@@ -269,6 +269,34 @@ function DesignerContent() {
         }
       }
 
+      // Optimistic self-adjustment: immediately shift subsequent products left to close gap
+      if (targetShelf && targetPlacement) {
+        const shiftW = targetPlacement.product.width_cm * targetPlacement.facing_count;
+        const targetRow = targetPlacement.row_index;
+        const deletedX = targetPlacement.x_offset_cm;
+
+        setPlanogram((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            shelves: prev.shelves.map((s) => {
+              if (s.id !== targetShelf!.id) return s;
+              const remaining = (s.placements || []).filter((p) => p.id !== placementId);
+              const shifted = remaining.map((p) => {
+                if (p.row_index === targetRow && p.x_offset_cm > deletedX) {
+                  return {
+                    ...p,
+                    x_offset_cm: Math.max(0, Math.round((p.x_offset_cm - shiftW) * 10) / 10),
+                  };
+                }
+                return p;
+              });
+              return { ...s, placements: shifted };
+            }),
+          };
+        });
+      }
+
       await api.deletePlacement(placementId);
 
       // Adjust the row height automatically when product is deleted

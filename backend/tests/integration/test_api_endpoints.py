@@ -148,3 +148,61 @@ def test_planogram_shelf_and_placement_workflow(client):
     assert metrics["total_planograms"] >= 1
     assert metrics["total_shelves"] >= 1
     assert metrics["total_products"] >= 1
+
+
+def test_delete_middle_placement_self_adjusts_subsequent_products(client):
+    # 1. Create product (width 10cm)
+    prod_res = client.post("/api/v1/products/direct", json={
+        "sku": "PROD-ADJUST-1",
+        "name": "Adjust Can",
+        "category": "Beverages",
+        "width_cm": 10.0,
+        "height_cm": 15.0,
+        "depth_cm": 5.0,
+        "price": 25.0,
+        "currency": "INR",
+        "image_path": "uploads/sample.png"
+    })
+    assert prod_res.status_code == 201
+    prod_id = prod_res.json()["id"]
+
+    # 2. Create Planogram and Shelf (width 100cm, 3 rows)
+    plano_res = client.post("/api/v1/planograms", json={"name": "Self Adjust Test Bay"})
+    assert plano_res.status_code == 201
+    plano_id = plano_res.json()["id"]
+
+    shelf_res = client.post(f"/api/v1/planograms/{plano_id}/shelves", json={
+        "name": "Bay 1",
+        "width_cm": 100.0,
+        "total_height_cm": 180.0,
+        "depth_cm": 40.0,
+        "row_count": 3,
+        "has_plinth": True,
+        "plinth_height_cm": 15.0
+    })
+    assert shelf_res.status_code == 201
+    shelf_id = shelf_res.json()["id"]
+
+    # 3. Add 4 consecutive products on Row 0:
+    # P0 at 0cm, P1 at 10cm, P2 at 20cm, P3 at 30cm
+    p0 = client.post(f"/api/v1/shelves/{shelf_id}/placements", json={"product_id": prod_id, "row_index": 0, "x_offset_cm": 0.0, "facing_count": 1}).json()
+    p1 = client.post(f"/api/v1/shelves/{shelf_id}/placements", json={"product_id": prod_id, "row_index": 0, "x_offset_cm": 10.0, "facing_count": 1}).json()
+    p2 = client.post(f"/api/v1/shelves/{shelf_id}/placements", json={"product_id": prod_id, "row_index": 0, "x_offset_cm": 20.0, "facing_count": 1}).json()
+    p3 = client.post(f"/api/v1/shelves/{shelf_id}/placements", json={"product_id": prod_id, "row_index": 0, "x_offset_cm": 30.0, "facing_count": 1}).json()
+
+    # 4. Delete the middle product P1 (at 10cm)
+    del_res = client.delete(f"/api/v1/placements/{p1['id']}")
+    assert del_res.status_code == 200
+
+    # 5. Verify the remaining placements shifted left to close the gap:
+    # P0 should remain at 0cm
+    # P2 (previously at 20cm) should now be at 10cm (occupying P1's slot!)
+    # P3 (previously at 30cm) should now be at 20cm (occupying P2's previous slot!)
+    plano_get = client.get(f"/api/v1/planograms/{plano_id}").json()
+    shelf_placements = plano_get["shelves"][0]["placements"]
+    assert len(shelf_placements) == 3
+
+    positions = {p["id"]: p["x_offset_cm"] for p in shelf_placements}
+    assert positions[p0["id"]] == 0.0
+    assert positions[p2["id"]] == 10.0
+    assert positions[p3["id"]] == 20.0
