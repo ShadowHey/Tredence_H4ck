@@ -8,6 +8,7 @@ import { AddShelfModal } from "@/components/designer/AddShelfModal";
 import { AddProductModal } from "@/components/designer/AddProductModal";
 import { ContextPanel } from "@/components/designer/ContextPanel";
 import { Shelf, Product } from "@/types";
+import { api } from "@/lib/api";
 
 const mockProduct: Product = {
   id: 1,
@@ -90,6 +91,66 @@ describe("ShelfCanvas Component", () => {
     expect(screen.getByText(/Base Plinth Fixture \(15 cm\)/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Row 1/i).length).toBeGreaterThan(0);
   });
+
+  it("enforces row minimum height based on placed products and displays Min badge", () => {
+    const shelfWithPlacement: Shelf = {
+      ...mockShelf,
+      placements: [
+        {
+          id: 101,
+          shelf_id: mockShelf.id,
+          product_id: mockProduct.id,
+          row_index: 0,
+          x_offset_cm: 0,
+          facing_count: 1,
+          product: mockProduct, // height_cm: 12.2
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ],
+    };
+
+    render(
+      <ShelfCanvas
+        shelves={[shelfWithPlacement]}
+        selectedShelfId={shelfWithPlacement.id}
+        selectedPlacementId={null}
+        onSelectShelf={vi.fn()}
+        onSelectPlacement={vi.fn()}
+        onOpenAddShelf={vi.fn()}
+        onDropProductOnRow={vi.fn()}
+        onMovePlacement={vi.fn()}
+        onDeletePlacement={vi.fn()}
+        collisionWarning={null}
+      />
+    );
+
+    // Checks that the Min badge is displayed for the placed product (12.2cm + 3.0cm headroom = 15.2cm)
+    expect(screen.getByText(/Min 15.2cm/i)).toBeInTheDocument();
+  });
+  it("clicking shelf row in ShelfCanvas triggers onSelectRow callback", () => {
+    const onSelectRow = vi.fn();
+    render(
+      <ShelfCanvas
+        shelves={[mockShelf]}
+        selectedShelfId={mockShelf.id}
+        selectedPlacementId={null}
+        selectedRowIndex={0}
+        onSelectShelf={vi.fn()}
+        onSelectPlacement={vi.fn()}
+        onSelectRow={onSelectRow}
+        onOpenAddShelf={vi.fn()}
+        onDropProductOnRow={vi.fn()}
+        onMovePlacement={vi.fn()}
+        onDeletePlacement={vi.fn()}
+        collisionWarning={null}
+      />
+    );
+
+    const row2 = screen.getByTestId("shelf-row-1");
+    fireEvent.click(row2);
+    expect(onSelectRow).toHaveBeenCalledWith(1);
+  });
 });
 
 describe("AddShelfModal Component", () => {
@@ -133,6 +194,38 @@ describe("AddProductModal Component", () => {
     expect(screen.getByText("Add Catalogue Product")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("e.g. BEV-001")).toBeInTheDocument();
     expect(screen.getByText("Physical Dimensions (cm)")).toBeInTheDocument();
+  });
+
+  it("submits manual product details and calls onProductCreated with database fields", async () => {
+    const onProductCreated = vi.fn();
+    const createdMock: Product = {
+      ...mockProduct,
+      id: 99,
+      sku: "MANUAL-001",
+      name: "Manual Orange Drink",
+    };
+    vi.spyOn(api, "createProductMultipart").mockResolvedValueOnce(createdMock);
+
+    render(
+      <AddProductModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onProductCreated={onProductCreated}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("e.g. BEV-001"), {
+      target: { value: "MANUAL-001" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("e.g. Citrus Soda Can"), {
+      target: { value: "Manual Orange Drink" },
+    });
+
+    const submitBtn = screen.getByText("Save to Product Library");
+    await fireEvent.click(submitBtn);
+
+    expect(api.createProductMultipart).toHaveBeenCalled();
+    expect(onProductCreated).toHaveBeenCalledWith(createdMock);
   });
 });
 

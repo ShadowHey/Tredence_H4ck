@@ -10,6 +10,7 @@ class ShelfBase(BaseModel):
     row_count: int = Field(4, ge=1, le=12, description="Number of shelf rows (1 to 12)")
     has_plinth: bool = Field(False, description="Enable bottom plinth/base header")
     plinth_height_cm: float = Field(0.0, ge=0.0, description="Plinth height in centimetres")
+    row_heights: Optional[List[float]] = Field(None, description="Custom heights per row in cm")
     order_index: int = Field(0, ge=0)
 
     @field_validator("name")
@@ -42,6 +43,7 @@ class ShelfUpdate(BaseModel):
     row_count: Optional[int] = Field(None, ge=1, le=12)
     has_plinth: Optional[bool] = None
     plinth_height_cm: Optional[float] = Field(None, ge=0.0)
+    row_heights: Optional[List[float]] = None
     order_index: Optional[int] = Field(None, ge=0)
 
     @model_validator(mode="after")
