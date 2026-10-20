@@ -1,0 +1,2608 @@
+{
+  "source_image": "new_01_pharmacy_pegboard.jpg",
+  "image_width": 768,
+  "image_height": 1024,
+  "model_status": "completed",
+  "summary": {
+    "product_count": 102,
+    "empty_region_count": 2,
+    "shelf_row_count": 3,
+    "empty_area_percentage": 1.74,
+    "product_area_percentage": 98.26,
+    "total_empty_area_px": 4546,
+    "total_product_area_px": 256594
+  },
+  "products": [
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.2498,
+      "bbox_xyxy": [
+        61,
+        29,
+        147,
+        45
+      ],
+      "bbox_normalized": [
+        0.07943,
+        0.02832,
+        0.19141,
+        0.04395
+      ],
+      "row_number": 1,
+      "area_px": 1376
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7395,
+      "bbox_xyxy": [
+        245,
+        81,
+        304,
+        178
+      ],
+      "bbox_normalized": [
+        0.31901,
+        0.0791,
+        0.39583,
+        0.17383
+      ],
+      "row_number": 1,
+      "area_px": 5723
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7864,
+      "bbox_xyxy": [
+        116,
+        91,
+        176,
+        175
+      ],
+      "bbox_normalized": [
+        0.15104,
+        0.08887,
+        0.22917,
+        0.1709
+      ],
+      "row_number": 1,
+      "area_px": 5040
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7863,
+      "bbox_xyxy": [
+        181,
+        93,
+        242,
+        176
+      ],
+      "bbox_normalized": [
+        0.23568,
+        0.09082,
+        0.3151,
+        0.17188
+      ],
+      "row_number": 1,
+      "area_px": 5063
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5956,
+      "bbox_xyxy": [
+        65,
+        94,
+        112,
+        176
+      ],
+      "bbox_normalized": [
+        0.08464,
+        0.0918,
+        0.14583,
+        0.17188
+      ],
+      "row_number": 1,
+      "area_px": 3854
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3041,
+      "bbox_xyxy": [
+        470,
+        144,
+        511,
+        228
+      ],
+      "bbox_normalized": [
+        0.61198,
+        0.14062,
+        0.66536,
+        0.22266
+      ],
+      "row_number": 1,
+      "area_px": 3444
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4223,
+      "bbox_xyxy": [
+        517,
+        144,
+        573,
+        227
+      ],
+      "bbox_normalized": [
+        0.67318,
+        0.14062,
+        0.74609,
+        0.22168
+      ],
+      "row_number": 1,
+      "area_px": 4648
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7463,
+      "bbox_xyxy": [
+        181,
+        202,
+        242,
+        292
+      ],
+      "bbox_normalized": [
+        0.23568,
+        0.19727,
+        0.3151,
+        0.28516
+      ],
+      "row_number": 1,
+      "area_px": 5490
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3545,
+      "bbox_xyxy": [
+        111,
+        205,
+        177,
+        280
+      ],
+      "bbox_normalized": [
+        0.14453,
+        0.2002,
+        0.23047,
+        0.27344
+      ],
+      "row_number": 1,
+      "area_px": 4950
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5075,
+      "bbox_xyxy": [
+        52,
+        206,
+        112,
+        284
+      ],
+      "bbox_normalized": [
+        0.06771,
+        0.20117,
+        0.14583,
+        0.27734
+      ],
+      "row_number": 1,
+      "area_px": 4680
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7075,
+      "bbox_xyxy": [
+        0,
+        209,
+        43,
+        286
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.2041,
+        0.05599,
+        0.2793
+      ],
+      "row_number": 1,
+      "area_px": 3311
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6736,
+      "bbox_xyxy": [
+        244,
+        224,
+        303,
+        293
+      ],
+      "bbox_normalized": [
+        0.31771,
+        0.21875,
+        0.39453,
+        0.28613
+      ],
+      "row_number": 1,
+      "area_px": 4071
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4694,
+      "bbox_xyxy": [
+        565,
+        246,
+        619,
+        319
+      ],
+      "bbox_normalized": [
+        0.73568,
+        0.24023,
+        0.80599,
+        0.31152
+      ],
+      "row_number": 1,
+      "area_px": 3942
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5861,
+      "bbox_xyxy": [
+        462,
+        250,
+        517,
+        319
+      ],
+      "bbox_normalized": [
+        0.60156,
+        0.24414,
+        0.67318,
+        0.31152
+      ],
+      "row_number": 1,
+      "area_px": 3795
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3958,
+      "bbox_xyxy": [
+        396,
+        251,
+        450,
+        320
+      ],
+      "bbox_normalized": [
+        0.51562,
+        0.24512,
+        0.58594,
+        0.3125
+      ],
+      "row_number": 1,
+      "area_px": 3726
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.517,
+      "bbox_xyxy": [
+        519,
+        258,
+        561,
+        319
+      ],
+      "bbox_normalized": [
+        0.67578,
+        0.25195,
+        0.73047,
+        0.31152
+      ],
+      "row_number": 1,
+      "area_px": 2562
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5873,
+      "bbox_xyxy": [
+        326,
+        260,
+        392,
+        318
+      ],
+      "bbox_normalized": [
+        0.42448,
+        0.25391,
+        0.51042,
+        0.31055
+      ],
+      "row_number": 1,
+      "area_px": 3828
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4811,
+      "bbox_xyxy": [
+        623,
+        262,
+        669,
+        318
+      ],
+      "bbox_normalized": [
+        0.8112,
+        0.25586,
+        0.87109,
+        0.31055
+      ],
+      "row_number": 1,
+      "area_px": 2576
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.2716,
+      "bbox_xyxy": [
+        650,
+        262,
+        687,
+        319
+      ],
+      "bbox_normalized": [
+        0.84635,
+        0.25586,
+        0.89453,
+        0.31152
+      ],
+      "row_number": 1,
+      "area_px": 2109
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.2208,
+      "bbox_xyxy": [
+        615,
+        329,
+        657,
+        397
+      ],
+      "bbox_normalized": [
+        0.80078,
+        0.32129,
+        0.85547,
+        0.3877
+      ],
+      "row_number": 1,
+      "area_px": 2856
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.243,
+      "bbox_xyxy": [
+        662,
+        329,
+        729,
+        394
+      ],
+      "bbox_normalized": [
+        0.86198,
+        0.32129,
+        0.94922,
+        0.38477
+      ],
+      "row_number": 1,
+      "area_px": 4355
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7739,
+      "bbox_xyxy": [
+        0,
+        330,
+        30,
+        409
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.32227,
+        0.03906,
+        0.39941
+      ],
+      "row_number": 1,
+      "area_px": 2370
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6822,
+      "bbox_xyxy": [
+        33,
+        330,
+        97,
+        408
+      ],
+      "bbox_normalized": [
+        0.04297,
+        0.32227,
+        0.1263,
+        0.39844
+      ],
+      "row_number": 1,
+      "area_px": 4992
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3185,
+      "bbox_xyxy": [
+        272,
+        330,
+        307,
+        409
+      ],
+      "bbox_normalized": [
+        0.35417,
+        0.32227,
+        0.39974,
+        0.39941
+      ],
+      "row_number": 1,
+      "area_px": 2765
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.389,
+      "bbox_xyxy": [
+        336,
+        330,
+        387,
+        394
+      ],
+      "bbox_normalized": [
+        0.4375,
+        0.32227,
+        0.50391,
+        0.38477
+      ],
+      "row_number": 1,
+      "area_px": 3264
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7358,
+      "bbox_xyxy": [
+        209,
+        332,
+        238,
+        412
+      ],
+      "bbox_normalized": [
+        0.27214,
+        0.32422,
+        0.3099,
+        0.40234
+      ],
+      "row_number": 1,
+      "area_px": 2320
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8003,
+      "bbox_xyxy": [
+        173,
+        333,
+        206,
+        413
+      ],
+      "bbox_normalized": [
+        0.22526,
+        0.3252,
+        0.26823,
+        0.40332
+      ],
+      "row_number": 1,
+      "area_px": 2640
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3041,
+      "bbox_xyxy": [
+        241,
+        337,
+        301,
+        409
+      ],
+      "bbox_normalized": [
+        0.3138,
+        0.3291,
+        0.39193,
+        0.39941
+      ],
+      "row_number": 1,
+      "area_px": 4320
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3945,
+      "bbox_xyxy": [
+        389,
+        339,
+        434,
+        398
+      ],
+      "bbox_normalized": [
+        0.50651,
+        0.33105,
+        0.5651,
+        0.38867
+      ],
+      "row_number": 1,
+      "area_px": 2655
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3733,
+      "bbox_xyxy": [
+        562,
+        341,
+        611,
+        401
+      ],
+      "bbox_normalized": [
+        0.73177,
+        0.33301,
+        0.79557,
+        0.3916
+      ],
+      "row_number": 1,
+      "area_px": 2940
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.681,
+      "bbox_xyxy": [
+        137,
+        354,
+        170,
+        412
+      ],
+      "bbox_normalized": [
+        0.17839,
+        0.3457,
+        0.22135,
+        0.40234
+      ],
+      "row_number": 1,
+      "area_px": 1914
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6808,
+      "bbox_xyxy": [
+        101,
+        355,
+        135,
+        412
+      ],
+      "bbox_normalized": [
+        0.13151,
+        0.34668,
+        0.17578,
+        0.40234
+      ],
+      "row_number": 1,
+      "area_px": 1938
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4777,
+      "bbox_xyxy": [
+        385,
+        405,
+        428,
+        465
+      ],
+      "bbox_normalized": [
+        0.5013,
+        0.39551,
+        0.55729,
+        0.4541
+      ],
+      "row_number": 1,
+      "area_px": 2580
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.2682,
+      "bbox_xyxy": [
+        572,
+        406,
+        628,
+        466
+      ],
+      "bbox_normalized": [
+        0.74479,
+        0.39648,
+        0.81771,
+        0.45508
+      ],
+      "row_number": 1,
+      "area_px": 3360
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.631,
+      "bbox_xyxy": [
+        341,
+        408,
+        383,
+        466
+      ],
+      "bbox_normalized": [
+        0.44401,
+        0.39844,
+        0.4987,
+        0.45508
+      ],
+      "row_number": 1,
+      "area_px": 2436
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3649,
+      "bbox_xyxy": [
+        431,
+        408,
+        504,
+        471
+      ],
+      "bbox_normalized": [
+        0.5612,
+        0.39844,
+        0.65625,
+        0.45996
+      ],
+      "row_number": 1,
+      "area_px": 4599
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3946,
+      "bbox_xyxy": [
+        513,
+        409,
+        557,
+        470
+      ],
+      "bbox_normalized": [
+        0.66797,
+        0.39941,
+        0.72526,
+        0.45898
+      ],
+      "row_number": 1,
+      "area_px": 2684
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.377,
+      "bbox_xyxy": [
+        655,
+        423,
+        692,
+        482
+      ],
+      "bbox_normalized": [
+        0.85286,
+        0.41309,
+        0.90104,
+        0.4707
+      ],
+      "row_number": 1,
+      "area_px": 2183
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3178,
+      "bbox_xyxy": [
+        695,
+        424,
+        730,
+        477
+      ],
+      "bbox_normalized": [
+        0.90495,
+        0.41406,
+        0.95052,
+        0.46582
+      ],
+      "row_number": 1,
+      "area_px": 1855
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7444,
+      "bbox_xyxy": [
+        29,
+        450,
+        67,
+        536
+      ],
+      "bbox_normalized": [
+        0.03776,
+        0.43945,
+        0.08724,
+        0.52344
+      ],
+      "row_number": 1,
+      "area_px": 3268
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6427,
+      "bbox_xyxy": [
+        0,
+        455,
+        26,
+        536
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.44434,
+        0.03385,
+        0.52344
+      ],
+      "row_number": 1,
+      "area_px": 2106
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7195,
+      "bbox_xyxy": [
+        239,
+        455,
+        272,
+        538
+      ],
+      "bbox_normalized": [
+        0.3112,
+        0.44434,
+        0.35417,
+        0.52539
+      ],
+      "row_number": 1,
+      "area_px": 2739
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7858,
+      "bbox_xyxy": [
+        274,
+        457,
+        307,
+        536
+      ],
+      "bbox_normalized": [
+        0.35677,
+        0.44629,
+        0.39974,
+        0.52344
+      ],
+      "row_number": 1,
+      "area_px": 2607
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7752,
+      "bbox_xyxy": [
+        138,
+        459,
+        168,
+        534
+      ],
+      "bbox_normalized": [
+        0.17969,
+        0.44824,
+        0.21875,
+        0.52148
+      ],
+      "row_number": 1,
+      "area_px": 2250
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8086,
+      "bbox_xyxy": [
+        206,
+        459,
+        237,
+        535
+      ],
+      "bbox_normalized": [
+        0.26823,
+        0.44824,
+        0.30859,
+        0.52246
+      ],
+      "row_number": 1,
+      "area_px": 2356
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8627,
+      "bbox_xyxy": [
+        68,
+        460,
+        102,
+        535
+      ],
+      "bbox_normalized": [
+        0.08854,
+        0.44922,
+        0.13281,
+        0.52246
+      ],
+      "row_number": 1,
+      "area_px": 2550
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8167,
+      "bbox_xyxy": [
+        103,
+        461,
+        135,
+        534
+      ],
+      "bbox_normalized": [
+        0.13411,
+        0.4502,
+        0.17578,
+        0.52148
+      ],
+      "row_number": 1,
+      "area_px": 2336
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8437,
+      "bbox_xyxy": [
+        170,
+        461,
+        204,
+        535
+      ],
+      "bbox_normalized": [
+        0.22135,
+        0.4502,
+        0.26562,
+        0.52246
+      ],
+      "row_number": 1,
+      "area_px": 2516
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.231,
+      "bbox_xyxy": [
+        399,
+        485,
+        440,
+        557
+      ],
+      "bbox_normalized": [
+        0.51953,
+        0.47363,
+        0.57292,
+        0.54395
+      ],
+      "row_number": 1,
+      "area_px": 2952
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3239,
+      "bbox_xyxy": [
+        484,
+        488,
+        526,
+        548
+      ],
+      "bbox_normalized": [
+        0.63021,
+        0.47656,
+        0.6849,
+        0.53516
+      ],
+      "row_number": 1,
+      "area_px": 2520
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4846,
+      "bbox_xyxy": [
+        336,
+        489,
+        395,
+        559
+      ],
+      "bbox_normalized": [
+        0.4375,
+        0.47754,
+        0.51432,
+        0.5459
+      ],
+      "row_number": 1,
+      "area_px": 4130
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.484,
+      "bbox_xyxy": [
+        529,
+        489,
+        563,
+        554
+      ],
+      "bbox_normalized": [
+        0.6888,
+        0.47754,
+        0.73307,
+        0.54102
+      ],
+      "row_number": 1,
+      "area_px": 2210
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6812,
+      "bbox_xyxy": [
+        565,
+        500,
+        611,
+        565
+      ],
+      "bbox_normalized": [
+        0.73568,
+        0.48828,
+        0.79557,
+        0.55176
+      ],
+      "row_number": 1,
+      "area_px": 2990
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3545,
+      "bbox_xyxy": [
+        667,
+        500,
+        716,
+        560
+      ],
+      "bbox_normalized": [
+        0.86849,
+        0.48828,
+        0.93229,
+        0.54688
+      ],
+      "row_number": 1,
+      "area_px": 2940
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6806,
+      "bbox_xyxy": [
+        191,
+        591,
+        233,
+        655
+      ],
+      "bbox_normalized": [
+        0.2487,
+        0.57715,
+        0.30339,
+        0.63965
+      ],
+      "row_number": 2,
+      "area_px": 2688
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.688,
+      "bbox_xyxy": [
+        0,
+        593,
+        21,
+        659
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.5791,
+        0.02734,
+        0.64355
+      ],
+      "row_number": 2,
+      "area_px": 1386
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8334,
+      "bbox_xyxy": [
+        65,
+        593,
+        106,
+        658
+      ],
+      "bbox_normalized": [
+        0.08464,
+        0.5791,
+        0.13802,
+        0.64258
+      ],
+      "row_number": 2,
+      "area_px": 2665
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7676,
+      "bbox_xyxy": [
+        149,
+        593,
+        190,
+        656
+      ],
+      "bbox_normalized": [
+        0.19401,
+        0.5791,
+        0.2474,
+        0.64062
+      ],
+      "row_number": 2,
+      "area_px": 2583
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7762,
+      "bbox_xyxy": [
+        24,
+        594,
+        63,
+        658
+      ],
+      "bbox_normalized": [
+        0.03125,
+        0.58008,
+        0.08203,
+        0.64258
+      ],
+      "row_number": 2,
+      "area_px": 2496
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.822,
+      "bbox_xyxy": [
+        108,
+        594,
+        147,
+        656
+      ],
+      "bbox_normalized": [
+        0.14062,
+        0.58008,
+        0.19141,
+        0.64062
+      ],
+      "row_number": 2,
+      "area_px": 2418
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6801,
+      "bbox_xyxy": [
+        234,
+        595,
+        306,
+        655
+      ],
+      "bbox_normalized": [
+        0.30469,
+        0.58105,
+        0.39844,
+        0.63965
+      ],
+      "row_number": 2,
+      "area_px": 4320
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3708,
+      "bbox_xyxy": [
+        498,
+        597,
+        533,
+        644
+      ],
+      "bbox_normalized": [
+        0.64844,
+        0.58301,
+        0.69401,
+        0.62891
+      ],
+      "row_number": 2,
+      "area_px": 1645
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3871,
+      "bbox_xyxy": [
+        535,
+        601,
+        570,
+        644
+      ],
+      "bbox_normalized": [
+        0.69661,
+        0.58691,
+        0.74219,
+        0.62891
+      ],
+      "row_number": 2,
+      "area_px": 1505
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3104,
+      "bbox_xyxy": [
+        573,
+        602,
+        610,
+        648
+      ],
+      "bbox_normalized": [
+        0.74609,
+        0.58789,
+        0.79427,
+        0.63281
+      ],
+      "row_number": 2,
+      "area_px": 1702
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4112,
+      "bbox_xyxy": [
+        465,
+        644,
+        494,
+        720
+      ],
+      "bbox_normalized": [
+        0.60547,
+        0.62891,
+        0.64323,
+        0.70312
+      ],
+      "row_number": 2,
+      "area_px": 2204
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.2473,
+      "bbox_xyxy": [
+        497,
+        652,
+        524,
+        722
+      ],
+      "bbox_normalized": [
+        0.64714,
+        0.63672,
+        0.68229,
+        0.70508
+      ],
+      "row_number": 2,
+      "area_px": 1890
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7217,
+      "bbox_xyxy": [
+        46,
+        701,
+        80,
+        769
+      ],
+      "bbox_normalized": [
+        0.0599,
+        0.68457,
+        0.10417,
+        0.75098
+      ],
+      "row_number": 2,
+      "area_px": 2312
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7298,
+      "bbox_xyxy": [
+        82,
+        703,
+        116,
+        768
+      ],
+      "bbox_normalized": [
+        0.10677,
+        0.68652,
+        0.15104,
+        0.75
+      ],
+      "row_number": 2,
+      "area_px": 2210
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7522,
+      "bbox_xyxy": [
+        200,
+        709,
+        248,
+        768
+      ],
+      "bbox_normalized": [
+        0.26042,
+        0.69238,
+        0.32292,
+        0.75
+      ],
+      "row_number": 2,
+      "area_px": 2832
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7383,
+      "bbox_xyxy": [
+        118,
+        710,
+        152,
+        768
+      ],
+      "bbox_normalized": [
+        0.15365,
+        0.69336,
+        0.19792,
+        0.75
+      ],
+      "row_number": 2,
+      "area_px": 1972
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7959,
+      "bbox_xyxy": [
+        154,
+        710,
+        197,
+        769
+      ],
+      "bbox_normalized": [
+        0.20052,
+        0.69336,
+        0.25651,
+        0.75098
+      ],
+      "row_number": 2,
+      "area_px": 2537
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4732,
+      "bbox_xyxy": [
+        0,
+        728,
+        7,
+        772
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.71094,
+        0.00911,
+        0.75391
+      ],
+      "row_number": 2,
+      "area_px": 308
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7439,
+      "bbox_xyxy": [
+        250,
+        728,
+        307,
+        768
+      ],
+      "bbox_normalized": [
+        0.32552,
+        0.71094,
+        0.39974,
+        0.75
+      ],
+      "row_number": 2,
+      "area_px": 2280
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7086,
+      "bbox_xyxy": [
+        6,
+        730,
+        44,
+        772
+      ],
+      "bbox_normalized": [
+        0.00781,
+        0.71289,
+        0.05729,
+        0.75391
+      ],
+      "row_number": 2,
+      "area_px": 1596
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.2958,
+      "bbox_xyxy": [
+        413,
+        736,
+        442,
+        764
+      ],
+      "bbox_normalized": [
+        0.53776,
+        0.71875,
+        0.57552,
+        0.74609
+      ],
+      "row_number": 2,
+      "area_px": 812
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.2808,
+      "bbox_xyxy": [
+        347,
+        738,
+        376,
+        766
+      ],
+      "bbox_normalized": [
+        0.45182,
+        0.7207,
+        0.48958,
+        0.74805
+      ],
+      "row_number": 2,
+      "area_px": 812
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3831,
+      "bbox_xyxy": [
+        380,
+        738,
+        410,
+        759
+      ],
+      "bbox_normalized": [
+        0.49479,
+        0.7207,
+        0.53385,
+        0.74121
+      ],
+      "row_number": 2,
+      "area_px": 630
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4202,
+      "bbox_xyxy": [
+        535,
+        762,
+        566,
+        815
+      ],
+      "bbox_normalized": [
+        0.69661,
+        0.74414,
+        0.73698,
+        0.7959
+      ],
+      "row_number": 3,
+      "area_px": 1643
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.2372,
+      "bbox_xyxy": [
+        568,
+        763,
+        596,
+        813
+      ],
+      "bbox_normalized": [
+        0.73958,
+        0.74512,
+        0.77604,
+        0.79395
+      ],
+      "row_number": 3,
+      "area_px": 1400
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6556,
+      "bbox_xyxy": [
+        361,
+        800,
+        391,
+        891
+      ],
+      "bbox_normalized": [
+        0.47005,
+        0.78125,
+        0.50911,
+        0.87012
+      ],
+      "row_number": 3,
+      "area_px": 2730
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5804,
+      "bbox_xyxy": [
+        396,
+        805,
+        428,
+        890
+      ],
+      "bbox_normalized": [
+        0.51562,
+        0.78613,
+        0.55729,
+        0.86914
+      ],
+      "row_number": 3,
+      "area_px": 2720
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4574,
+      "bbox_xyxy": [
+        319,
+        820,
+        356,
+        894
+      ],
+      "bbox_normalized": [
+        0.41536,
+        0.80078,
+        0.46354,
+        0.87305
+      ],
+      "row_number": 3,
+      "area_px": 2738
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6254,
+      "bbox_xyxy": [
+        5,
+        821,
+        46,
+        853
+      ],
+      "bbox_normalized": [
+        0.00651,
+        0.80176,
+        0.0599,
+        0.83301
+      ],
+      "row_number": 3,
+      "area_px": 1312
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5024,
+      "bbox_xyxy": [
+        431,
+        828,
+        471,
+        888
+      ],
+      "bbox_normalized": [
+        0.5612,
+        0.80859,
+        0.61328,
+        0.86719
+      ],
+      "row_number": 3,
+      "area_px": 2400
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3225,
+      "bbox_xyxy": [
+        695,
+        836,
+        731,
+        879
+      ],
+      "bbox_normalized": [
+        0.90495,
+        0.81641,
+        0.95182,
+        0.8584
+      ],
+      "row_number": 3,
+      "area_px": 1548
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5324,
+      "bbox_xyxy": [
+        660,
+        838,
+        694,
+        879
+      ],
+      "bbox_normalized": [
+        0.85938,
+        0.81836,
+        0.90365,
+        0.8584
+      ],
+      "row_number": 3,
+      "area_px": 1394
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5648,
+      "bbox_xyxy": [
+        632,
+        840,
+        658,
+        881
+      ],
+      "bbox_normalized": [
+        0.82292,
+        0.82031,
+        0.85677,
+        0.86035
+      ],
+      "row_number": 3,
+      "area_px": 1066
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5148,
+      "bbox_xyxy": [
+        587,
+        841,
+        623,
+        883
+      ],
+      "bbox_normalized": [
+        0.76432,
+        0.82129,
+        0.8112,
+        0.8623
+      ],
+      "row_number": 3,
+      "area_px": 1512
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3403,
+      "bbox_xyxy": [
+        474,
+        843,
+        502,
+        887
+      ],
+      "bbox_normalized": [
+        0.61719,
+        0.82324,
+        0.65365,
+        0.86621
+      ],
+      "row_number": 3,
+      "area_px": 1232
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.549,
+      "bbox_xyxy": [
+        546,
+        844,
+        582,
+        884
+      ],
+      "bbox_normalized": [
+        0.71094,
+        0.82422,
+        0.75781,
+        0.86328
+      ],
+      "row_number": 3,
+      "area_px": 1440
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3875,
+      "bbox_xyxy": [
+        510,
+        846,
+        541,
+        886
+      ],
+      "bbox_normalized": [
+        0.66406,
+        0.82617,
+        0.70443,
+        0.86523
+      ],
+      "row_number": 3,
+      "area_px": 1240
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4625,
+      "bbox_xyxy": [
+        194,
+        848,
+        249,
+        876
+      ],
+      "bbox_normalized": [
+        0.2526,
+        0.82812,
+        0.32422,
+        0.85547
+      ],
+      "row_number": 3,
+      "area_px": 1540
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4028,
+      "bbox_xyxy": [
+        253,
+        849,
+        304,
+        895
+      ],
+      "bbox_normalized": [
+        0.32943,
+        0.8291,
+        0.39583,
+        0.87402
+      ],
+      "row_number": 3,
+      "area_px": 2346
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4119,
+      "bbox_xyxy": [
+        0,
+        857,
+        8,
+        892
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.83691,
+        0.01042,
+        0.87109
+      ],
+      "row_number": 3,
+      "area_px": 280
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6367,
+      "bbox_xyxy": [
+        48,
+        859,
+        82,
+        900
+      ],
+      "bbox_normalized": [
+        0.0625,
+        0.83887,
+        0.10677,
+        0.87891
+      ],
+      "row_number": 3,
+      "area_px": 1394
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5642,
+      "bbox_xyxy": [
+        111,
+        860,
+        135,
+        898
+      ],
+      "bbox_normalized": [
+        0.14453,
+        0.83984,
+        0.17578,
+        0.87695
+      ],
+      "row_number": 3,
+      "area_px": 912
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6116,
+      "bbox_xyxy": [
+        137,
+        860,
+        191,
+        897
+      ],
+      "bbox_normalized": [
+        0.17839,
+        0.83984,
+        0.2487,
+        0.87598
+      ],
+      "row_number": 3,
+      "area_px": 1998
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6763,
+      "bbox_xyxy": [
+        83,
+        861,
+        109,
+        899
+      ],
+      "bbox_normalized": [
+        0.10807,
+        0.84082,
+        0.14193,
+        0.87793
+      ],
+      "row_number": 3,
+      "area_px": 988
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.595,
+      "bbox_xyxy": [
+        10,
+        863,
+        46,
+        893
+      ],
+      "bbox_normalized": [
+        0.01302,
+        0.84277,
+        0.0599,
+        0.87207
+      ],
+      "row_number": 3,
+      "area_px": 1080
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5339,
+      "bbox_xyxy": [
+        194,
+        869,
+        249,
+        895
+      ],
+      "bbox_normalized": [
+        0.2526,
+        0.84863,
+        0.32422,
+        0.87402
+      ],
+      "row_number": 3,
+      "area_px": 1430
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.2241,
+      "bbox_xyxy": [
+        0,
+        872,
+        8,
+        900
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.85156,
+        0.01042,
+        0.87891
+      ],
+      "row_number": 3,
+      "area_px": 224
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5361,
+      "bbox_xyxy": [
+        10,
+        885,
+        46,
+        900
+      ],
+      "bbox_normalized": [
+        0.01302,
+        0.86426,
+        0.0599,
+        0.87891
+      ],
+      "row_number": 3,
+      "area_px": 540
+    }
+  ],
+  "empty_regions": [
+    {
+      "class_name": "empty_space",
+      "class_id": 0,
+      "confidence": 0.3646,
+      "bbox_xyxy": [
+        198,
+        795,
+        250,
+        844
+      ],
+      "bbox_normalized": [
+        0.25781,
+        0.77637,
+        0.32552,
+        0.82422
+      ],
+      "row_number": 3,
+      "area_px": 2548
+    },
+    {
+      "class_name": "empty_space",
+      "class_id": 0,
+      "confidence": 0.2767,
+      "bbox_xyxy": [
+        50,
+        796,
+        87,
+        850
+      ],
+      "bbox_normalized": [
+        0.0651,
+        0.77734,
+        0.11328,
+        0.83008
+      ],
+      "row_number": 3,
+      "area_px": 1998
+    }
+  ],
+  "shelf_rows": [
+    {
+      "row_number": 1,
+      "bbox_xyxy": [
+        18,
+        536,
+        250,
+        562
+      ],
+      "bbox_normalized": [
+        0.02344,
+        0.52344,
+        0.32552,
+        0.54883
+      ],
+      "polygon": [
+        [
+          18,
+          536
+        ],
+        [
+          18,
+          562
+        ],
+        [
+          134,
+          562
+        ],
+        [
+          136,
+          560
+        ],
+        [
+          152,
+          560
+        ],
+        [
+          154,
+          562
+        ],
+        [
+          202,
+          562
+        ],
+        [
+          203,
+          560
+        ],
+        [
+          222,
+          560
+        ],
+        [
+          224,
+          562
+        ],
+        [
+          229,
+          562
+        ],
+        [
+          230,
+          560
+        ],
+        [
+          242,
+          560
+        ],
+        [
+          243,
+          562
+        ],
+        [
+          250,
+          562
+        ],
+        [
+          250,
+          536
+        ]
+      ],
+      "confidence": 0.2036,
+      "product_count": 54,
+      "empty_region_count": 0,
+      "empty_area_px": 0,
+      "product_area_px": 173684,
+      "row_empty_percentage": 0.0
+    },
+    {
+      "row_number": 2,
+      "bbox_xyxy": [
+        6,
+        656,
+        307,
+        682
+      ],
+      "bbox_normalized": [
+        0.00781,
+        0.64062,
+        0.39974,
+        0.66602
+      ],
+      "polygon": [
+        [
+          10,
+          656
+        ],
+        [
+          8,
+          658
+        ],
+        [
+          6,
+          658
+        ],
+        [
+          6,
+          682
+        ],
+        [
+          96,
+          682
+        ],
+        [
+          98,
+          680
+        ],
+        [
+          101,
+          680
+        ],
+        [
+          102,
+          682
+        ],
+        [
+          104,
+          682
+        ],
+        [
+          106,
+          680
+        ],
+        [
+          171,
+          680
+        ],
+        [
+          173,
+          678
+        ],
+        [
+          194,
+          678
+        ],
+        [
+          195,
+          680
+        ],
+        [
+          198,
+          680
+        ],
+        [
+          200,
+          678
+        ],
+        [
+          202,
+          678
+        ],
+        [
+          203,
+          680
+        ],
+        [
+          227,
+          680
+        ],
+        [
+          229,
+          678
+        ],
+        [
+          299,
+          678
+        ],
+        [
+          301,
+          677
+        ],
+        [
+          306,
+          677
+        ],
+        [
+          307,
+          675
+        ],
+        [
+          307,
+          656
+        ]
+      ],
+      "confidence": 0.1727,
+      "product_count": 23,
+      "empty_region_count": 0,
+      "empty_area_px": 0,
+      "product_area_px": 45803,
+      "row_empty_percentage": 0.0
+    },
+    {
+      "row_number": 3,
+      "bbox_xyxy": [
+        0,
+        877,
+        736,
+        930
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.85645,
+        0.95833,
+        0.9082
+      ],
+      "polygon": [
+        [
+          664,
+          877
+        ],
+        [
+          662,
+          878
+        ],
+        [
+          651,
+          878
+        ],
+        [
+          650,
+          880
+        ],
+        [
+          626,
+          880
+        ],
+        [
+          624,
+          882
+        ],
+        [
+          565,
+          882
+        ],
+        [
+          563,
+          883
+        ],
+        [
+          486,
+          883
+        ],
+        [
+          485,
+          885
+        ],
+        [
+          466,
+          885
+        ],
+        [
+          464,
+          886
+        ],
+        [
+          438,
+          886
+        ],
+        [
+          437,
+          888
+        ],
+        [
+          405,
+          888
+        ],
+        [
+          403,
+          890
+        ],
+        [
+          365,
+          890
+        ],
+        [
+          363,
+          891
+        ],
+        [
+          334,
+          891
+        ],
+        [
+          333,
+          893
+        ],
+        [
+          256,
+          893
+        ],
+        [
+          254,
+          894
+        ],
+        [
+          184,
+          894
+        ],
+        [
+          182,
+          896
+        ],
+        [
+          179,
+          896
+        ],
+        [
+          178,
+          894
+        ],
+        [
+          163,
+          894
+        ],
+        [
+          162,
+          896
+        ],
+        [
+          142,
+          896
+        ],
+        [
+          141,
+          898
+        ],
+        [
+          122,
+          898
+        ],
+        [
+          120,
+          899
+        ],
+        [
+          102,
+          899
+        ],
+        [
+          101,
+          901
+        ],
+        [
+          72,
+          901
+        ],
+        [
+          70,
+          899
+        ],
+        [
+          40,
+          899
+        ],
+        [
+          38,
+          901
+        ],
+        [
+          24,
+          901
+        ],
+        [
+          22,
+          902
+        ],
+        [
+          10,
+          902
+        ],
+        [
+          8,
+          904
+        ],
+        [
+          0,
+          904
+        ],
+        [
+          0,
+          930
+        ],
+        [
+          29,
+          930
+        ],
+        [
+          30,
+          928
+        ],
+        [
+          37,
+          928
+        ],
+        [
+          38,
+          926
+        ],
+        [
+          69,
+          926
+        ],
+        [
+          70,
+          925
+        ],
+        [
+          82,
+          925
+        ],
+        [
+          83,
+          926
+        ],
+        [
+          86,
+          926
+        ],
+        [
+          88,
+          928
+        ],
+        [
+          101,
+          928
+        ],
+        [
+          102,
+          926
+        ],
+        [
+          112,
+          926
+        ],
+        [
+          114,
+          925
+        ],
+        [
+          120,
+          925
+        ],
+        [
+          122,
+          923
+        ],
+        [
+          155,
+          923
+        ],
+        [
+          157,
+          922
+        ],
+        [
+          222,
+          922
+        ],
+        [
+          224,
+          920
+        ],
+        [
+          270,
+          920
+        ],
+        [
+          272,
+          918
+        ],
+        [
+          304,
+          918
+        ],
+        [
+          306,
+          917
+        ],
+        [
+          370,
+          917
+        ],
+        [
+          371,
+          915
+        ],
+        [
+          438,
+          915
+        ],
+        [
+          440,
+          914
+        ],
+        [
+          478,
+          914
+        ],
+        [
+          480,
+          912
+        ],
+        [
+          525,
+          912
+        ],
+        [
+          526,
+          910
+        ],
+        [
+          574,
+          910
+        ],
+        [
+          576,
+          909
+        ],
+        [
+          624,
+          909
+        ],
+        [
+          626,
+          907
+        ],
+        [
+          658,
+          907
+        ],
+        [
+          659,
+          906
+        ],
+        [
+          710,
+          906
+        ],
+        [
+          712,
+          904
+        ],
+        [
+          718,
+          904
+        ],
+        [
+          726,
+          896
+        ],
+        [
+          728,
+          896
+        ],
+        [
+          730,
+          898
+        ],
+        [
+          736,
+          898
+        ],
+        [
+          736,
+          880
+        ],
+        [
+          723,
+          880
+        ],
+        [
+          722,
+          878
+        ],
+        [
+          717,
+          878
+        ],
+        [
+          715,
+          877
+        ]
+      ],
+      "confidence": 0.6435,
+      "product_count": 25,
+      "empty_region_count": 2,
+      "empty_area_px": 4546,
+      "product_area_px": 37107,
+      "row_empty_percentage": 10.91
+    }
+  ],
+  "annotated_image": "new_01_pharmacy_pegboard_annotated.jpg",
+  "errors": null
+}
