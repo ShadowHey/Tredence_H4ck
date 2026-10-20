@@ -1,0 +1,6978 @@
+{
+  "source_image": "new_02_coffee_pods.jpg",
+  "image_width": 768,
+  "image_height": 1024,
+  "model_status": "completed",
+  "summary": {
+    "product_count": 155,
+    "empty_region_count": 2,
+    "shelf_row_count": 8,
+    "empty_area_percentage": 1.91,
+    "product_area_percentage": 98.09,
+    "total_empty_area_px": 9702,
+    "total_product_area_px": 497986
+  },
+  "products": [
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9194,
+      "bbox_xyxy": [
+        36,
+        6,
+        117,
+        59
+      ],
+      "bbox_normalized": [
+        0.04688,
+        0.00586,
+        0.15234,
+        0.05762
+      ],
+      "row_number": 1,
+      "area_px": 4293
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9222,
+      "bbox_xyxy": [
+        282,
+        8,
+        362,
+        60
+      ],
+      "bbox_normalized": [
+        0.36719,
+        0.00781,
+        0.47135,
+        0.05859
+      ],
+      "row_number": 1,
+      "area_px": 4160
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8819,
+      "bbox_xyxy": [
+        120,
+        9,
+        197,
+        60
+      ],
+      "bbox_normalized": [
+        0.15625,
+        0.00879,
+        0.25651,
+        0.05859
+      ],
+      "row_number": 1,
+      "area_px": 3927
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9391,
+      "bbox_xyxy": [
+        201,
+        9,
+        278,
+        62
+      ],
+      "bbox_normalized": [
+        0.26172,
+        0.00879,
+        0.36198,
+        0.06055
+      ],
+      "row_number": 1,
+      "area_px": 4081
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8529,
+      "bbox_xyxy": [
+        365,
+        13,
+        442,
+        61
+      ],
+      "bbox_normalized": [
+        0.47526,
+        0.0127,
+        0.57552,
+        0.05957
+      ],
+      "row_number": 1,
+      "area_px": 3696
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8559,
+      "bbox_xyxy": [
+        445,
+        15,
+        527,
+        62
+      ],
+      "bbox_normalized": [
+        0.57943,
+        0.01465,
+        0.6862,
+        0.06055
+      ],
+      "row_number": 1,
+      "area_px": 3854
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8987,
+      "bbox_xyxy": [
+        529,
+        15,
+        607,
+        64
+      ],
+      "bbox_normalized": [
+        0.6888,
+        0.01465,
+        0.79036,
+        0.0625
+      ],
+      "row_number": 1,
+      "area_px": 3822
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7755,
+      "bbox_xyxy": [
+        611,
+        15,
+        696,
+        65
+      ],
+      "bbox_normalized": [
+        0.79557,
+        0.01465,
+        0.90625,
+        0.06348
+      ],
+      "row_number": 1,
+      "area_px": 4250
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9012,
+      "bbox_xyxy": [
+        700,
+        17,
+        768,
+        69
+      ],
+      "bbox_normalized": [
+        0.91146,
+        0.0166,
+        1.0,
+        0.06738
+      ],
+      "row_number": 1,
+      "area_px": 3536
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7707,
+      "bbox_xyxy": [
+        0,
+        22,
+        31,
+        66
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.02148,
+        0.04036,
+        0.06445
+      ],
+      "row_number": 1,
+      "area_px": 1364
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9091,
+      "bbox_xyxy": [
+        35,
+        62,
+        117,
+        117
+      ],
+      "bbox_normalized": [
+        0.04557,
+        0.06055,
+        0.15234,
+        0.11426
+      ],
+      "row_number": 2,
+      "area_px": 4510
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9064,
+      "bbox_xyxy": [
+        119,
+        65,
+        196,
+        118
+      ],
+      "bbox_normalized": [
+        0.15495,
+        0.06348,
+        0.25521,
+        0.11523
+      ],
+      "row_number": 2,
+      "area_px": 4081
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9192,
+      "bbox_xyxy": [
+        283,
+        65,
+        361,
+        120
+      ],
+      "bbox_normalized": [
+        0.36849,
+        0.06348,
+        0.47005,
+        0.11719
+      ],
+      "row_number": 2,
+      "area_px": 4290
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9141,
+      "bbox_xyxy": [
+        200,
+        66,
+        280,
+        119
+      ],
+      "bbox_normalized": [
+        0.26042,
+        0.06445,
+        0.36458,
+        0.11621
+      ],
+      "row_number": 2,
+      "area_px": 4240
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8888,
+      "bbox_xyxy": [
+        364,
+        68,
+        442,
+        119
+      ],
+      "bbox_normalized": [
+        0.47396,
+        0.06641,
+        0.57552,
+        0.11621
+      ],
+      "row_number": 2,
+      "area_px": 3978
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5886,
+      "bbox_xyxy": [
+        0,
+        69,
+        35,
+        116
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.06738,
+        0.04557,
+        0.11328
+      ],
+      "row_number": 2,
+      "area_px": 1645
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9116,
+      "bbox_xyxy": [
+        526,
+        70,
+        607,
+        122
+      ],
+      "bbox_normalized": [
+        0.6849,
+        0.06836,
+        0.79036,
+        0.11914
+      ],
+      "row_number": 2,
+      "area_px": 4212
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8976,
+      "bbox_xyxy": [
+        445,
+        71,
+        525,
+        118
+      ],
+      "bbox_normalized": [
+        0.57943,
+        0.06934,
+        0.68359,
+        0.11523
+      ],
+      "row_number": 2,
+      "area_px": 3760
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9158,
+      "bbox_xyxy": [
+        610,
+        72,
+        690,
+        124
+      ],
+      "bbox_normalized": [
+        0.79427,
+        0.07031,
+        0.89844,
+        0.12109
+      ],
+      "row_number": 2,
+      "area_px": 4160
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8317,
+      "bbox_xyxy": [
+        695,
+        72,
+        768,
+        128
+      ],
+      "bbox_normalized": [
+        0.90495,
+        0.07031,
+        1.0,
+        0.125
+      ],
+      "row_number": 2,
+      "area_px": 4088
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4786,
+      "bbox_xyxy": [
+        441,
+        123,
+        542,
+        165
+      ],
+      "bbox_normalized": [
+        0.57422,
+        0.12012,
+        0.70573,
+        0.16113
+      ],
+      "row_number": 2,
+      "area_px": 4242
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7096,
+      "bbox_xyxy": [
+        0,
+        152,
+        34,
+        220
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.14844,
+        0.04427,
+        0.21484
+      ],
+      "row_number": 2,
+      "area_px": 2312
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9211,
+      "bbox_xyxy": [
+        37,
+        154,
+        115,
+        208
+      ],
+      "bbox_normalized": [
+        0.04818,
+        0.15039,
+        0.14974,
+        0.20312
+      ],
+      "row_number": 2,
+      "area_px": 4212
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7844,
+      "bbox_xyxy": [
+        356,
+        154,
+        432,
+        203
+      ],
+      "bbox_normalized": [
+        0.46354,
+        0.15039,
+        0.5625,
+        0.19824
+      ],
+      "row_number": 2,
+      "area_px": 3724
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8449,
+      "bbox_xyxy": [
+        273,
+        155,
+        352,
+        208
+      ],
+      "bbox_normalized": [
+        0.35547,
+        0.15137,
+        0.45833,
+        0.20312
+      ],
+      "row_number": 2,
+      "area_px": 4187
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8482,
+      "bbox_xyxy": [
+        118,
+        156,
+        194,
+        210
+      ],
+      "bbox_normalized": [
+        0.15365,
+        0.15234,
+        0.2526,
+        0.20508
+      ],
+      "row_number": 2,
+      "area_px": 4104
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8374,
+      "bbox_xyxy": [
+        197,
+        156,
+        271,
+        209
+      ],
+      "bbox_normalized": [
+        0.25651,
+        0.15234,
+        0.35286,
+        0.2041
+      ],
+      "row_number": 2,
+      "area_px": 3922
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7642,
+      "bbox_xyxy": [
+        596,
+        157,
+        673,
+        206
+      ],
+      "bbox_normalized": [
+        0.77604,
+        0.15332,
+        0.8763,
+        0.20117
+      ],
+      "row_number": 2,
+      "area_px": 3773
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6521,
+      "bbox_xyxy": [
+        513,
+        164,
+        590,
+        207
+      ],
+      "bbox_normalized": [
+        0.66797,
+        0.16016,
+        0.76823,
+        0.20215
+      ],
+      "row_number": 2,
+      "area_px": 3311
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7538,
+      "bbox_xyxy": [
+        434,
+        166,
+        512,
+        206
+      ],
+      "bbox_normalized": [
+        0.5651,
+        0.16211,
+        0.66667,
+        0.20117
+      ],
+      "row_number": 2,
+      "area_px": 3120
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9112,
+      "bbox_xyxy": [
+        39,
+        209,
+        116,
+        261
+      ],
+      "bbox_normalized": [
+        0.05078,
+        0.2041,
+        0.15104,
+        0.25488
+      ],
+      "row_number": 3,
+      "area_px": 4004
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8806,
+      "bbox_xyxy": [
+        355,
+        210,
+        430,
+        263
+      ],
+      "bbox_normalized": [
+        0.46224,
+        0.20508,
+        0.5599,
+        0.25684
+      ],
+      "row_number": 3,
+      "area_px": 3975
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8599,
+      "bbox_xyxy": [
+        590,
+        210,
+        671,
+        264
+      ],
+      "bbox_normalized": [
+        0.76823,
+        0.20508,
+        0.8737,
+        0.25781
+      ],
+      "row_number": 3,
+      "area_px": 4374
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8527,
+      "bbox_xyxy": [
+        118,
+        211,
+        193,
+        262
+      ],
+      "bbox_normalized": [
+        0.15365,
+        0.20605,
+        0.2513,
+        0.25586
+      ],
+      "row_number": 3,
+      "area_px": 3825
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9003,
+      "bbox_xyxy": [
+        196,
+        211,
+        270,
+        263
+      ],
+      "bbox_normalized": [
+        0.25521,
+        0.20605,
+        0.35156,
+        0.25684
+      ],
+      "row_number": 3,
+      "area_px": 3848
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9034,
+      "bbox_xyxy": [
+        433,
+        211,
+        510,
+        264
+      ],
+      "bbox_normalized": [
+        0.5638,
+        0.20605,
+        0.66406,
+        0.25781
+      ],
+      "row_number": 3,
+      "area_px": 4081
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8771,
+      "bbox_xyxy": [
+        511,
+        211,
+        587,
+        264
+      ],
+      "bbox_normalized": [
+        0.66536,
+        0.20605,
+        0.76432,
+        0.25781
+      ],
+      "row_number": 3,
+      "area_px": 4028
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.885,
+      "bbox_xyxy": [
+        274,
+        212,
+        351,
+        264
+      ],
+      "bbox_normalized": [
+        0.35677,
+        0.20703,
+        0.45703,
+        0.25781
+      ],
+      "row_number": 3,
+      "area_px": 4004
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8356,
+      "bbox_xyxy": [
+        674,
+        216,
+        749,
+        265
+      ],
+      "bbox_normalized": [
+        0.8776,
+        0.21094,
+        0.97526,
+        0.25879
+      ],
+      "row_number": 3,
+      "area_px": 3675
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4936,
+      "bbox_xyxy": [
+        752,
+        216,
+        768,
+        265
+      ],
+      "bbox_normalized": [
+        0.97917,
+        0.21094,
+        1.0,
+        0.25879
+      ],
+      "row_number": 3,
+      "area_px": 784
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.3857,
+      "bbox_xyxy": [
+        0,
+        222,
+        35,
+        259
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.2168,
+        0.04557,
+        0.25293
+      ],
+      "row_number": 3,
+      "area_px": 1295
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5905,
+      "bbox_xyxy": [
+        0,
+        289,
+        36,
+        358
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.28223,
+        0.04688,
+        0.34961
+      ],
+      "row_number": 3,
+      "area_px": 2484
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7993,
+      "bbox_xyxy": [
+        40,
+        299,
+        117,
+        345
+      ],
+      "bbox_normalized": [
+        0.05208,
+        0.29199,
+        0.15234,
+        0.33691
+      ],
+      "row_number": 3,
+      "area_px": 3542
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9096,
+      "bbox_xyxy": [
+        119,
+        301,
+        199,
+        347
+      ],
+      "bbox_normalized": [
+        0.15495,
+        0.29395,
+        0.25911,
+        0.33887
+      ],
+      "row_number": 3,
+      "area_px": 3680
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8243,
+      "bbox_xyxy": [
+        356,
+        303,
+        432,
+        348
+      ],
+      "bbox_normalized": [
+        0.46354,
+        0.2959,
+        0.5625,
+        0.33984
+      ],
+      "row_number": 3,
+      "area_px": 3420
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8021,
+      "bbox_xyxy": [
+        212,
+        304,
+        276,
+        349
+      ],
+      "bbox_normalized": [
+        0.27604,
+        0.29688,
+        0.35938,
+        0.34082
+      ],
+      "row_number": 3,
+      "area_px": 2880
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8388,
+      "bbox_xyxy": [
+        278,
+        304,
+        353,
+        350
+      ],
+      "bbox_normalized": [
+        0.36198,
+        0.29688,
+        0.45964,
+        0.3418
+      ],
+      "row_number": 3,
+      "area_px": 3450
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7099,
+      "bbox_xyxy": [
+        435,
+        305,
+        509,
+        351
+      ],
+      "bbox_normalized": [
+        0.56641,
+        0.29785,
+        0.66276,
+        0.34277
+      ],
+      "row_number": 3,
+      "area_px": 3404
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8255,
+      "bbox_xyxy": [
+        512,
+        305,
+        587,
+        351
+      ],
+      "bbox_normalized": [
+        0.66667,
+        0.29785,
+        0.76432,
+        0.34277
+      ],
+      "row_number": 3,
+      "area_px": 3450
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7876,
+      "bbox_xyxy": [
+        591,
+        306,
+        667,
+        352
+      ],
+      "bbox_normalized": [
+        0.76953,
+        0.29883,
+        0.86849,
+        0.34375
+      ],
+      "row_number": 3,
+      "area_px": 3496
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8304,
+      "bbox_xyxy": [
+        670,
+        307,
+        745,
+        351
+      ],
+      "bbox_normalized": [
+        0.8724,
+        0.2998,
+        0.97005,
+        0.34277
+      ],
+      "row_number": 3,
+      "area_px": 3300
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7827,
+      "bbox_xyxy": [
+        44,
+        349,
+        122,
+        396
+      ],
+      "bbox_normalized": [
+        0.05729,
+        0.34082,
+        0.15885,
+        0.38672
+      ],
+      "row_number": 3,
+      "area_px": 3666
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.865,
+      "bbox_xyxy": [
+        125,
+        352,
+        199,
+        397
+      ],
+      "bbox_normalized": [
+        0.16276,
+        0.34375,
+        0.25911,
+        0.3877
+      ],
+      "row_number": 4,
+      "area_px": 3330
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.9118,
+      "bbox_xyxy": [
+        203,
+        353,
+        276,
+        398
+      ],
+      "bbox_normalized": [
+        0.26432,
+        0.34473,
+        0.35938,
+        0.38867
+      ],
+      "row_number": 4,
+      "area_px": 3285
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8545,
+      "bbox_xyxy": [
+        357,
+        353,
+        430,
+        397
+      ],
+      "bbox_normalized": [
+        0.46484,
+        0.34473,
+        0.5599,
+        0.3877
+      ],
+      "row_number": 4,
+      "area_px": 3212
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5325,
+      "bbox_xyxy": [
+        744,
+        355,
+        768,
+        400
+      ],
+      "bbox_normalized": [
+        0.96875,
+        0.34668,
+        1.0,
+        0.39062
+      ],
+      "row_number": 4,
+      "area_px": 1080
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7852,
+      "bbox_xyxy": [
+        279,
+        356,
+        353,
+        399
+      ],
+      "bbox_normalized": [
+        0.36328,
+        0.34766,
+        0.45964,
+        0.38965
+      ],
+      "row_number": 4,
+      "area_px": 3182
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7877,
+      "bbox_xyxy": [
+        433,
+        356,
+        507,
+        400
+      ],
+      "bbox_normalized": [
+        0.5638,
+        0.34766,
+        0.66016,
+        0.39062
+      ],
+      "row_number": 4,
+      "area_px": 3256
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.807,
+      "bbox_xyxy": [
+        510,
+        357,
+        584,
+        399
+      ],
+      "bbox_normalized": [
+        0.66406,
+        0.34863,
+        0.76042,
+        0.38965
+      ],
+      "row_number": 4,
+      "area_px": 3108
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7986,
+      "bbox_xyxy": [
+        666,
+        357,
+        740,
+        402
+      ],
+      "bbox_normalized": [
+        0.86719,
+        0.34863,
+        0.96354,
+        0.39258
+      ],
+      "row_number": 4,
+      "area_px": 3330
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8216,
+      "bbox_xyxy": [
+        587,
+        358,
+        662,
+        401
+      ],
+      "bbox_normalized": [
+        0.76432,
+        0.34961,
+        0.86198,
+        0.3916
+      ],
+      "row_number": 4,
+      "area_px": 3225
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5163,
+      "bbox_xyxy": [
+        0,
+        367,
+        41,
+        435
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.3584,
+        0.05339,
+        0.4248
+      ],
+      "row_number": 4,
+      "area_px": 2788
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8009,
+      "bbox_xyxy": [
+        47,
+        400,
+        123,
+        446
+      ],
+      "bbox_normalized": [
+        0.0612,
+        0.39062,
+        0.16016,
+        0.43555
+      ],
+      "row_number": 4,
+      "area_px": 3496
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8447,
+      "bbox_xyxy": [
+        126,
+        401,
+        199,
+        447
+      ],
+      "bbox_normalized": [
+        0.16406,
+        0.3916,
+        0.25911,
+        0.43652
+      ],
+      "row_number": 4,
+      "area_px": 3358
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8796,
+      "bbox_xyxy": [
+        203,
+        402,
+        276,
+        448
+      ],
+      "bbox_normalized": [
+        0.26432,
+        0.39258,
+        0.35938,
+        0.4375
+      ],
+      "row_number": 4,
+      "area_px": 3358
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7676,
+      "bbox_xyxy": [
+        357,
+        403,
+        428,
+        449
+      ],
+      "bbox_normalized": [
+        0.46484,
+        0.39355,
+        0.55729,
+        0.43848
+      ],
+      "row_number": 4,
+      "area_px": 3266
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8383,
+      "bbox_xyxy": [
+        280,
+        404,
+        353,
+        449
+      ],
+      "bbox_normalized": [
+        0.36458,
+        0.39453,
+        0.45964,
+        0.43848
+      ],
+      "row_number": 4,
+      "area_px": 3285
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8082,
+      "bbox_xyxy": [
+        433,
+        404,
+        506,
+        449
+      ],
+      "bbox_normalized": [
+        0.5638,
+        0.39453,
+        0.65885,
+        0.43848
+      ],
+      "row_number": 4,
+      "area_px": 3285
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8356,
+      "bbox_xyxy": [
+        510,
+        404,
+        582,
+        450
+      ],
+      "bbox_normalized": [
+        0.66406,
+        0.39453,
+        0.75781,
+        0.43945
+      ],
+      "row_number": 4,
+      "area_px": 3312
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8549,
+      "bbox_xyxy": [
+        586,
+        405,
+        659,
+        451
+      ],
+      "bbox_normalized": [
+        0.76302,
+        0.39551,
+        0.85807,
+        0.44043
+      ],
+      "row_number": 4,
+      "area_px": 3358
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8499,
+      "bbox_xyxy": [
+        663,
+        406,
+        737,
+        452
+      ],
+      "bbox_normalized": [
+        0.86328,
+        0.39648,
+        0.95964,
+        0.44141
+      ],
+      "row_number": 4,
+      "area_px": 3404
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5887,
+      "bbox_xyxy": [
+        740,
+        406,
+        768,
+        453
+      ],
+      "bbox_normalized": [
+        0.96354,
+        0.39648,
+        1.0,
+        0.44238
+      ],
+      "row_number": 4,
+      "area_px": 1316
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7295,
+      "bbox_xyxy": [
+        0,
+        462,
+        48,
+        532
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.45117,
+        0.0625,
+        0.51953
+      ],
+      "row_number": 4,
+      "area_px": 3360
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6839,
+      "bbox_xyxy": [
+        52,
+        474,
+        126,
+        523
+      ],
+      "bbox_normalized": [
+        0.06771,
+        0.46289,
+        0.16406,
+        0.51074
+      ],
+      "row_number": 4,
+      "area_px": 3626
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8374,
+      "bbox_xyxy": [
+        355,
+        476,
+        424,
+        524
+      ],
+      "bbox_normalized": [
+        0.46224,
+        0.46484,
+        0.55208,
+        0.51172
+      ],
+      "row_number": 4,
+      "area_px": 3312
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4998,
+      "bbox_xyxy": [
+        205,
+        478,
+        276,
+        523
+      ],
+      "bbox_normalized": [
+        0.26693,
+        0.4668,
+        0.35938,
+        0.51074
+      ],
+      "row_number": 4,
+      "area_px": 3195
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8854,
+      "bbox_xyxy": [
+        427,
+        478,
+        495,
+        524
+      ],
+      "bbox_normalized": [
+        0.55599,
+        0.4668,
+        0.64453,
+        0.51172
+      ],
+      "row_number": 4,
+      "area_px": 3128
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8404,
+      "bbox_xyxy": [
+        499,
+        478,
+        568,
+        524
+      ],
+      "bbox_normalized": [
+        0.64974,
+        0.4668,
+        0.73958,
+        0.51172
+      ],
+      "row_number": 4,
+      "area_px": 3174
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.2976,
+      "bbox_xyxy": [
+        630,
+        478,
+        714,
+        524
+      ],
+      "bbox_normalized": [
+        0.82031,
+        0.4668,
+        0.92969,
+        0.51172
+      ],
+      "row_number": 4,
+      "area_px": 3864
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8125,
+      "bbox_xyxy": [
+        280,
+        482,
+        352,
+        526
+      ],
+      "bbox_normalized": [
+        0.36458,
+        0.4707,
+        0.45833,
+        0.51367
+      ],
+      "row_number": 4,
+      "area_px": 3168
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6617,
+      "bbox_xyxy": [
+        571,
+        482,
+        618,
+        525
+      ],
+      "bbox_normalized": [
+        0.74349,
+        0.4707,
+        0.80469,
+        0.5127
+      ],
+      "row_number": 4,
+      "area_px": 2021
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8471,
+      "bbox_xyxy": [
+        720,
+        484,
+        768,
+        529
+      ],
+      "bbox_normalized": [
+        0.9375,
+        0.47266,
+        1.0,
+        0.5166
+      ],
+      "row_number": 4,
+      "area_px": 2160
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6443,
+      "bbox_xyxy": [
+        52,
+        524,
+        126,
+        571
+      ],
+      "bbox_normalized": [
+        0.06771,
+        0.51172,
+        0.16406,
+        0.55762
+      ],
+      "row_number": 5,
+      "area_px": 3478
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7155,
+      "bbox_xyxy": [
+        132,
+        527,
+        204,
+        571
+      ],
+      "bbox_normalized": [
+        0.17188,
+        0.51465,
+        0.26562,
+        0.55762
+      ],
+      "row_number": 5,
+      "area_px": 3168
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6473,
+      "bbox_xyxy": [
+        206,
+        527,
+        277,
+        571
+      ],
+      "bbox_normalized": [
+        0.26823,
+        0.51465,
+        0.36068,
+        0.55762
+      ],
+      "row_number": 5,
+      "area_px": 3124
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8488,
+      "bbox_xyxy": [
+        357,
+        527,
+        425,
+        573
+      ],
+      "bbox_normalized": [
+        0.46484,
+        0.51465,
+        0.55339,
+        0.55957
+      ],
+      "row_number": 5,
+      "area_px": 3128
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7792,
+      "bbox_xyxy": [
+        281,
+        528,
+        353,
+        574
+      ],
+      "bbox_normalized": [
+        0.36589,
+        0.51562,
+        0.45964,
+        0.56055
+      ],
+      "row_number": 5,
+      "area_px": 3312
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.856,
+      "bbox_xyxy": [
+        428,
+        528,
+        496,
+        571
+      ],
+      "bbox_normalized": [
+        0.55729,
+        0.51562,
+        0.64583,
+        0.55762
+      ],
+      "row_number": 5,
+      "area_px": 2924
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8385,
+      "bbox_xyxy": [
+        499,
+        529,
+        570,
+        573
+      ],
+      "bbox_normalized": [
+        0.64974,
+        0.5166,
+        0.74219,
+        0.55957
+      ],
+      "row_number": 5,
+      "area_px": 3124
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7947,
+      "bbox_xyxy": [
+        574,
+        530,
+        642,
+        574
+      ],
+      "bbox_normalized": [
+        0.7474,
+        0.51758,
+        0.83594,
+        0.56055
+      ],
+      "row_number": 5,
+      "area_px": 2992
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8504,
+      "bbox_xyxy": [
+        719,
+        531,
+        768,
+        577
+      ],
+      "bbox_normalized": [
+        0.9362,
+        0.51855,
+        1.0,
+        0.56348
+      ],
+      "row_number": 5,
+      "area_px": 2254
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8203,
+      "bbox_xyxy": [
+        646,
+        534,
+        716,
+        576
+      ],
+      "bbox_normalized": [
+        0.84115,
+        0.52148,
+        0.93229,
+        0.5625
+      ],
+      "row_number": 5,
+      "area_px": 2940
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8065,
+      "bbox_xyxy": [
+        0,
+        559,
+        48,
+        628
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.5459,
+        0.0625,
+        0.61328
+      ],
+      "row_number": 5,
+      "area_px": 3312
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7744,
+      "bbox_xyxy": [
+        278,
+        598,
+        347,
+        643
+      ],
+      "bbox_normalized": [
+        0.36198,
+        0.58398,
+        0.45182,
+        0.62793
+      ],
+      "row_number": 5,
+      "area_px": 3105
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8041,
+      "bbox_xyxy": [
+        55,
+        599,
+        126,
+        646
+      ],
+      "bbox_normalized": [
+        0.07161,
+        0.58496,
+        0.16406,
+        0.63086
+      ],
+      "row_number": 5,
+      "area_px": 3337
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7688,
+      "bbox_xyxy": [
+        348,
+        600,
+        416,
+        682
+      ],
+      "bbox_normalized": [
+        0.45312,
+        0.58594,
+        0.54167,
+        0.66602
+      ],
+      "row_number": 5,
+      "area_px": 5576
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7492,
+      "bbox_xyxy": [
+        204,
+        601,
+        274,
+        646
+      ],
+      "bbox_normalized": [
+        0.26562,
+        0.58691,
+        0.35677,
+        0.63086
+      ],
+      "row_number": 5,
+      "area_px": 3150
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7636,
+      "bbox_xyxy": [
+        129,
+        602,
+        199,
+        647
+      ],
+      "bbox_normalized": [
+        0.16797,
+        0.58789,
+        0.25911,
+        0.63184
+      ],
+      "row_number": 5,
+      "area_px": 3150
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7378,
+      "bbox_xyxy": [
+        420,
+        604,
+        488,
+        648
+      ],
+      "bbox_normalized": [
+        0.54688,
+        0.58984,
+        0.63542,
+        0.63281
+      ],
+      "row_number": 5,
+      "area_px": 2992
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7288,
+      "bbox_xyxy": [
+        491,
+        605,
+        560,
+        649
+      ],
+      "bbox_normalized": [
+        0.63932,
+        0.59082,
+        0.72917,
+        0.63379
+      ],
+      "row_number": 5,
+      "area_px": 3036
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7236,
+      "bbox_xyxy": [
+        562,
+        606,
+        632,
+        651
+      ],
+      "bbox_normalized": [
+        0.73177,
+        0.5918,
+        0.82292,
+        0.63574
+      ],
+      "row_number": 5,
+      "area_px": 3150
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7997,
+      "bbox_xyxy": [
+        637,
+        606,
+        710,
+        651
+      ],
+      "bbox_normalized": [
+        0.82943,
+        0.5918,
+        0.92448,
+        0.63574
+      ],
+      "row_number": 5,
+      "area_px": 3285
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7419,
+      "bbox_xyxy": [
+        715,
+        613,
+        768,
+        653
+      ],
+      "bbox_normalized": [
+        0.93099,
+        0.59863,
+        1.0,
+        0.6377
+      ],
+      "row_number": 5,
+      "area_px": 2120
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7925,
+      "bbox_xyxy": [
+        205,
+        644,
+        274,
+        690
+      ],
+      "bbox_normalized": [
+        0.26693,
+        0.62891,
+        0.35677,
+        0.67383
+      ],
+      "row_number": 6,
+      "area_px": 3174
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4055,
+      "bbox_xyxy": [
+        349,
+        645,
+        415,
+        689
+      ],
+      "bbox_normalized": [
+        0.45443,
+        0.62988,
+        0.54036,
+        0.67285
+      ],
+      "row_number": 6,
+      "area_px": 2904
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6569,
+      "bbox_xyxy": [
+        278,
+        646,
+        347,
+        689
+      ],
+      "bbox_normalized": [
+        0.36198,
+        0.63086,
+        0.45182,
+        0.67285
+      ],
+      "row_number": 6,
+      "area_px": 2967
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8023,
+      "bbox_xyxy": [
+        58,
+        648,
+        127,
+        693
+      ],
+      "bbox_normalized": [
+        0.07552,
+        0.63281,
+        0.16536,
+        0.67676
+      ],
+      "row_number": 6,
+      "area_px": 3105
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7979,
+      "bbox_xyxy": [
+        131,
+        648,
+        201,
+        693
+      ],
+      "bbox_normalized": [
+        0.17057,
+        0.63281,
+        0.26172,
+        0.67676
+      ],
+      "row_number": 6,
+      "area_px": 3150
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6192,
+      "bbox_xyxy": [
+        561,
+        648,
+        632,
+        690
+      ],
+      "bbox_normalized": [
+        0.73047,
+        0.63281,
+        0.82292,
+        0.67383
+      ],
+      "row_number": 6,
+      "area_px": 2982
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6465,
+      "bbox_xyxy": [
+        490,
+        649,
+        559,
+        690
+      ],
+      "bbox_normalized": [
+        0.63802,
+        0.63379,
+        0.72786,
+        0.67383
+      ],
+      "row_number": 6,
+      "area_px": 2829
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7134,
+      "bbox_xyxy": [
+        418,
+        650,
+        487,
+        688
+      ],
+      "bbox_normalized": [
+        0.54427,
+        0.63477,
+        0.63411,
+        0.67188
+      ],
+      "row_number": 6,
+      "area_px": 2622
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8705,
+      "bbox_xyxy": [
+        636,
+        652,
+        706,
+        693
+      ],
+      "bbox_normalized": [
+        0.82812,
+        0.63672,
+        0.91927,
+        0.67676
+      ],
+      "row_number": 6,
+      "area_px": 2870
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.786,
+      "bbox_xyxy": [
+        711,
+        655,
+        768,
+        697
+      ],
+      "bbox_normalized": [
+        0.92578,
+        0.63965,
+        1.0,
+        0.68066
+      ],
+      "row_number": 6,
+      "area_px": 2394
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8891,
+      "bbox_xyxy": [
+        218,
+        713,
+        285,
+        761
+      ],
+      "bbox_normalized": [
+        0.28385,
+        0.69629,
+        0.37109,
+        0.74316
+      ],
+      "row_number": 6,
+      "area_px": 3216
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7523,
+      "bbox_xyxy": [
+        637,
+        713,
+        702,
+        758
+      ],
+      "bbox_normalized": [
+        0.82943,
+        0.69629,
+        0.91406,
+        0.74023
+      ],
+      "row_number": 6,
+      "area_px": 2925
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8416,
+      "bbox_xyxy": [
+        287,
+        714,
+        354,
+        762
+      ],
+      "bbox_normalized": [
+        0.3737,
+        0.69727,
+        0.46094,
+        0.74414
+      ],
+      "row_number": 6,
+      "area_px": 3216
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6875,
+      "bbox_xyxy": [
+        58,
+        715,
+        131,
+        765
+      ],
+      "bbox_normalized": [
+        0.07552,
+        0.69824,
+        0.17057,
+        0.74707
+      ],
+      "row_number": 6,
+      "area_px": 3650
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8381,
+      "bbox_xyxy": [
+        141,
+        715,
+        214,
+        762
+      ],
+      "bbox_normalized": [
+        0.18359,
+        0.69824,
+        0.27865,
+        0.74414
+      ],
+      "row_number": 6,
+      "area_px": 3431
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6643,
+      "bbox_xyxy": [
+        426,
+        717,
+        495,
+        761
+      ],
+      "bbox_normalized": [
+        0.55469,
+        0.7002,
+        0.64453,
+        0.74316
+      ],
+      "row_number": 6,
+      "area_px": 3036
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8027,
+      "bbox_xyxy": [
+        706,
+        717,
+        768,
+        763
+      ],
+      "bbox_normalized": [
+        0.91927,
+        0.7002,
+        1.0,
+        0.74512
+      ],
+      "row_number": 6,
+      "area_px": 2852
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8057,
+      "bbox_xyxy": [
+        357,
+        718,
+        423,
+        765
+      ],
+      "bbox_normalized": [
+        0.46484,
+        0.70117,
+        0.55078,
+        0.74707
+      ],
+      "row_number": 6,
+      "area_px": 3102
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8498,
+      "bbox_xyxy": [
+        566,
+        718,
+        633,
+        760
+      ],
+      "bbox_normalized": [
+        0.73698,
+        0.70117,
+        0.82422,
+        0.74219
+      ],
+      "row_number": 6,
+      "area_px": 2814
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6947,
+      "bbox_xyxy": [
+        499,
+        719,
+        563,
+        760
+      ],
+      "bbox_normalized": [
+        0.64974,
+        0.70215,
+        0.73307,
+        0.74219
+      ],
+      "row_number": 6,
+      "area_px": 2624
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.661,
+      "bbox_xyxy": [
+        3,
+        750,
+        54,
+        820
+      ],
+      "bbox_normalized": [
+        0.00391,
+        0.73242,
+        0.07031,
+        0.80078
+      ],
+      "row_number": 7,
+      "area_px": 3570
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7929,
+      "bbox_xyxy": [
+        637,
+        761,
+        706,
+        804
+      ],
+      "bbox_normalized": [
+        0.82943,
+        0.74316,
+        0.91927,
+        0.78516
+      ],
+      "row_number": 7,
+      "area_px": 2967
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7443,
+      "bbox_xyxy": [
+        214,
+        763,
+        279,
+        803
+      ],
+      "bbox_normalized": [
+        0.27865,
+        0.74512,
+        0.36328,
+        0.78418
+      ],
+      "row_number": 7,
+      "area_px": 2600
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7127,
+      "bbox_xyxy": [
+        492,
+        763,
+        562,
+        803
+      ],
+      "bbox_normalized": [
+        0.64062,
+        0.74512,
+        0.73177,
+        0.78418
+      ],
+      "row_number": 7,
+      "area_px": 2800
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8256,
+      "bbox_xyxy": [
+        564,
+        763,
+        632,
+        804
+      ],
+      "bbox_normalized": [
+        0.73438,
+        0.74512,
+        0.82292,
+        0.78516
+      ],
+      "row_number": 7,
+      "area_px": 2788
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5469,
+      "bbox_xyxy": [
+        422,
+        764,
+        490,
+        804
+      ],
+      "bbox_normalized": [
+        0.54948,
+        0.74609,
+        0.63802,
+        0.78516
+      ],
+      "row_number": 7,
+      "area_px": 2720
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7768,
+      "bbox_xyxy": [
+        139,
+        765,
+        211,
+        806
+      ],
+      "bbox_normalized": [
+        0.18099,
+        0.74707,
+        0.27474,
+        0.78711
+      ],
+      "row_number": 7,
+      "area_px": 2952
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7289,
+      "bbox_xyxy": [
+        282,
+        765,
+        349,
+        808
+      ],
+      "bbox_normalized": [
+        0.36719,
+        0.74707,
+        0.45443,
+        0.78906
+      ],
+      "row_number": 7,
+      "area_px": 2881
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8049,
+      "bbox_xyxy": [
+        708,
+        766,
+        768,
+        805
+      ],
+      "bbox_normalized": [
+        0.92188,
+        0.74805,
+        1.0,
+        0.78613
+      ],
+      "row_number": 7,
+      "area_px": 2340
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7814,
+      "bbox_xyxy": [
+        351,
+        767,
+        418,
+        807
+      ],
+      "bbox_normalized": [
+        0.45703,
+        0.74902,
+        0.54427,
+        0.78809
+      ],
+      "row_number": 7,
+      "area_px": 2680
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6213,
+      "bbox_xyxy": [
+        59,
+        768,
+        130,
+        806
+      ],
+      "bbox_normalized": [
+        0.07682,
+        0.75,
+        0.16927,
+        0.78711
+      ],
+      "row_number": 7,
+      "area_px": 2698
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4254,
+      "bbox_xyxy": [
+        409,
+        826,
+        478,
+        858
+      ],
+      "bbox_normalized": [
+        0.53255,
+        0.80664,
+        0.6224,
+        0.83789
+      ],
+      "row_number": 7,
+      "area_px": 2208
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.8465,
+      "bbox_xyxy": [
+        271,
+        827,
+        339,
+        878
+      ],
+      "bbox_normalized": [
+        0.35286,
+        0.80762,
+        0.44141,
+        0.85742
+      ],
+      "row_number": 7,
+      "area_px": 3468
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.4678,
+      "bbox_xyxy": [
+        339,
+        828,
+        407,
+        890
+      ],
+      "bbox_normalized": [
+        0.44141,
+        0.80859,
+        0.52995,
+        0.86914
+      ],
+      "row_number": 7,
+      "area_px": 4216
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6725,
+      "bbox_xyxy": [
+        193,
+        832,
+        262,
+        877
+      ],
+      "bbox_normalized": [
+        0.2513,
+        0.8125,
+        0.34115,
+        0.85645
+      ],
+      "row_number": 7,
+      "area_px": 3105
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5849,
+      "bbox_xyxy": [
+        410,
+        841,
+        477,
+        893
+      ],
+      "bbox_normalized": [
+        0.53385,
+        0.82129,
+        0.62109,
+        0.87207
+      ],
+      "row_number": 7,
+      "area_px": 3484
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7166,
+      "bbox_xyxy": [
+        480,
+        844,
+        549,
+        891
+      ],
+      "bbox_normalized": [
+        0.625,
+        0.82422,
+        0.71484,
+        0.87012
+      ],
+      "row_number": 7,
+      "area_px": 3243
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7256,
+      "bbox_xyxy": [
+        59,
+        845,
+        135,
+        887
+      ],
+      "bbox_normalized": [
+        0.07682,
+        0.8252,
+        0.17578,
+        0.86621
+      ],
+      "row_number": 7,
+      "area_px": 3192
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6462,
+      "bbox_xyxy": [
+        623,
+        847,
+        693,
+        891
+      ],
+      "bbox_normalized": [
+        0.8112,
+        0.82715,
+        0.90234,
+        0.87012
+      ],
+      "row_number": 7,
+      "area_px": 3080
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6257,
+      "bbox_xyxy": [
+        550,
+        849,
+        618,
+        890
+      ],
+      "bbox_normalized": [
+        0.71615,
+        0.8291,
+        0.80469,
+        0.86914
+      ],
+      "row_number": 7,
+      "area_px": 2788
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5921,
+      "bbox_xyxy": [
+        698,
+        849,
+        768,
+        892
+      ],
+      "bbox_normalized": [
+        0.90885,
+        0.8291,
+        1.0,
+        0.87109
+      ],
+      "row_number": 7,
+      "area_px": 3010
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6874,
+      "bbox_xyxy": [
+        0,
+        868,
+        55,
+        919
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.84766,
+        0.07161,
+        0.89746
+      ],
+      "row_number": 8,
+      "area_px": 2805
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6837,
+      "bbox_xyxy": [
+        192,
+        879,
+        261,
+        918
+      ],
+      "bbox_normalized": [
+        0.25,
+        0.8584,
+        0.33984,
+        0.89648
+      ],
+      "row_number": 8,
+      "area_px": 2691
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.771,
+      "bbox_xyxy": [
+        268,
+        879,
+        337,
+        926
+      ],
+      "bbox_normalized": [
+        0.34896,
+        0.8584,
+        0.4388,
+        0.9043
+      ],
+      "row_number": 8,
+      "area_px": 3243
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.6489,
+      "bbox_xyxy": [
+        59,
+        890,
+        131,
+        928
+      ],
+      "bbox_normalized": [
+        0.07682,
+        0.86914,
+        0.17057,
+        0.90625
+      ],
+      "row_number": 8,
+      "area_px": 2736
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7232,
+      "bbox_xyxy": [
+        339,
+        892,
+        407,
+        932
+      ],
+      "bbox_normalized": [
+        0.44141,
+        0.87109,
+        0.52995,
+        0.91016
+      ],
+      "row_number": 8,
+      "area_px": 2720
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.81,
+      "bbox_xyxy": [
+        479,
+        893,
+        547,
+        932
+      ],
+      "bbox_normalized": [
+        0.6237,
+        0.87207,
+        0.71224,
+        0.91016
+      ],
+      "row_number": 8,
+      "area_px": 2652
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7019,
+      "bbox_xyxy": [
+        550,
+        893,
+        617,
+        930
+      ],
+      "bbox_normalized": [
+        0.71615,
+        0.87207,
+        0.80339,
+        0.9082
+      ],
+      "row_number": 8,
+      "area_px": 2479
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7391,
+      "bbox_xyxy": [
+        409,
+        894,
+        477,
+        933
+      ],
+      "bbox_normalized": [
+        0.53255,
+        0.87305,
+        0.62109,
+        0.91113
+      ],
+      "row_number": 8,
+      "area_px": 2652
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.7575,
+      "bbox_xyxy": [
+        621,
+        894,
+        690,
+        933
+      ],
+      "bbox_normalized": [
+        0.80859,
+        0.87305,
+        0.89844,
+        0.91113
+      ],
+      "row_number": 8,
+      "area_px": 2691
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.5646,
+      "bbox_xyxy": [
+        694,
+        895,
+        767,
+        935
+      ],
+      "bbox_normalized": [
+        0.90365,
+        0.87402,
+        0.9987,
+        0.91309
+      ],
+      "row_number": 8,
+      "area_px": 2920
+    },
+    {
+      "class_name": "product",
+      "class_id": 1,
+      "confidence": 0.2719,
+      "bbox_xyxy": [
+        734,
+        895,
+        768,
+        934
+      ],
+      "bbox_normalized": [
+        0.95573,
+        0.87402,
+        1.0,
+        0.91211
+      ],
+      "row_number": 8,
+      "area_px": 1326
+    }
+  ],
+  "empty_regions": [
+    {
+      "class_name": "empty_space",
+      "class_id": 0,
+      "confidence": 0.9179,
+      "bbox_xyxy": [
+        139,
+        836,
+        190,
+        934
+      ],
+      "bbox_normalized": [
+        0.18099,
+        0.81641,
+        0.2474,
+        0.91211
+      ],
+      "row_number": 8,
+      "area_px": 4998
+    },
+    {
+      "class_name": "empty_space",
+      "class_id": 0,
+      "confidence": 0.5452,
+      "bbox_xyxy": [
+        0,
+        646,
+        56,
+        730
+      ],
+      "bbox_normalized": [
+        0.0,
+        0.63086,
+        0.07292,
+        0.71289
+      ],
+      "row_number": 6,
+      "area_px": 4704
+    }
+  ],
+  "shelf_rows": [
+    {
+      "row_number": 1,
+      "bbox_xyxy": [
+        139,
+        0,
+        765,
+        13
+      ],
+      "bbox_normalized": [
+        0.18099,
+        0.0,
+        0.99609,
+        0.0127
+      ],
+      "polygon": [
+        [
+          139,
+          0
+        ],
+        [
+          139,
+          10
+        ],
+        [
+          144,
+          10
+        ],
+        [
+          146,
+          11
+        ],
+        [
+          147,
+          11
+        ],
+        [
+          149,
+          13
+        ],
+        [
+          157,
+          13
+        ],
+        [
+          158,
+          11
+        ],
+        [
+          160,
+          11
+        ],
+        [
+          162,
+          10
+        ],
+        [
+          178,
+          10
+        ],
+        [
+          179,
+          8
+        ],
+        [
+          186,
+          8
+        ],
+        [
+          187,
+          6
+        ],
+        [
+          190,
+          6
+        ],
+        [
+          192,
+          8
+        ],
+        [
+          197,
+          8
+        ],
+        [
+          198,
+          10
+        ],
+        [
+          200,
+          10
+        ],
+        [
+          202,
+          11
+        ],
+        [
+          219,
+          11
+        ],
+        [
+          221,
+          10
+        ],
+        [
+          237,
+          10
+        ],
+        [
+          238,
+          8
+        ],
+        [
+          240,
+          8
+        ],
+        [
+          242,
+          10
+        ],
+        [
+          243,
+          10
+        ],
+        [
+          245,
+          11
+        ],
+        [
+          246,
+          11
+        ],
+        [
+          246,
+          10
+        ],
+        [
+          248,
+          8
+        ],
+        [
+          259,
+          8
+        ],
+        [
+          261,
+          6
+        ],
+        [
+          274,
+          6
+        ],
+        [
+          275,
+          8
+        ],
+        [
+          280,
+          8
+        ],
+        [
+          285,
+          13
+        ],
+        [
+          312,
+          13
+        ],
+        [
+          314,
+          11
+        ],
+        [
+          320,
+          11
+        ],
+        [
+          323,
+          8
+        ],
+        [
+          328,
+          8
+        ],
+        [
+          330,
+          6
+        ],
+        [
+          331,
+          8
+        ],
+        [
+          338,
+          8
+        ],
+        [
+          339,
+          6
+        ],
+        [
+          357,
+          6
+        ],
+        [
+          358,
+          8
+        ],
+        [
+          363,
+          8
+        ],
+        [
+          365,
+          10
+        ],
+        [
+          373,
+          10
+        ],
+        [
+          374,
+          11
+        ],
+        [
+          499,
+          11
+        ],
+        [
+          501,
+          13
+        ],
+        [
+          502,
+          13
+        ],
+        [
+          504,
+          11
+        ],
+        [
+          518,
+          11
+        ],
+        [
+          520,
+          13
+        ],
+        [
+          669,
+          13
+        ],
+        [
+          670,
+          11
+        ],
+        [
+          688,
+          11
+        ],
+        [
+          690,
+          10
+        ],
+        [
+          701,
+          10
+        ],
+        [
+          702,
+          11
+        ],
+        [
+          707,
+          11
+        ],
+        [
+          709,
+          13
+        ],
+        [
+          760,
+          13
+        ],
+        [
+          762,
+          11
+        ],
+        [
+          765,
+          11
+        ],
+        [
+          765,
+          8
+        ],
+        [
+          763,
+          8
+        ],
+        [
+          762,
+          6
+        ],
+        [
+          760,
+          6
+        ],
+        [
+          758,
+          5
+        ],
+        [
+          754,
+          5
+        ],
+        [
+          752,
+          3
+        ],
+        [
+          744,
+          3
+        ],
+        [
+          742,
+          5
+        ],
+        [
+          736,
+          5
+        ],
+        [
+          734,
+          3
+        ],
+        [
+          733,
+          3
+        ],
+        [
+          731,
+          2
+        ],
+        [
+          731,
+          0
+        ]
+      ],
+      "confidence": 0.1841,
+      "product_count": 10,
+      "empty_region_count": 0,
+      "empty_area_px": 0,
+      "product_area_px": 36983,
+      "row_empty_percentage": 0.0
+    },
+    {
+      "row_number": 2,
+      "bbox_xyxy": [
+        5,
+        117,
+        718,
+        165
+      ],
+      "bbox_normalized": [
+        0.00651,
+        0.11426,
+        0.9349,
+        0.16113
+      ],
+      "polygon": [
+        [
+          714,
+          160
+        ],
+        [
+          694,
+          160
+        ],
+        [
+          693,
+          162
+        ],
+        [
+          693,
+          163
+        ],
+        [
+          691,
+          165
+        ],
+        [
+          718,
+          165
+        ],
+        [
+          718,
+          162
+        ],
+        [
+          715,
+          162
+        ],
+        [
+          714,
+          160
+        ],
+        [
+          718,
+          150
+        ],
+        [
+          718,
+          123
+        ],
+        [
+          702,
+          123
+        ],
+        [
+          701,
+          125
+        ],
+        [
+          699,
+          125
+        ],
+        [
+          698,
+          123
+        ],
+        [
+          691,
+          123
+        ],
+        [
+          690,
+          125
+        ],
+        [
+          686,
+          125
+        ],
+        [
+          682,
+          120
+        ],
+        [
+          645,
+          120
+        ],
+        [
+          643,
+          122
+        ],
+        [
+          635,
+          122
+        ],
+        [
+          634,
+          120
+        ],
+        [
+          578,
+          120
+        ],
+        [
+          576,
+          118
+        ],
+        [
+          510,
+          118
+        ],
+        [
+          509,
+          117
+        ],
+        [
+          5,
+          117
+        ],
+        [
+          5,
+          134
+        ],
+        [
+          136,
+          134
+        ],
+        [
+          138,
+          136
+        ],
+        [
+          310,
+          136
+        ],
+        [
+          312,
+          138
+        ],
+        [
+          352,
+          138
+        ],
+        [
+          354,
+          139
+        ],
+        [
+          363,
+          139
+        ],
+        [
+          365,
+          141
+        ],
+        [
+          366,
+          141
+        ],
+        [
+          368,
+          142
+        ],
+        [
+          368,
+          144
+        ],
+        [
+          365,
+          147
+        ],
+        [
+          363,
+          147
+        ],
+        [
+          362,
+          149
+        ],
+        [
+          360,
+          149
+        ],
+        [
+          358,
+          150
+        ],
+        [
+          358,
+          155
+        ],
+        [
+          360,
+          157
+        ],
+        [
+          362,
+          157
+        ],
+        [
+          368,
+          163
+        ],
+        [
+          370,
+          163
+        ],
+        [
+          371,
+          165
+        ],
+        [
+          413,
+          165
+        ],
+        [
+          414,
+          163
+        ],
+        [
+          418,
+          163
+        ],
+        [
+          419,
+          162
+        ],
+        [
+          422,
+          162
+        ],
+        [
+          424,
+          160
+        ],
+        [
+          426,
+          162
+        ],
+        [
+          427,
+          162
+        ],
+        [
+          429,
+          163
+        ],
+        [
+          435,
+          163
+        ],
+        [
+          437,
+          165
+        ],
+        [
+          594,
+          165
+        ],
+        [
+          597,
+          162
+        ],
+        [
+          597,
+          158
+        ],
+        [
+          595,
+          157
+        ],
+        [
+          597,
+          155
+        ],
+        [
+          597,
+          152
+        ],
+        [
+          598,
+          150
+        ],
+        [
+          605,
+          150
+        ],
+        [
+          606,
+          152
+        ],
+        [
+          608,
+          152
+        ],
+        [
+          618,
+          162
+        ],
+        [
+          618,
+          163
+        ],
+        [
+          619,
+          165
+        ],
+        [
+          656,
+          165
+        ],
+        [
+          658,
+          163
+        ],
+        [
+          658,
+          152
+        ],
+        [
+          656,
+          150
+        ],
+        [
+          658,
+          149
+        ],
+        [
+          658,
+          147
+        ],
+        [
+          661,
+          144
+        ],
+        [
+          686,
+          144
+        ],
+        [
+          688,
+          146
+        ],
+        [
+          691,
+          146
+        ],
+        [
+          693,
+          147
+        ],
+        [
+          696,
+          147
+        ],
+        [
+          698,
+          149
+        ],
+        [
+          704,
+          149
+        ],
+        [
+          706,
+          150
+        ],
+        [
+          718,
+          150
+        ]
+      ],
+      "confidence": 0.5679,
+      "product_count": 20,
+      "empty_region_count": 0,
+      "empty_area_px": 0,
+      "product_area_px": 75871,
+      "row_empty_percentage": 0.0
+    },
+    {
+      "row_number": 3,
+      "bbox_xyxy": [
+        6,
+        261,
+        688,
+        285
+      ],
+      "bbox_normalized": [
+        0.00781,
+        0.25488,
+        0.89583,
+        0.27832
+      ],
+      "polygon": [
+        [
+          6,
+          261
+        ],
+        [
+          6,
+          277
+        ],
+        [
+          146,
+          277
+        ],
+        [
+          147,
+          278
+        ],
+        [
+          234,
+          278
+        ],
+        [
+          235,
+          280
+        ],
+        [
+          280,
+          280
+        ],
+        [
+          282,
+          282
+        ],
+        [
+          285,
+          282
+        ],
+        [
+          286,
+          280
+        ],
+        [
+          366,
+          280
+        ],
+        [
+          368,
+          282
+        ],
+        [
+          390,
+          282
+        ],
+        [
+          392,
+          280
+        ],
+        [
+          414,
+          280
+        ],
+        [
+          416,
+          282
+        ],
+        [
+          574,
+          282
+        ],
+        [
+          576,
+          283
+        ],
+        [
+          629,
+          283
+        ],
+        [
+          630,
+          285
+        ],
+        [
+          670,
+          285
+        ],
+        [
+          672,
+          283
+        ],
+        [
+          672,
+          282
+        ],
+        [
+          674,
+          280
+        ],
+        [
+          677,
+          283
+        ],
+        [
+          677,
+          285
+        ],
+        [
+          688,
+          285
+        ],
+        [
+          688,
+          262
+        ],
+        [
+          680,
+          262
+        ],
+        [
+          675,
+          267
+        ],
+        [
+          674,
+          267
+        ],
+        [
+          672,
+          266
+        ],
+        [
+          670,
+          266
+        ],
+        [
+          669,
+          264
+        ],
+        [
+          662,
+          264
+        ],
+        [
+          661,
+          262
+        ],
+        [
+          659,
+          262
+        ],
+        [
+          658,
+          261
+        ]
+      ],
+      "confidence": 0.402,
+      "product_count": 22,
+      "empty_region_count": 0,
+      "empty_area_px": 0,
+      "product_area_px": 74665,
+      "row_empty_percentage": 0.0
+    },
+    {
+      "row_number": 4,
+      "bbox_xyxy": [
+        45,
+        453,
+        766,
+        494
+      ],
+      "bbox_normalized": [
+        0.05859,
+        0.44238,
+        0.9974,
+        0.48242
+      ],
+      "polygon": [
+        [
+          50,
+          453
+        ],
+        [
+          50,
+          454
+        ],
+        [
+          48,
+          456
+        ],
+        [
+          48,
+          461
+        ],
+        [
+          46,
+          462
+        ],
+        [
+          46,
+          470
+        ],
+        [
+          45,
+          472
+        ],
+        [
+          45,
+          478
+        ],
+        [
+          46,
+          480
+        ],
+        [
+          46,
+          482
+        ],
+        [
+          48,
+          483
+        ],
+        [
+          53,
+          483
+        ],
+        [
+          54,
+          485
+        ],
+        [
+          67,
+          485
+        ],
+        [
+          69,
+          486
+        ],
+        [
+          91,
+          486
+        ],
+        [
+          93,
+          485
+        ],
+        [
+          94,
+          485
+        ],
+        [
+          94,
+          474
+        ],
+        [
+          93,
+          472
+        ],
+        [
+          93,
+          470
+        ],
+        [
+          96,
+          467
+        ],
+        [
+          99,
+          467
+        ],
+        [
+          101,
+          466
+        ],
+        [
+          114,
+          466
+        ],
+        [
+          115,
+          467
+        ],
+        [
+          118,
+          467
+        ],
+        [
+          120,
+          466
+        ],
+        [
+          138,
+          466
+        ],
+        [
+          139,
+          467
+        ],
+        [
+          144,
+          467
+        ],
+        [
+          147,
+          470
+        ],
+        [
+          147,
+          480
+        ],
+        [
+          146,
+          482
+        ],
+        [
+          146,
+          486
+        ],
+        [
+          149,
+          490
+        ],
+        [
+          182,
+          490
+        ],
+        [
+          184,
+          488
+        ],
+        [
+          186,
+          488
+        ],
+        [
+          186,
+          486
+        ],
+        [
+          187,
+          485
+        ],
+        [
+          187,
+          480
+        ],
+        [
+          186,
+          478
+        ],
+        [
+          186,
+          470
+        ],
+        [
+          189,
+          467
+        ],
+        [
+          202,
+          467
+        ],
+        [
+          205,
+          470
+        ],
+        [
+          205,
+          472
+        ],
+        [
+          203,
+          474
+        ],
+        [
+          203,
+          477
+        ],
+        [
+          202,
+          478
+        ],
+        [
+          202,
+          483
+        ],
+        [
+          203,
+          485
+        ],
+        [
+          205,
+          485
+        ],
+        [
+          206,
+          486
+        ],
+        [
+          208,
+          486
+        ],
+        [
+          210,
+          488
+        ],
+        [
+          224,
+          488
+        ],
+        [
+          226,
+          490
+        ],
+        [
+          238,
+          490
+        ],
+        [
+          240,
+          488
+        ],
+        [
+          245,
+          488
+        ],
+        [
+          246,
+          486
+        ],
+        [
+          246,
+          485
+        ],
+        [
+          248,
+          483
+        ],
+        [
+          248,
+          482
+        ],
+        [
+          246,
+          480
+        ],
+        [
+          246,
+          478
+        ],
+        [
+          245,
+          477
+        ],
+        [
+          245,
+          470
+        ],
+        [
+          246,
+          469
+        ],
+        [
+          248,
+          469
+        ],
+        [
+          250,
+          467
+        ],
+        [
+          261,
+          467
+        ],
+        [
+          262,
+          466
+        ],
+        [
+          267,
+          466
+        ],
+        [
+          269,
+          467
+        ],
+        [
+          272,
+          467
+        ],
+        [
+          275,
+          470
+        ],
+        [
+          275,
+          472
+        ],
+        [
+          274,
+          474
+        ],
+        [
+          274,
+          477
+        ],
+        [
+          272,
+          478
+        ],
+        [
+          272,
+          483
+        ],
+        [
+          274,
+          485
+        ],
+        [
+          274,
+          488
+        ],
+        [
+          275,
+          490
+        ],
+        [
+          312,
+          490
+        ],
+        [
+          314,
+          488
+        ],
+        [
+          314,
+          483
+        ],
+        [
+          315,
+          482
+        ],
+        [
+          315,
+          480
+        ],
+        [
+          317,
+          478
+        ],
+        [
+          318,
+          480
+        ],
+        [
+          320,
+          480
+        ],
+        [
+          322,
+          482
+        ],
+        [
+          325,
+          482
+        ],
+        [
+          326,
+          483
+        ],
+        [
+          331,
+          483
+        ],
+        [
+          333,
+          482
+        ],
+        [
+          342,
+          482
+        ],
+        [
+          344,
+          480
+        ],
+        [
+          347,
+          480
+        ],
+        [
+          349,
+          478
+        ],
+        [
+          354,
+          478
+        ],
+        [
+          358,
+          483
+        ],
+        [
+          358,
+          488
+        ],
+        [
+          360,
+          490
+        ],
+        [
+          363,
+          490
+        ],
+        [
+          365,
+          491
+        ],
+        [
+          400,
+          491
+        ],
+        [
+          403,
+          488
+        ],
+        [
+          402,
+          486
+        ],
+        [
+          402,
+          482
+        ],
+        [
+          403,
+          480
+        ],
+        [
+          403,
+          477
+        ],
+        [
+          405,
+          475
+        ],
+        [
+          405,
+          470
+        ],
+        [
+          406,
+          469
+        ],
+        [
+          411,
+          469
+        ],
+        [
+          413,
+          467
+        ],
+        [
+          434,
+          467
+        ],
+        [
+          435,
+          469
+        ],
+        [
+          437,
+          469
+        ],
+        [
+          438,
+          470
+        ],
+        [
+          437,
+          472
+        ],
+        [
+          437,
+          474
+        ],
+        [
+          435,
+          475
+        ],
+        [
+          438,
+          478
+        ],
+        [
+          438,
+          480
+        ],
+        [
+          440,
+          482
+        ],
+        [
+          440,
+          486
+        ],
+        [
+          438,
+          488
+        ],
+        [
+          442,
+          491
+        ],
+        [
+          478,
+          491
+        ],
+        [
+          482,
+          488
+        ],
+        [
+          480,
+          486
+        ],
+        [
+          480,
+          470
+        ],
+        [
+          483,
+          467
+        ],
+        [
+          501,
+          467
+        ],
+        [
+          502,
+          469
+        ],
+        [
+          506,
+          469
+        ],
+        [
+          507,
+          470
+        ],
+        [
+          507,
+          488
+        ],
+        [
+          509,
+          490
+        ],
+        [
+          512,
+          490
+        ],
+        [
+          514,
+          491
+        ],
+        [
+          547,
+          491
+        ],
+        [
+          550,
+          488
+        ],
+        [
+          550,
+          485
+        ],
+        [
+          549,
+          483
+        ],
+        [
+          549,
+          480
+        ],
+        [
+          550,
+          478
+        ],
+        [
+          550,
+          472
+        ],
+        [
+          554,
+          469
+        ],
+        [
+          578,
+          469
+        ],
+        [
+          584,
+          475
+        ],
+        [
+          584,
+          488
+        ],
+        [
+          587,
+          491
+        ],
+        [
+          589,
+          491
+        ],
+        [
+          590,
+          493
+        ],
+        [
+          616,
+          493
+        ],
+        [
+          618,
+          491
+        ],
+        [
+          627,
+          491
+        ],
+        [
+          629,
+          490
+        ],
+        [
+          653,
+          490
+        ],
+        [
+          654,
+          488
+        ],
+        [
+          656,
+          490
+        ],
+        [
+          661,
+          490
+        ],
+        [
+          662,
+          491
+        ],
+        [
+          672,
+          491
+        ],
+        [
+          674,
+          493
+        ],
+        [
+          683,
+          493
+        ],
+        [
+          685,
+          494
+        ],
+        [
+          694,
+          494
+        ],
+        [
+          696,
+          493
+        ],
+        [
+          702,
+          493
+        ],
+        [
+          707,
+          488
+        ],
+        [
+          707,
+          486
+        ],
+        [
+          706,
+          485
+        ],
+        [
+          706,
+          482
+        ],
+        [
+          704,
+          480
+        ],
+        [
+          704,
+          477
+        ],
+        [
+          707,
+          474
+        ],
+        [
+          715,
+          474
+        ],
+        [
+          717,
+          472
+        ],
+        [
+          739,
+          472
+        ],
+        [
+          742,
+          475
+        ],
+        [
+          742,
+          478
+        ],
+        [
+          741,
+          480
+        ],
+        [
+          741,
+          482
+        ],
+        [
+          739,
+          483
+        ],
+        [
+          739,
+          485
+        ],
+        [
+          741,
+          486
+        ],
+        [
+          741,
+          490
+        ],
+        [
+          744,
+          493
+        ],
+        [
+          755,
+          493
+        ],
+        [
+          757,
+          494
+        ],
+        [
+          758,
+          494
+        ],
+        [
+          760,
+          493
+        ],
+        [
+          766,
+          493
+        ],
+        [
+          766,
+          453
+        ]
+      ],
+      "confidence": 0.5847,
+      "product_count": 30,
+      "empty_region_count": 0,
+      "empty_area_px": 0,
+      "product_area_px": 92242,
+      "row_empty_percentage": 0.0
+    },
+    {
+      "row_number": 5,
+      "bbox_xyxy": [
+        38,
+        566,
+        765,
+        611
+      ],
+      "bbox_normalized": [
+        0.04948,
+        0.55273,
+        0.99609,
+        0.59668
+      ],
+      "polygon": [
+        [
+          314,
+          611
+        ],
+        [
+          306,
+          611
+        ],
+        [
+          314,
+          611
+        ],
+        [
+          322,
+          611
+        ],
+        [
+          301,
+          611
+        ],
+        [
+          302,
+          611
+        ],
+        [
+          288,
+          611
+        ],
+        [
+          157,
+          600
+        ],
+        [
+          158,
+          602
+        ],
+        [
+          160,
+          602
+        ],
+        [
+          162,
+          603
+        ],
+        [
+          171,
+          603
+        ],
+        [
+          173,
+          602
+        ],
+        [
+          181,
+          602
+        ],
+        [
+          184,
+          605
+        ],
+        [
+          184,
+          606
+        ],
+        [
+          186,
+          608
+        ],
+        [
+          186,
+          610
+        ],
+        [
+          144,
+          589
+        ],
+        [
+          170,
+          589
+        ],
+        [
+          171,
+          590
+        ],
+        [
+          182,
+          590
+        ],
+        [
+          184,
+          589
+        ],
+        [
+          190,
+          589
+        ],
+        [
+          192,
+          587
+        ],
+        [
+          221,
+          587
+        ],
+        [
+          222,
+          589
+        ],
+        [
+          229,
+          589
+        ],
+        [
+          232,
+          592
+        ],
+        [
+          227,
+          597
+        ],
+        [
+          224,
+          597
+        ],
+        [
+          222,
+          598
+        ],
+        [
+          219,
+          598
+        ],
+        [
+          219,
+          600
+        ],
+        [
+          214,
+          605
+        ],
+        [
+          216,
+          605
+        ],
+        [
+          219,
+          608
+        ],
+        [
+          221,
+          608
+        ],
+        [
+          222,
+          610
+        ],
+        [
+          224,
+          610
+        ],
+        [
+          226,
+          611
+        ],
+        [
+          261,
+          611
+        ],
+        [
+          262,
+          610
+        ],
+        [
+          262,
+          606
+        ],
+        [
+          264,
+          605
+        ],
+        [
+          264,
+          603
+        ],
+        [
+          262,
+          602
+        ],
+        [
+          262,
+          600
+        ],
+        [
+          259,
+          597
+        ],
+        [
+          259,
+          592
+        ],
+        [
+          262,
+          589
+        ],
+        [
+          266,
+          589
+        ],
+        [
+          267,
+          587
+        ],
+        [
+          272,
+          587
+        ],
+        [
+          274,
+          589
+        ],
+        [
+          302,
+          589
+        ],
+        [
+          304,
+          587
+        ],
+        [
+          306,
+          589
+        ],
+        [
+          310,
+          589
+        ],
+        [
+          312,
+          587
+        ],
+        [
+          352,
+          587
+        ],
+        [
+          354,
+          589
+        ],
+        [
+          387,
+          589
+        ],
+        [
+          389,
+          587
+        ],
+        [
+          435,
+          587
+        ],
+        [
+          437,
+          589
+        ],
+        [
+          571,
+          589
+        ],
+        [
+          573,
+          590
+        ],
+        [
+          610,
+          590
+        ],
+        [
+          611,
+          592
+        ],
+        [
+          648,
+          592
+        ],
+        [
+          650,
+          594
+        ],
+        [
+          677,
+          594
+        ],
+        [
+          678,
+          595
+        ],
+        [
+          682,
+          595
+        ],
+        [
+          685,
+          598
+        ],
+        [
+          683,
+          600
+        ],
+        [
+          683,
+          605
+        ],
+        [
+          682,
+          606
+        ],
+        [
+          682,
+          611
+        ],
+        [
+          765,
+          611
+        ],
+        [
+          765,
+          576
+        ],
+        [
+          734,
+          576
+        ],
+        [
+          733,
+          574
+        ],
+        [
+          654,
+          574
+        ],
+        [
+          653,
+          573
+        ],
+        [
+          566,
+          573
+        ],
+        [
+          565,
+          571
+        ],
+        [
+          533,
+          571
+        ],
+        [
+          531,
+          570
+        ],
+        [
+          502,
+          570
+        ],
+        [
+          501,
+          568
+        ],
+        [
+          421,
+          568
+        ],
+        [
+          419,
+          566
+        ],
+        [
+          398,
+          566
+        ],
+        [
+          397,
+          568
+        ],
+        [
+          381,
+          568
+        ],
+        [
+          379,
+          566
+        ],
+        [
+          198,
+          566
+        ],
+        [
+          197,
+          568
+        ],
+        [
+          59,
+          568
+        ],
+        [
+          58,
+          570
+        ],
+        [
+          54,
+          570
+        ],
+        [
+          53,
+          571
+        ],
+        [
+          51,
+          571
+        ],
+        [
+          46,
+          576
+        ],
+        [
+          43,
+          576
+        ],
+        [
+          42,
+          574
+        ],
+        [
+          40,
+          576
+        ],
+        [
+          38,
+          576
+        ],
+        [
+          38,
+          606
+        ],
+        [
+          40,
+          606
+        ],
+        [
+          42,
+          605
+        ],
+        [
+          42,
+          602
+        ],
+        [
+          45,
+          598
+        ],
+        [
+          45,
+          597
+        ],
+        [
+          46,
+          595
+        ],
+        [
+          46,
+          590
+        ],
+        [
+          50,
+          587
+        ],
+        [
+          67,
+          587
+        ],
+        [
+          69,
+          589
+        ],
+        [
+          72,
+          589
+        ],
+        [
+          75,
+          592
+        ],
+        [
+          67,
+          600
+        ],
+        [
+          66,
+          600
+        ],
+        [
+          64,
+          602
+        ],
+        [
+          64,
+          605
+        ],
+        [
+          66,
+          606
+        ],
+        [
+          67,
+          606
+        ],
+        [
+          70,
+          610
+        ],
+        [
+          72,
+          610
+        ],
+        [
+          74,
+          611
+        ],
+        [
+          110,
+          611
+        ],
+        [
+          112,
+          610
+        ],
+        [
+          112,
+          605
+        ],
+        [
+          110,
+          603
+        ],
+        [
+          110,
+          598
+        ],
+        [
+          107,
+          595
+        ],
+        [
+          107,
+          592
+        ],
+        [
+          110,
+          589
+        ],
+        [
+          122,
+          589
+        ],
+        [
+          123,
+          587
+        ],
+        [
+          142,
+          587
+        ],
+        [
+          144,
+          589
+        ],
+        [
+          186,
+          610
+        ],
+        [
+          184,
+          611
+        ],
+        [
+          147,
+          611
+        ],
+        [
+          144,
+          608
+        ],
+        [
+          142,
+          608
+        ],
+        [
+          139,
+          605
+        ],
+        [
+          139,
+          603
+        ],
+        [
+          141,
+          603
+        ],
+        [
+          142,
+          602
+        ],
+        [
+          144,
+          602
+        ],
+        [
+          146,
+          600
+        ],
+        [
+          157,
+          600
+        ],
+        [
+          288,
+          611
+        ],
+        [
+          288,
+          610
+        ],
+        [
+          291,
+          606
+        ],
+        [
+          296,
+          606
+        ],
+        [
+          301,
+          611
+        ],
+        [
+          322,
+          611
+        ],
+        [
+          342,
+          611
+        ],
+        [
+          342,
+          610
+        ],
+        [
+          339,
+          610
+        ],
+        [
+          338,
+          611
+        ],
+        [
+          322,
+          611
+        ]
+      ],
+      "confidence": 0.345,
+      "product_count": 21,
+      "empty_region_count": 0,
+      "empty_area_px": 0,
+      "product_area_px": 66657,
+      "row_empty_percentage": 0.0
+    },
+    {
+      "row_number": 6,
+      "bbox_xyxy": [
+        58,
+        686,
+        765,
+        714
+      ],
+      "bbox_normalized": [
+        0.07552,
+        0.66992,
+        0.99609,
+        0.69727
+      ],
+      "polygon": [
+        [
+          66,
+          686
+        ],
+        [
+          64,
+          688
+        ],
+        [
+          62,
+          688
+        ],
+        [
+          61,
+          690
+        ],
+        [
+          59,
+          690
+        ],
+        [
+          58,
+          691
+        ],
+        [
+          58,
+          701
+        ],
+        [
+          59,
+          701
+        ],
+        [
+          61,
+          702
+        ],
+        [
+          64,
+          702
+        ],
+        [
+          66,
+          704
+        ],
+        [
+          413,
+          704
+        ],
+        [
+          414,
+          706
+        ],
+        [
+          499,
+          706
+        ],
+        [
+          501,
+          707
+        ],
+        [
+          570,
+          707
+        ],
+        [
+          571,
+          709
+        ],
+        [
+          630,
+          709
+        ],
+        [
+          632,
+          710
+        ],
+        [
+          653,
+          710
+        ],
+        [
+          654,
+          712
+        ],
+        [
+          664,
+          712
+        ],
+        [
+          666,
+          714
+        ],
+        [
+          672,
+          714
+        ],
+        [
+          674,
+          712
+        ],
+        [
+          686,
+          712
+        ],
+        [
+          688,
+          710
+        ],
+        [
+          720,
+          710
+        ],
+        [
+          722,
+          712
+        ],
+        [
+          723,
+          712
+        ],
+        [
+          725,
+          714
+        ],
+        [
+          765,
+          714
+        ],
+        [
+          765,
+          696
+        ],
+        [
+          762,
+          696
+        ],
+        [
+          760,
+          694
+        ],
+        [
+          741,
+          694
+        ],
+        [
+          739,
+          693
+        ],
+        [
+          722,
+          693
+        ],
+        [
+          720,
+          691
+        ],
+        [
+          709,
+          691
+        ],
+        [
+          707,
+          690
+        ],
+        [
+          626,
+          690
+        ],
+        [
+          624,
+          688
+        ],
+        [
+          538,
+          688
+        ],
+        [
+          536,
+          686
+        ],
+        [
+          531,
+          686
+        ],
+        [
+          530,
+          688
+        ],
+        [
+          510,
+          688
+        ],
+        [
+          509,
+          686
+        ],
+        [
+          493,
+          686
+        ],
+        [
+          491,
+          688
+        ],
+        [
+          488,
+          688
+        ],
+        [
+          486,
+          686
+        ],
+        [
+          414,
+          686
+        ],
+        [
+          413,
+          688
+        ],
+        [
+          394,
+          688
+        ],
+        [
+          392,
+          686
+        ]
+      ],
+      "confidence": 0.2797,
+      "product_count": 20,
+      "empty_region_count": 1,
+      "empty_area_px": 4704,
+      "product_area_px": 59863,
+      "row_empty_percentage": 7.29
+    },
+    {
+      "row_number": 7,
+      "bbox_xyxy": [
+        53,
+        800,
+        752,
+        821
+      ],
+      "bbox_normalized": [
+        0.06901,
+        0.78125,
+        0.97917,
+        0.80176
+      ],
+      "polygon": [
+        [
+          69,
+          800
+        ],
+        [
+          64,
+          805
+        ],
+        [
+          64,
+          806
+        ],
+        [
+          62,
+          808
+        ],
+        [
+          62,
+          814
+        ],
+        [
+          61,
+          816
+        ],
+        [
+          54,
+          816
+        ],
+        [
+          53,
+          814
+        ],
+        [
+          53,
+          813
+        ],
+        [
+          53,
+          821
+        ],
+        [
+          69,
+          821
+        ],
+        [
+          70,
+          819
+        ],
+        [
+          77,
+          819
+        ],
+        [
+          78,
+          821
+        ],
+        [
+          122,
+          821
+        ],
+        [
+          123,
+          819
+        ],
+        [
+          134,
+          819
+        ],
+        [
+          136,
+          818
+        ],
+        [
+          150,
+          818
+        ],
+        [
+          152,
+          819
+        ],
+        [
+          154,
+          819
+        ],
+        [
+          155,
+          821
+        ],
+        [
+          189,
+          821
+        ],
+        [
+          190,
+          819
+        ],
+        [
+          206,
+          819
+        ],
+        [
+          208,
+          818
+        ],
+        [
+          216,
+          818
+        ],
+        [
+          218,
+          819
+        ],
+        [
+          238,
+          819
+        ],
+        [
+          240,
+          821
+        ],
+        [
+          267,
+          821
+        ],
+        [
+          269,
+          819
+        ],
+        [
+          288,
+          819
+        ],
+        [
+          290,
+          818
+        ],
+        [
+          306,
+          818
+        ],
+        [
+          307,
+          819
+        ],
+        [
+          330,
+          819
+        ],
+        [
+          331,
+          821
+        ],
+        [
+          336,
+          821
+        ],
+        [
+          338,
+          819
+        ],
+        [
+          438,
+          819
+        ],
+        [
+          440,
+          818
+        ],
+        [
+          498,
+          818
+        ],
+        [
+          499,
+          819
+        ],
+        [
+          627,
+          819
+        ],
+        [
+          629,
+          818
+        ],
+        [
+          642,
+          818
+        ],
+        [
+          643,
+          819
+        ],
+        [
+          651,
+          819
+        ],
+        [
+          653,
+          821
+        ],
+        [
+          675,
+          821
+        ],
+        [
+          677,
+          819
+        ],
+        [
+          707,
+          819
+        ],
+        [
+          709,
+          821
+        ],
+        [
+          752,
+          821
+        ],
+        [
+          752,
+          805
+        ],
+        [
+          733,
+          805
+        ],
+        [
+          731,
+          803
+        ],
+        [
+          718,
+          803
+        ],
+        [
+          717,
+          805
+        ],
+        [
+          707,
+          805
+        ],
+        [
+          706,
+          803
+        ],
+        [
+          678,
+          803
+        ],
+        [
+          677,
+          802
+        ],
+        [
+          664,
+          802
+        ],
+        [
+          662,
+          800
+        ],
+        [
+          437,
+          800
+        ],
+        [
+          435,
+          802
+        ],
+        [
+          424,
+          802
+        ],
+        [
+          422,
+          803
+        ],
+        [
+          416,
+          803
+        ],
+        [
+          414,
+          805
+        ],
+        [
+          322,
+          805
+        ],
+        [
+          320,
+          803
+        ],
+        [
+          298,
+          803
+        ],
+        [
+          296,
+          805
+        ],
+        [
+          290,
+          805
+        ],
+        [
+          288,
+          803
+        ],
+        [
+          272,
+          803
+        ],
+        [
+          270,
+          802
+        ],
+        [
+          254,
+          802
+        ],
+        [
+          253,
+          800
+        ],
+        [
+          251,
+          800
+        ],
+        [
+          250,
+          802
+        ],
+        [
+          243,
+          802
+        ],
+        [
+          242,
+          800
+        ],
+        [
+          176,
+          800
+        ],
+        [
+          174,
+          802
+        ],
+        [
+          146,
+          802
+        ],
+        [
+          144,
+          800
+        ],
+        [
+          126,
+          800
+        ],
+        [
+          125,
+          802
+        ],
+        [
+          118,
+          802
+        ],
+        [
+          117,
+          800
+        ],
+        [
+          115,
+          802
+        ],
+        [
+          112,
+          802
+        ],
+        [
+          110,
+          800
+        ]
+      ],
+      "confidence": 0.2848,
+      "product_count": 21,
+      "empty_region_count": 0,
+      "empty_area_px": 0,
+      "product_area_px": 62790,
+      "row_empty_percentage": 0.0
+    },
+    {
+      "row_number": 8,
+      "bbox_xyxy": [
+        14,
+        928,
+        763,
+        974
+      ],
+      "bbox_normalized": [
+        0.01823,
+        0.90625,
+        0.99349,
+        0.95117
+      ],
+      "polygon": [
+        [
+          102,
+          957
+        ],
+        [
+          99,
+          957
+        ],
+        [
+          96,
+          960
+        ],
+        [
+          96,
+          963
+        ],
+        [
+          98,
+          963
+        ],
+        [
+          99,
+          965
+        ],
+        [
+          123,
+          965
+        ],
+        [
+          125,
+          963
+        ],
+        [
+          130,
+          963
+        ],
+        [
+          130,
+          962
+        ],
+        [
+          128,
+          960
+        ],
+        [
+          126,
+          960
+        ],
+        [
+          123,
+          957
+        ],
+        [
+          112,
+          957
+        ],
+        [
+          110,
+          958
+        ],
+        [
+          104,
+          958
+        ],
+        [
+          102,
+          957
+        ],
+        [
+          102,
+          949
+        ],
+        [
+          125,
+          949
+        ],
+        [
+          126,
+          947
+        ],
+        [
+          208,
+          947
+        ],
+        [
+          211,
+          950
+        ],
+        [
+          211,
+          957
+        ],
+        [
+          210,
+          958
+        ],
+        [
+          210,
+          960
+        ],
+        [
+          208,
+          962
+        ],
+        [
+          208,
+          968
+        ],
+        [
+          210,
+          970
+        ],
+        [
+          211,
+          970
+        ],
+        [
+          213,
+          971
+        ],
+        [
+          245,
+          971
+        ],
+        [
+          246,
+          970
+        ],
+        [
+          250,
+          970
+        ],
+        [
+          251,
+          968
+        ],
+        [
+          251,
+          963
+        ],
+        [
+          250,
+          962
+        ],
+        [
+          250,
+          952
+        ],
+        [
+          253,
+          949
+        ],
+        [
+          256,
+          949
+        ],
+        [
+          258,
+          947
+        ],
+        [
+          262,
+          947
+        ],
+        [
+          264,
+          949
+        ],
+        [
+          296,
+          949
+        ],
+        [
+          298,
+          947
+        ],
+        [
+          315,
+          947
+        ],
+        [
+          317,
+          949
+        ],
+        [
+          317,
+          952
+        ],
+        [
+          315,
+          954
+        ],
+        [
+          315,
+          955
+        ],
+        [
+          314,
+          957
+        ],
+        [
+          314,
+          960
+        ],
+        [
+          312,
+          962
+        ],
+        [
+          312,
+          970
+        ],
+        [
+          315,
+          973
+        ],
+        [
+          317,
+          973
+        ],
+        [
+          318,
+          974
+        ],
+        [
+          349,
+          974
+        ],
+        [
+          350,
+          973
+        ],
+        [
+          352,
+          973
+        ],
+        [
+          354,
+          971
+        ],
+        [
+          357,
+          971
+        ],
+        [
+          358,
+          970
+        ],
+        [
+          362,
+          970
+        ],
+        [
+          363,
+          968
+        ],
+        [
+          365,
+          968
+        ],
+        [
+          365,
+          963
+        ],
+        [
+          363,
+          962
+        ],
+        [
+          363,
+          960
+        ],
+        [
+          357,
+          954
+        ],
+        [
+          357,
+          952
+        ],
+        [
+          355,
+          950
+        ],
+        [
+          357,
+          949
+        ],
+        [
+          360,
+          949
+        ],
+        [
+          362,
+          947
+        ],
+        [
+          378,
+          947
+        ],
+        [
+          381,
+          950
+        ],
+        [
+          381,
+          952
+        ],
+        [
+          378,
+          955
+        ],
+        [
+          376,
+          955
+        ],
+        [
+          376,
+          957
+        ],
+        [
+          374,
+          958
+        ],
+        [
+          374,
+          960
+        ],
+        [
+          373,
+          962
+        ],
+        [
+          373,
+          965
+        ],
+        [
+          374,
+          966
+        ],
+        [
+          374,
+          968
+        ],
+        [
+          376,
+          970
+        ],
+        [
+          378,
+          970
+        ],
+        [
+          381,
+          973
+        ],
+        [
+          382,
+          973
+        ],
+        [
+          384,
+          974
+        ],
+        [
+          414,
+          974
+        ],
+        [
+          416,
+          973
+        ],
+        [
+          426,
+          973
+        ],
+        [
+          427,
+          971
+        ],
+        [
+          442,
+          971
+        ],
+        [
+          443,
+          970
+        ],
+        [
+          448,
+          970
+        ],
+        [
+          450,
+          968
+        ],
+        [
+          454,
+          968
+        ],
+        [
+          454,
+          962
+        ],
+        [
+          451,
+          958
+        ],
+        [
+          451,
+          957
+        ],
+        [
+          450,
+          955
+        ],
+        [
+          446,
+          955
+        ],
+        [
+          445,
+          954
+        ],
+        [
+          437,
+          954
+        ],
+        [
+          435,
+          952
+        ],
+        [
+          434,
+          952
+        ],
+        [
+          432,
+          950
+        ],
+        [
+          434,
+          949
+        ],
+        [
+          450,
+          949
+        ],
+        [
+          451,
+          947
+        ],
+        [
+          461,
+          947
+        ],
+        [
+          464,
+          950
+        ],
+        [
+          464,
+          952
+        ],
+        [
+          462,
+          954
+        ],
+        [
+          462,
+          955
+        ],
+        [
+          461,
+          957
+        ],
+        [
+          461,
+          958
+        ],
+        [
+          459,
+          960
+        ],
+        [
+          459,
+          962
+        ],
+        [
+          458,
+          963
+        ],
+        [
+          458,
+          968
+        ],
+        [
+          459,
+          970
+        ],
+        [
+          461,
+          970
+        ],
+        [
+          462,
+          971
+        ],
+        [
+          464,
+          971
+        ],
+        [
+          466,
+          973
+        ],
+        [
+          467,
+          973
+        ],
+        [
+          469,
+          974
+        ],
+        [
+          485,
+          974
+        ],
+        [
+          486,
+          973
+        ],
+        [
+          499,
+          973
+        ],
+        [
+          501,
+          971
+        ],
+        [
+          502,
+          971
+        ],
+        [
+          504,
+          970
+        ],
+        [
+          506,
+          970
+        ],
+        [
+          507,
+          968
+        ],
+        [
+          507,
+          962
+        ],
+        [
+          506,
+          960
+        ],
+        [
+          506,
+          950
+        ],
+        [
+          507,
+          949
+        ],
+        [
+          510,
+          949
+        ],
+        [
+          512,
+          947
+        ],
+        [
+          646,
+          947
+        ],
+        [
+          648,
+          949
+        ],
+        [
+          650,
+          949
+        ],
+        [
+          651,
+          950
+        ],
+        [
+          651,
+          952
+        ],
+        [
+          653,
+          954
+        ],
+        [
+          653,
+          955
+        ],
+        [
+          646,
+          962
+        ],
+        [
+          646,
+          963
+        ],
+        [
+          651,
+          968
+        ],
+        [
+          683,
+          968
+        ],
+        [
+          685,
+          966
+        ],
+        [
+          686,
+          966
+        ],
+        [
+          688,
+          965
+        ],
+        [
+          694,
+          965
+        ],
+        [
+          696,
+          966
+        ],
+        [
+          698,
+          966
+        ],
+        [
+          699,
+          968
+        ],
+        [
+          718,
+          968
+        ],
+        [
+          720,
+          970
+        ],
+        [
+          739,
+          970
+        ],
+        [
+          741,
+          968
+        ],
+        [
+          744,
+          968
+        ],
+        [
+          744,
+          963
+        ],
+        [
+          742,
+          962
+        ],
+        [
+          742,
+          960
+        ],
+        [
+          741,
+          958
+        ],
+        [
+          741,
+          955
+        ],
+        [
+          739,
+          954
+        ],
+        [
+          739,
+          950
+        ],
+        [
+          741,
+          949
+        ],
+        [
+          742,
+          949
+        ],
+        [
+          744,
+          947
+        ],
+        [
+          747,
+          947
+        ],
+        [
+          749,
+          949
+        ],
+        [
+          762,
+          949
+        ],
+        [
+          763,
+          947
+        ],
+        [
+          763,
+          936
+        ],
+        [
+          762,
+          934
+        ],
+        [
+          742,
+          934
+        ],
+        [
+          741,
+          933
+        ],
+        [
+          677,
+          933
+        ],
+        [
+          675,
+          931
+        ],
+        [
+          650,
+          931
+        ],
+        [
+          648,
+          930
+        ],
+        [
+          630,
+          930
+        ],
+        [
+          629,
+          928
+        ],
+        [
+          528,
+          928
+        ],
+        [
+          526,
+          930
+        ],
+        [
+          514,
+          930
+        ],
+        [
+          512,
+          931
+        ],
+        [
+          299,
+          931
+        ],
+        [
+          298,
+          930
+        ],
+        [
+          282,
+          930
+        ],
+        [
+          280,
+          931
+        ],
+        [
+          205,
+          931
+        ],
+        [
+          203,
+          930
+        ],
+        [
+          96,
+          930
+        ],
+        [
+          94,
+          928
+        ],
+        [
+          14,
+          928
+        ],
+        [
+          14,
+          944
+        ],
+        [
+          29,
+          944
+        ],
+        [
+          30,
+          946
+        ],
+        [
+          91,
+          946
+        ],
+        [
+          93,
+          947
+        ],
+        [
+          101,
+          947
+        ],
+        [
+          102,
+          949
+        ]
+      ],
+      "confidence": 0.5083,
+      "product_count": 11,
+      "empty_region_count": 1,
+      "empty_area_px": 4998,
+      "product_area_px": 28915,
+      "row_empty_percentage": 14.74
+    }
+  ],
+  "annotated_image": "new_02_coffee_pods_annotated.jpg",
+  "errors": null
+}

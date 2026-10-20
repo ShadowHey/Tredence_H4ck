@@ -1,0 +1,54 @@
+source_image,model_status,image_width,image_height,row_number,row_product_count,row_empty_count,row_empty_percentage,total_products,total_empty_slots,total_shelf_rows,overall_empty_percentage,annotated_image
+new_01_pharmacy_pegboard.jpg,completed,768,1024,1,54,0,0.0,102,2,3,1.74,new_01_pharmacy_pegboard_annotated.jpg
+new_01_pharmacy_pegboard.jpg,completed,768,1024,2,23,0,0.0,102,2,3,1.74,new_01_pharmacy_pegboard_annotated.jpg
+new_01_pharmacy_pegboard.jpg,completed,768,1024,3,25,2,10.91,102,2,3,1.74,new_01_pharmacy_pegboard_annotated.jpg
+new_02_coffee_pods.jpg,completed,768,1024,1,10,0,0.0,155,2,8,1.91,new_02_coffee_pods_annotated.jpg
+new_02_coffee_pods.jpg,completed,768,1024,2,20,0,0.0,155,2,8,1.91,new_02_coffee_pods_annotated.jpg
+new_02_coffee_pods.jpg,completed,768,1024,3,22,0,0.0,155,2,8,1.91,new_02_coffee_pods_annotated.jpg
+new_02_coffee_pods.jpg,completed,768,1024,4,30,0,0.0,155,2,8,1.91,new_02_coffee_pods_annotated.jpg
+new_02_coffee_pods.jpg,completed,768,1024,5,21,0,0.0,155,2,8,1.91,new_02_coffee_pods_annotated.jpg
+new_02_coffee_pods.jpg,completed,768,1024,6,20,1,7.29,155,2,8,1.91,new_02_coffee_pods_annotated.jpg
+new_02_coffee_pods.jpg,completed,768,1024,7,21,0,0.0,155,2,8,1.91,new_02_coffee_pods_annotated.jpg
+new_02_coffee_pods.jpg,completed,768,1024,8,11,1,14.74,155,2,8,1.91,new_02_coffee_pods_annotated.jpg
+new_03_dove_bodywash.jpg,completed,768,1024,1,22,1,3.78,127,2,9,1.85,new_03_dove_bodywash_annotated.jpg
+new_03_dove_bodywash.jpg,completed,768,1024,2,13,0,0.0,127,2,9,1.85,new_03_dove_bodywash_annotated.jpg
+new_03_dove_bodywash.jpg,completed,768,1024,3,4,0,0.0,127,2,9,1.85,new_03_dove_bodywash_annotated.jpg
+new_03_dove_bodywash.jpg,completed,768,1024,4,17,0,0.0,127,2,9,1.85,new_03_dove_bodywash_annotated.jpg
+new_03_dove_bodywash.jpg,completed,768,1024,5,18,0,0.0,127,2,9,1.85,new_03_dove_bodywash_annotated.jpg
+new_03_dove_bodywash.jpg,completed,768,1024,6,25,1,7.67,127,2,9,1.85,new_03_dove_bodywash_annotated.jpg
+new_03_dove_bodywash.jpg,completed,768,1024,7,12,0,0.0,127,2,9,1.85,new_03_dove_bodywash_annotated.jpg
+new_03_dove_bodywash.jpg,completed,768,1024,8,0,0,N/A,127,2,9,1.85,new_03_dove_bodywash_annotated.jpg
+new_03_dove_bodywash.jpg,completed,768,1024,9,16,0,0.0,127,2,9,1.85,new_03_dove_bodywash_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,1,15,0,0.0,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,2,22,0,0.0,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,3,3,0,0.0,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,4,21,0,0.0,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,5,12,1,5.82,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,6,14,0,0.0,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,7,11,2,17.95,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,8,14,0,0.0,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,9,8,0,0.0,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,10,24,0,0.0,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,11,30,0,0.0,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_04_packaged_hygiene.jpg,completed,768,1024,12,13,0,0.0,187,3,12,1.39,new_04_packaged_hygiene_annotated.jpg
+new_05_medicines_aisle.jpg,completed,575,1024,1,19,0,0.0,155,3,8,2.46,new_05_medicines_aisle_annotated.jpg
+new_05_medicines_aisle.jpg,completed,575,1024,2,12,0,0.0,155,3,8,2.46,new_05_medicines_aisle_annotated.jpg
+new_05_medicines_aisle.jpg,completed,575,1024,3,21,1,3.27,155,3,8,2.46,new_05_medicines_aisle_annotated.jpg
+new_05_medicines_aisle.jpg,completed,575,1024,4,17,0,0.0,155,3,8,2.46,new_05_medicines_aisle_annotated.jpg
+new_05_medicines_aisle.jpg,completed,575,1024,5,20,0,0.0,155,3,8,2.46,new_05_medicines_aisle_annotated.jpg
+new_05_medicines_aisle.jpg,completed,575,1024,6,22,0,0.0,155,3,8,2.46,new_05_medicines_aisle_annotated.jpg
+new_05_medicines_aisle.jpg,completed,575,1024,7,36,2,8.66,155,3,8,2.46,new_05_medicines_aisle_annotated.jpg
+new_05_medicines_aisle.jpg,completed,575,1024,8,8,0,0.0,155,3,8,2.46,new_05_medicines_aisle_annotated.jpg
+test_987.jpg,completed,1024,768,1,41,0,0.0,173,6,5,11.11,test_987_annotated.jpg
+test_987.jpg,completed,1024,768,2,51,1,5.2,173,6,5,11.11,test_987_annotated.jpg
+test_987.jpg,completed,1024,768,3,29,1,22.62,173,6,5,11.11,test_987_annotated.jpg
+test_987.jpg,completed,1024,768,4,19,1,11.23,173,6,5,11.11,test_987_annotated.jpg
+test_987.jpg,completed,1024,768,5,33,3,21.85,173,6,5,11.11,test_987_annotated.jpg
+test_999 (1).jpg,completed,1024,768,1,25,1,3.29,147,1,7,0.64,test_999 (1)_annotated.jpg
+test_999 (1).jpg,completed,1024,768,2,20,0,0.0,147,1,7,0.64,test_999 (1)_annotated.jpg
+test_999 (1).jpg,completed,1024,768,3,23,0,0.0,147,1,7,0.64,test_999 (1)_annotated.jpg
+test_999 (1).jpg,completed,1024,768,4,34,0,0.0,147,1,7,0.64,test_999 (1)_annotated.jpg
+test_999 (1).jpg,completed,1024,768,5,22,0,0.0,147,1,7,0.64,test_999 (1)_annotated.jpg
+test_999 (1).jpg,completed,1024,768,6,8,0,0.0,147,1,7,0.64,test_999 (1)_annotated.jpg
+test_999 (1).jpg,completed,1024,768,7,15,0,0.0,147,1,7,0.64,test_999 (1)_annotated.jpg
+test_image.jpg,completed,1150,2048,1,90,4,5.43,90,4,1,5.43,test_image_annotated.jpg

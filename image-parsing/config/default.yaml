@@ -1,0 +1,62 @@
+# ShelfSense AI - Image Parsing Pipeline Configuration
+
+models:
+  detection:
+    path: "models/detect_product_empty_space.pt"
+    confidence: 0.20
+    iou: 0.45
+    class_mapping:
+      0: "empty_space"
+      1: "product"
+  segmentation:
+    path: "models/segment_shelf_rows.pt"
+    confidence: 0.15
+    iou: 0.50
+    class_mapping:
+      0: "shelf_row"
+
+refinement:
+  # Filter out row segmentation noise whose width is less than ratio * average_width
+  row_filter_width_ratio: 0.40
+  # Vertical band assignment mode for mapping empty slots to shelf rows: 'overlap' or 'center_band'
+  empty_assignment_mode: "center_band"
+  # Deduplicate heavily overlapping empty boxes (IoU threshold)
+  empty_nms_threshold: 0.50
+
+visualization:
+  product:
+    # Neon cyan / light blue (#00E5FF) -> in BGR: (255, 229, 0)
+    color_bgr: [255, 229, 0]
+    thickness: 2
+    label_prefix: "PRODUCT"
+    show_confidence: true
+    font_scale: 0.45
+  empty_space:
+    # Dark royal blue (#1739B7) -> in BGR: (183, 57, 23)
+    color_bgr: [183, 57, 23]
+    thickness: 2
+    label_prefix: "EMPTY SPACE"
+    show_confidence: true
+    fill_translucent: true
+    fill_alpha: 0.25
+    font_scale: 0.45
+  shelf_row:
+    # Amber (#FFB000) -> in BGR: (0, 176, 255)
+    color_bgr: [0, 176, 255]
+    thickness: 2
+    label_prefix: "ROW"
+    fill_translucent: true
+    fill_alpha: 0.15
+    font_scale: 0.55
+  drawing_order:
+    - "original_image"
+    - "shelf_rows"
+    - "empty_spaces"
+    - "products"
+    - "labels_and_summary"
+
+outputs:
+  save_annotated_image: true
+  save_json: true
+  save_csv: true
+  default_output_dir: "outputs"
