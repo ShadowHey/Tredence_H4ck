@@ -112,40 +112,51 @@ export function ShelfCanvas({
       className="flex-1 min-w-[500px] flex flex-col bg-[#0d0f12] overflow-hidden p-3 md:p-4 select-none relative"
       data-testid="shelf-canvas"
     >
-      {/* Shelf Bay Selector Bar (when multiple shelves exist) */}
-      <div className="flex items-center justify-between mb-3 px-1">
-        <div className="flex items-center gap-2 overflow-x-auto">
-          {shelves.map((shelf, idx) => (
-            <button
-              key={shelf.id}
-              onClick={() => {
-                onSelectShelf(shelf.id);
+      {/* Selected Shelf Header Bar: shows ONLY the selected shelf */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3 px-1">
+        <div className="flex items-center gap-2">
+          {/* Active Shelf Indicator */}
+          <div
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 bg-amber-500 text-gray-950 shadow-sm"
+            data-testid="selected-shelf-badge"
+          >
+            <Box className="w-3.5 h-3.5" />
+            <span>
+              Shelf: <strong className="font-bold">{activeShelf.name}</strong>
+            </span>
+            <span className="text-[10px] font-mono opacity-80">({activeShelf.width_cm}cm)</span>
+          </div>
+
+          {/* Quick switcher dropdown when multiple shelves exist */}
+          {shelves.length > 1 && (
+            <select
+              value={activeShelf.id}
+              onChange={(e) => {
+                onSelectShelf(Number(e.target.value));
                 onSelectPlacement(null);
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
-                activeShelf.id === shelf.id
-                  ? "bg-amber-500 text-gray-950 shadow-sm"
-                  : "bg-[#1a1e26] text-gray-300 hover:bg-[#222733] border border-[#262b36]"
-              }`}
+              className="bg-[#1a1e26] border border-[#262b36] hover:border-amber-500 text-gray-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer transition-colors"
+              title="Switch selected shelf"
             >
-              <Box className="w-3.5 h-3.5" />
-              <span>
-                Bay #{idx + 1}: {shelf.name}
-              </span>
-              <span className="text-[10px] font-mono opacity-80">({shelf.width_cm}cm)</span>
-            </button>
-          ))}
+              {shelves.map((s, idx) => (
+                <option key={s.id} value={s.id} className="bg-[#1a1e26] text-gray-200">
+                  Bay #{idx + 1}: {s.name} ({s.width_cm}cm)
+                </option>
+              ))}
+            </select>
+          )}
+
           <button
             onClick={onOpenAddShelf}
-            className="px-2.5 py-1.5 rounded-lg bg-[#1a1e26] hover:bg-[#222733] text-amber-400 hover:text-amber-300 border border-[#262b36] text-xs font-semibold flex items-center gap-1"
+            className="px-2.5 py-1.5 rounded-lg bg-[#1a1e26] hover:bg-[#222733] text-amber-400 hover:text-amber-300 border border-[#262b36] text-xs font-semibold flex items-center gap-1 transition-colors"
             title="Add another shelf bay"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Add Bay</span>
+            <span className="hidden sm:inline">Add Shelf</span>
           </button>
         </div>
 
-        <div className="text-[11px] font-mono text-gray-400 flex items-center gap-3">
+        <div className="text-[11px] font-mono text-gray-400 flex items-center gap-3 shrink-0">
           <span>Width: {activeShelf.width_cm}cm</span>
           <span>Height: {activeShelf.total_height_cm}cm</span>
           <span>Depth: {activeShelf.depth_cm}cm</span>
@@ -172,7 +183,7 @@ export function ShelfCanvas({
               Bay Reference Elevation: {activeShelf.name}
             </span>
             <div className="text-[11px] text-gray-500 font-mono">
-              Physical Dimensions: {activeShelf.width_cm} cm (W) × {activeShelf.total_height_cm} cm (H) × {activeShelf.depth_cm} cm (D) · {activeShelf.row_count} Rows
+              Physical Dimensions: {activeShelf.width_cm} cm (W) x {activeShelf.total_height_cm} cm (H) x {activeShelf.depth_cm} cm (D) • {activeShelf.row_count} Rows
             </div>
           </div>
           <div className="text-right">
@@ -334,7 +345,7 @@ export function ShelfCanvas({
                                 : "z-10 hover:z-20 hover:ring-1 hover:ring-blue-400"
                             }`}
                             data-testid={`placement-${placement.id}`}
-                            title={`${product.name} (${product.width_cm}cm × ${product.height_cm}cm) - At ${placement.x_offset_cm}cm`}
+                            title={`${product.name} (${product.width_cm}cm x ${product.height_cm}cm) - At ${placement.x_offset_cm}cm`}
                           >
                             {/* Facings row */}
                             <div className="w-full flex items-end justify-center h-full">
@@ -358,7 +369,7 @@ export function ShelfCanvas({
 
                             {/* SKU / Width Label Badge */}
                             <div className="w-full text-center bg-gray-900/80 text-white rounded text-[8px] font-mono py-0.5 px-1 truncate shadow-xs">
-                              {product.sku} · {placement.x_offset_cm}cm
+                              {product.sku} • {placement.x_offset_cm}cm
                             </div>
 
                             {/* Delete placement button on hover */}
