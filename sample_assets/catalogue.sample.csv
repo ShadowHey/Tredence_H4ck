@@ -1,0 +1,7 @@
+sku,name,category,price,currency,width_cm,height_cm,depth_cm,image,description
+DEMO-DRK-001,Citrus Sparkling Drink,Beverages,35.0,INR,6.5,12.2,6.5,images/citrus_drink_can.svg,Unbranded sample can; illustration only.
+DEMO-DRK-002,Orange Juice Carton,Beverages,60.0,INR,6.0,19.0,5.0,images/orange_juice_carton.svg,Unbranded sample carton; illustration only.
+DEMO-FOD-001,Oat Crunch Cereal,Breakfast,120.0,INR,8.0,22.0,4.5,images/oat_cereal_box.svg,Unbranded sample box; illustration only.
+DEMO-SNK-001,Crispy Chips,Snacks,30.0,INR,14.0,20.0,5.0,images/crispy_chips_bag.svg,Unbranded sample flexible pouch; illustration only.
+DEMO-HOM-001,Fresh Laundry Liquid,Home Care,185.0,INR,9.0,25.0,6.0,images/laundry_bottle.svg,Unbranded sample bottle; illustration only.
+DEMO-HOM-002,Daily Clean Spray,Home Care,140.0,INR,7.0,24.0,5.0,images/cleaner_spray.svg,Unbranded sample spray bottle; illustration only.
