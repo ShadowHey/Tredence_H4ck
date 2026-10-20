@@ -10,6 +10,7 @@ import {
   AlertCircle,
   CheckCircle,
   ArrowLeft,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -349,6 +350,27 @@ function DesignerContent() {
     }
   };
 
+  // Delete Entire Planogram
+  const handleDeleteCurrentPlanogram = async () => {
+    if (!planogram) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete planogram "${planogram.name}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setSaveStatus("saving");
+      await api.deletePlanogram(planogram.id);
+      router.push("/");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Failed to delete planogram: ${msg}`);
+      setSaveStatus("error");
+    }
+  };
+
   // Explicit Save Planogram Name
   const handleSavePlanogramName = async (newName: string) => {
     if (!planogram || !newName.trim()) return;
@@ -472,6 +494,16 @@ function DesignerContent() {
           >
             <Save className="w-3.5 h-3.5" />
             <span>Save</span>
+          </button>
+
+          <button
+            onClick={handleDeleteCurrentPlanogram}
+            data-testid="delete-planogram-btn"
+            className="px-2.5 py-1.5 rounded-lg bg-[#1a1e26] hover:bg-red-950/50 border border-[#262b36] hover:border-red-700 text-gray-400 hover:text-red-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            title="Delete this planogram"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+            <span className="hidden md:inline">Delete</span>
           </button>
         </div>
       </header>

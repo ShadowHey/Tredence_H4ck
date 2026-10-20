@@ -15,6 +15,7 @@ import {
   FolderOpen,
   AlertCircle,
   TrendingUp,
+  Trash2,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { DashboardMetrics } from "@/types";
@@ -32,6 +33,29 @@ export default function DashboardPage() {
   const [newPlanogramName, setNewPlanogramName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const handleDeletePlanogram = async (id: number, name: string) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete planogram "${name}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setDeletingId(id);
+      await api.deletePlanogram(id);
+      const data = await api.getDashboardMetrics();
+      setMetrics(data);
+    } catch (err: unknown) {
+      console.error("Failed to delete planogram:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Failed to delete planogram: ${msg}`);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -324,6 +348,22 @@ export default function DashboardPage() {
                       <FolderOpen className="w-3.5 h-3.5" />
                       <span>Open Planogram</span>
                     </Link>
+
+                    <button
+                      type="button"
+                      disabled={deletingId === planogram.id}
+                      onClick={() => handleDeletePlanogram(planogram.id, planogram.name)}
+                      className="px-3 py-1.5 rounded-lg bg-[#262b36] hover:bg-red-600/90 text-gray-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5 border border-transparent hover:border-red-500 disabled:opacity-50 cursor-pointer"
+                      title={`Delete planogram "${planogram.name}"`}
+                      data-testid={`delete-planogram-${planogram.id}`}
+                    >
+                      {deletingId === planogram.id ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-red-300" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5 text-red-400 group-hover:text-white" />
+                      )}
+                      <span>Delete</span>
+                    </button>
                   </div>
                 </div>
               ))}
