@@ -18,8 +18,10 @@ interface OutlinerProps {
   planogram: Planogram | null;
   selectedShelfId: number | null;
   selectedPlacementId: number | null;
+  selectedRowIndex?: number;
   onSelectShelf: (shelfId: number | null) => void;
   onSelectPlacement: (placementId: number | null) => void;
+  onSelectRow?: (rowIndex: number) => void;
   onDeleteShelf: (shelfId: number) => void;
   onDeletePlacement: (placementId: number) => void;
   onOpenAddShelf: () => void;
@@ -29,8 +31,10 @@ export function Outliner({
   planogram,
   selectedShelfId,
   selectedPlacementId,
+  selectedRowIndex = 0,
   onSelectShelf,
   onSelectPlacement,
+  onSelectRow,
   onDeleteShelf,
   onDeletePlacement,
   onOpenAddShelf,
@@ -200,12 +204,23 @@ export function Outliner({
                       <div key={rowKey} className="space-y-0.5">
                         {/* Row Node */}
                         <div
-                          onClick={(e) => toggleRow(rowKey, e)}
-                          className="flex items-center justify-between px-2 py-0.5 rounded text-gray-400 hover:text-gray-200 hover:bg-[#1a1e26]/60 cursor-pointer text-[11px]"
+                          onClick={() => {
+                            onSelectShelf(shelf.id);
+                            onSelectRow?.(rIdx);
+                          }}
+                          className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer text-[11px] transition-colors ${
+                            isShelfSelected && selectedRowIndex === rIdx
+                              ? "bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40"
+                              : "text-gray-400 hover:text-gray-200 hover:bg-[#1a1e26]/60 border border-transparent"
+                          }`}
                         >
                           <div className="flex items-center gap-1.5 truncate">
                             {rowPlacements.length > 0 ? (
-                              <button className="p-0.5">
+                              <button
+                                type="button"
+                                onClick={(e) => toggleRow(rowKey, e)}
+                                className="p-0.5 text-gray-400 hover:text-gray-200"
+                              >
                                 {isRowCollapsed ? (
                                   <ChevronRight className="w-2.5 h-2.5" />
                                 ) : (
@@ -215,7 +230,7 @@ export function Outliner({
                             ) : (
                               <span className="w-3.5" />
                             )}
-                            <span className="font-mono text-gray-400">Row {rIdx + 1}</span>
+                            <span className="font-mono">Row {rIdx + 1}</span>
                           </div>
                           <span
                             className={`text-[9px] font-mono px-1 rounded ${
@@ -238,6 +253,7 @@ export function Outliner({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onSelectShelf(shelf.id);
+                                  onSelectRow?.(rIdx);
                                   onSelectPlacement(placement.id);
                                 }}
                                 className={`flex items-center justify-between pl-6 pr-2 py-0.5 rounded cursor-pointer group text-[11px] transition-colors ${

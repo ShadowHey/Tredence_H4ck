@@ -11,12 +11,16 @@ import {
 import { Shelf, Placement, Product } from "@/types";
 import { getImageUrl } from "@/lib/api";
 
+export const ROW_HEADROOM_PADDING_CM = 3.0;
+
 interface ShelfCanvasProps {
   shelves: Shelf[];
   selectedShelfId: number | null;
   selectedPlacementId: number | null;
+  selectedRowIndex?: number;
   onSelectShelf: (shelfId: number) => void;
   onSelectPlacement: (placementId: number | null) => void;
+  onSelectRow?: (rowIndex: number) => void;
   onOpenAddShelf: () => void;
   onDropProductOnRow: (shelfId: number, rowIndex: number, product: Product, clientX?: number) => void;
   onMovePlacement: (placementId: number, newRowIndex: number, newXOffsetCm: number) => void;
@@ -29,8 +33,10 @@ export function ShelfCanvas({
   shelves,
   selectedShelfId,
   selectedPlacementId,
+  selectedRowIndex = 0,
   onSelectShelf,
   onSelectPlacement,
+  onSelectRow,
   onOpenAddShelf,
   onDropProductOnRow,
   onMovePlacement,
@@ -114,9 +120,11 @@ export function ShelfCanvas({
     return Math.max(...rowPlacements.map((p) => p.product.height_cm));
   });
 
-  // Minimum allowed height for each row: at least max product height in that row, and at least 10cm physical minimum
+  // Minimum allowed height for each row: tallest product + headroom clearance padding, and at least 10cm physical minimum
   const minRowHeights: number[] = Array.from({ length: activeShelf.row_count }).map((_, rIdx) => {
-    return Math.max(10, Number(maxProductHeights[rIdx].toFixed(1)));
+    const maxH = maxProductHeights[rIdx];
+    if (maxH <= 0) return 10;
+    return Math.max(10, Number((maxH + ROW_HEADROOM_PADDING_CM).toFixed(1)));
   });
 
   // Effective row heights array (index 0 is top row, index row_count - 1 is bottom row)
@@ -360,6 +368,7 @@ export function ShelfCanvas({
               const baseElevationCm = rowElevations[rIdx];
               const isAtMin = rowHeightCm <= minRowH + 0.1;
               const isHovered = hoveredRow?.shelfId === activeShelf.id && hoveredRow?.rowIndex === rIdx;
+              const isSelectedRow = selectedRowIndex === rIdx;
               const rowPlacements = (activeShelf.placements || []).filter(
                 (p) => p.row_index === rIdx
               );
@@ -380,11 +389,15 @@ export function ShelfCanvas({
                   >
                     {/* Left Elevation Dimension Bracket (Adjustable Row Height) */}
                     <div
-                      className={`w-36 shrink-0 rounded-lg border-2 flex flex-col justify-between p-2 select-none font-mono text-[10px] transition-all ${
-                        isHovered
-                          ? "border-amber-500 bg-amber-50/90 text-amber-950 shadow-xs"
+                      onClick={() => onSelectRow?.(rIdx)}
+                      className={`w-36 shrink-0 rounded-lg border-2 flex flex-col justify-between p-2 select-none font-mono text-[10px] transition-all cursor-pointer ${
+                        isSelectedRow
+                          ? "border-amber-500 bg-amber-50/90 text-amber-950 shadow-sm ring-2 ring-amber-400"
+                          : isHovered
+                          ? "border-amber-400 bg-amber-50/60 text-amber-950"
                           : "border-blue-200 bg-blue-50/50 text-blue-900 hover:border-blue-300"
                       }`}
+                      title={`Click to select Row ${rIdx + 1}`}
                     >
                       {/* Row Tag & Min Badge */}
                       <div className="flex items-center justify-between font-bold">
@@ -394,9 +407,9 @@ export function ShelfCanvas({
                         {maxProdH > 0 ? (
                           <span
                             className="text-[9px] font-semibold text-amber-700 bg-amber-100/90 px-1 rounded"
-                            title={`Minimum allowed height based on tallest product (${maxProdH}cm)`}
+                            title={`Minimum allowed height: tallest product (${maxProdH}cm) + ${ROW_HEADROOM_PADDING_CM}cm headroom padding`}
                           >
-                            Min {maxProdH}cm
+                            Min {minRowH}cm
                           </span>
                         ) : (
                           <span className="text-gray-500 text-[9px] font-semibold">
@@ -455,19 +468,33 @@ export function ShelfCanvas({
 
                     {/* Center Shelf Bay Row Drop Zone */}
                     <div
+                      onClick={() => onSelectRow?.(rIdx)}
                       onDragOver={(e) => handleDragOver(e, activeShelf.id, rIdx)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, activeShelf.id, rIdx)}
-                      className={`flex-1 border-2 rounded-lg flex flex-col justify-between transition-colors relative ${
-                        isHovered
-                          ? "border-amber-500 bg-amber-50/70"
+                      className={`flex-1 border-2 rounded-lg flex flex-col justify-between transition-colors relative cursor-pointer ${
+                        isSelectedRow
+                          ? "border-amber-500 bg-white ring-1 ring-amber-400 shadow-xs"
+                          : isHovered
+                          ? "border-amber-400 bg-amber-50/70"
                           : "border-gray-300 bg-white hover:border-gray-400"
                       }`}
                       data-testid={`shelf-row-${rIdx}`}
                     >
                       {/* Row Capacity & Index Header Bar */}
-                      <div className="h-5 px-2 bg-gray-100 border-b border-gray-200 flex items-center justify-between text-[10px] text-gray-700 select-none">
-                        <span className="font-bold text-gray-800 font-mono">Row {rIdx + 1}</span>
+                      <div className={`h-5 px-2 border-b flex items-center justify-between text-[10px] select-none transition-colors ${
+                        isSelectedRow
+                          ? "bg-amber-100 border-amber-300 text-amber-950 font-bold"
+                          : "bg-gray-100 border-gray-200 text-gray-700 font-mono"
+                      }`}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold">Row {rIdx + 1}</span>
+                          {isSelectedRow && (
+                            <span className="px-1 py-0.2 rounded bg-amber-500 text-gray-950 text-[8px] font-extrabold uppercase tracking-wider">
+                              Selected
+                            </span>
+                          )}
+                        </div>
                         
                         {/* Capacity Indicator (used cm / total cm) */}
                         <div className="flex items-center gap-2">
@@ -490,7 +517,7 @@ export function ShelfCanvas({
                       </div>
 
                       {/* Placed Products Area */}
-                      <div className="flex-1 relative w-full h-full flex items-end px-1 pb-1 overflow-hidden">
+                      <div className="flex-1 relative w-full h-full flex items-end px-1 pt-2 pb-1">
                         {rowPlacements.map((placement) => {
                           const isSelected = selectedPlacementId === placement.id;
                           const product = placement.product;
@@ -516,6 +543,7 @@ export function ShelfCanvas({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onSelectShelf(activeShelf.id);
+                                onSelectRow?.(rIdx);
                                 onSelectPlacement(placement.id);
                               }}
                               style={{
@@ -562,7 +590,7 @@ export function ShelfCanvas({
                                   e.stopPropagation();
                                   onDeletePlacement(placement.id);
                                 }}
-                                className="absolute -top-2 -right-1 p-0.5 rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 shadow"
+                                className="absolute -top-2 right-0 p-0.5 rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 shadow-sm z-30"
                                 title="Delete placement"
                               >
                                 <Trash2 className="w-2.5 h-2.5" />

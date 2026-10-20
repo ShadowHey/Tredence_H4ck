@@ -124,8 +124,31 @@ describe("ShelfCanvas Component", () => {
       />
     );
 
-    // Checks that the Min badge is displayed for the placed product (12.2cm)
-    expect(screen.getByText(/Min 12.2cm/i)).toBeInTheDocument();
+    // Checks that the Min badge is displayed for the placed product (12.2cm + 3.0cm headroom = 15.2cm)
+    expect(screen.getByText(/Min 15.2cm/i)).toBeInTheDocument();
+  });
+  it("clicking shelf row in ShelfCanvas triggers onSelectRow callback", () => {
+    const onSelectRow = vi.fn();
+    render(
+      <ShelfCanvas
+        shelves={[mockShelf]}
+        selectedShelfId={mockShelf.id}
+        selectedPlacementId={null}
+        selectedRowIndex={0}
+        onSelectShelf={vi.fn()}
+        onSelectPlacement={vi.fn()}
+        onSelectRow={onSelectRow}
+        onOpenAddShelf={vi.fn()}
+        onDropProductOnRow={vi.fn()}
+        onMovePlacement={vi.fn()}
+        onDeletePlacement={vi.fn()}
+        collisionWarning={null}
+      />
+    );
+
+    const row2 = screen.getByTestId("shelf-row-1");
+    fireEvent.click(row2);
+    expect(onSelectRow).toHaveBeenCalledWith(1);
   });
 });
 

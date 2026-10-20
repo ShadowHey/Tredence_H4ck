@@ -36,6 +36,7 @@ function DesignerContent() {
   // Selection State
   const [selectedShelfId, setSelectedShelfId] = useState<number | null>(null);
   const [selectedPlacementId, setSelectedPlacementId] = useState<number | null>(null);
+  const [selectedRowIndex, setSelectedRowIndex] = useState<number>(0);
 
   // Save State (clear feedback: Saved / Unsaved changes / Saving / Save failed)
   const [saveStatus, setSaveStatus] = useState<"saved" | "unsaved" | "saving" | "error">("saved");
@@ -183,15 +184,16 @@ function DesignerContent() {
     const nextX = Math.round(usedWidth * 10) / 10;
 
     try {
-      // Ensure row height is at least product.height_cm
+      // Ensure row height is at least product.height_cm + 3.0cm headroom clearance
       const usableH = shelf.total_height_cm - (shelf.has_plinth ? shelf.plinth_height_cm : 0);
       const defaultEqualH = Math.max(10, usableH / shelf.row_count);
       const currentHeights = shelf.row_heights && shelf.row_heights.length === shelf.row_count
         ? [...shelf.row_heights]
         : Array(shelf.row_count).fill(defaultEqualH);
 
-      if (currentHeights[rowIndex] < product.height_cm) {
-        currentHeights[rowIndex] = Number(product.height_cm.toFixed(1));
+      const requiredMinH = Number((product.height_cm + 3.0).toFixed(1));
+      if (currentHeights[rowIndex] < requiredMinH) {
+        currentHeights[rowIndex] = requiredMinH;
         await api.updateShelf(shelfId, { row_heights: currentHeights });
       }
       setCollisionWarning(null);
@@ -317,9 +319,9 @@ function DesignerContent() {
           ? [...targetShelf.row_heights]
           : Array(targetShelf.row_count).fill(defaultEqualH);
 
-        // Adjust row height based on remaining products
+        // Adjust row height based on remaining products + 3.0cm headroom
         const targetRowH = newMaxHeight > 0
-          ? Math.max(newMaxHeight, Math.min(currentHeights[rowIndex], defaultEqualH))
+          ? Math.max(newMaxHeight + 3.0, Math.min(currentHeights[rowIndex], defaultEqualH))
           : defaultEqualH;
 
         if (currentHeights[rowIndex] > targetRowH + 0.2) {
@@ -515,11 +517,13 @@ function DesignerContent() {
           planogram={planogram}
           selectedShelfId={selectedShelfId}
           selectedPlacementId={selectedPlacementId}
+          selectedRowIndex={selectedRowIndex}
           onSelectShelf={(id) => {
             setSelectedShelfId(id);
             setSelectedPlacementId(null);
           }}
           onSelectPlacement={(id) => setSelectedPlacementId(id)}
+          onSelectRow={setSelectedRowIndex}
           onDeleteShelf={handleDeleteShelf}
           onDeletePlacement={handleDeletePlacement}
           onOpenAddShelf={() => setShowAddShelfModal(true)}
@@ -530,11 +534,13 @@ function DesignerContent() {
           shelves={planogram.shelves}
           selectedShelfId={selectedShelfId}
           selectedPlacementId={selectedPlacementId}
+          selectedRowIndex={selectedRowIndex}
           onSelectShelf={(id) => {
             setSelectedShelfId(id);
             setSelectedPlacementId(null);
           }}
           onSelectPlacement={(id) => setSelectedPlacementId(id)}
+          onSelectRow={setSelectedRowIndex}
           onOpenAddShelf={() => setShowAddShelfModal(true)}
           onDropProductOnRow={handleDropProductOnRow}
           onMovePlacement={handleMovePlacement}
@@ -549,6 +555,8 @@ function DesignerContent() {
           selectedShelf={activeShelf}
           selectedPlacement={activePlacement}
           products={products}
+          selectedRowIndex={selectedRowIndex}
+          onSelectRow={setSelectedRowIndex}
           onUpdateShelf={handleUpdateShelf}
           onDeleteShelf={handleDeleteShelf}
           onUpdatePlacement={handleUpdatePlacement}
