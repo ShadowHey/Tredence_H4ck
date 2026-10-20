@@ -90,6 +90,43 @@ describe("ShelfCanvas Component", () => {
     expect(screen.getByText(/Base Plinth Fixture \(15 cm\)/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Row 1/i).length).toBeGreaterThan(0);
   });
+
+  it("enforces row minimum height based on placed products and displays Min badge", () => {
+    const shelfWithPlacement: Shelf = {
+      ...mockShelf,
+      placements: [
+        {
+          id: 101,
+          shelf_id: mockShelf.id,
+          product_id: mockProduct.id,
+          row_index: 0,
+          x_offset_cm: 0,
+          facing_count: 1,
+          product: mockProduct, // height_cm: 12.2
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ],
+    };
+
+    render(
+      <ShelfCanvas
+        shelves={[shelfWithPlacement]}
+        selectedShelfId={shelfWithPlacement.id}
+        selectedPlacementId={null}
+        onSelectShelf={vi.fn()}
+        onSelectPlacement={vi.fn()}
+        onOpenAddShelf={vi.fn()}
+        onDropProductOnRow={vi.fn()}
+        onMovePlacement={vi.fn()}
+        onDeletePlacement={vi.fn()}
+        collisionWarning={null}
+      />
+    );
+
+    // Checks that the Min badge is displayed for the placed product (12.2cm)
+    expect(screen.getByText(/Min 12.2cm/i)).toBeInTheDocument();
+  });
 });
 
 describe("AddShelfModal Component", () => {

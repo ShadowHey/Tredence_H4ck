@@ -182,6 +182,17 @@ function DesignerContent() {
     const nextX = Math.round(usedWidth * 10) / 10;
 
     try {
+      // Ensure row height is at least product.height_cm
+      const usableH = shelf.total_height_cm - (shelf.has_plinth ? shelf.plinth_height_cm : 0);
+      const defaultEqualH = Math.max(10, usableH / shelf.row_count);
+      const currentHeights = shelf.row_heights && shelf.row_heights.length === shelf.row_count
+        ? [...shelf.row_heights]
+        : Array(shelf.row_count).fill(defaultEqualH);
+
+      if (currentHeights[rowIndex] < product.height_cm) {
+        currentHeights[rowIndex] = Number(product.height_cm.toFixed(1));
+        await api.updateShelf(shelfId, { row_heights: currentHeights });
+      }
       setCollisionWarning(null);
       setSaveStatus("saving");
       const newPlacement = await api.createPlacement(shelfId, {
@@ -243,10 +254,62 @@ function DesignerContent() {
     }
   };
 
-  // Delete Placement
+  // Delete Placement: deletes product and adjusts row height automatically
   const handleDeletePlacement = async (placementId: number) => {
     try {
+      // Find placement and shelf before deletion
+      let targetPlacement: Placement | null = null;
+      let targetShelf: Shelf | null = null;
+      for (const shelf of planogram?.shelves || []) {
+        const found = (shelf.placements || []).find((p) => p.id === placementId);
+        if (found) {
+          targetPlacement = found;
+          targetShelf = shelf;
+          break;
+        }
+      }
+
       await api.deletePlacement(placementId);
+
+      // Adjust the row height automatically when product is deleted
+      if (targetShelf && targetPlacement) {
+        const rowIndex = targetPlacement.row_index;
+        const remainingOnRow = (targetShelf.placements || []).filter(
+          (p) => p.id !== placementId && p.row_index === rowIndex
+        );
+        const newMaxHeight = remainingOnRow.length > 0
+          ? Math.max(...remainingOnRow.map((p) => p.product.height_cm))
+          : 0;
+
+        const usableH = targetShelf.total_height_cm - (targetShelf.has_plinth ? targetShelf.plinth_height_cm : 0);
+        const defaultEqualH = Math.max(10, usableH / targetShelf.row_count);
+
+        const currentHeights = targetShelf.row_heights && targetShelf.row_heights.length === targetShelf.row_count
+          ? [...targetShelf.row_heights]
+          : Array(targetShelf.row_count).fill(defaultEqualH);
+
+        // Adjust row height based on remaining products
+        const targetRowH = newMaxHeight > 0
+          ? Math.max(newMaxHeight, Math.min(currentHeights[rowIndex], defaultEqualH))
+          : defaultEqualH;
+
+        if (currentHeights[rowIndex] > targetRowH + 0.2) {
+          const releasedSpace = currentHeights[rowIndex] - targetRowH;
+          currentHeights[rowIndex] = Number(targetRowH.toFixed(1));
+
+          // Redistribute released space to other rows
+          const otherIndices = Array.from({ length: targetShelf.row_count }, (_, i) => i).filter(i => i !== rowIndex);
+          if (otherIndices.length > 0) {
+            const addPer = releasedSpace / otherIndices.length;
+            for (const oIdx of otherIndices) {
+              currentHeights[oIdx] = Number((currentHeights[oIdx] + addPer).toFixed(1));
+            }
+          }
+
+          await api.updateShelf(targetShelf.id, { row_heights: currentHeights });
+        }
+      }
+
       await refreshPlanogram();
       if (selectedPlacementId === placementId) {
         setSelectedPlacementId(null);

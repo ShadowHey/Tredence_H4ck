@@ -107,13 +107,27 @@ export function ShelfCanvas({
   const usableHeightCm = activeShelf.total_height_cm - (activeShelf.has_plinth ? activeShelf.plinth_height_cm : 0);
   const defaultEqualHeight = Math.max(10, usableHeightCm / activeShelf.row_count);
 
+  // Maximum product height per row (each row must be at least this height)
+  const maxProductHeights: number[] = Array.from({ length: activeShelf.row_count }).map((_, rIdx) => {
+    const rowPlacements = (activeShelf.placements || []).filter((p) => p.row_index === rIdx);
+    if (rowPlacements.length === 0) return 0;
+    return Math.max(...rowPlacements.map((p) => p.product.height_cm));
+  });
+
+  // Minimum allowed height for each row: at least max product height in that row, and at least 10cm physical minimum
+  const minRowHeights: number[] = Array.from({ length: activeShelf.row_count }).map((_, rIdx) => {
+    return Math.max(10, Number(maxProductHeights[rIdx].toFixed(1)));
+  });
+
   // Effective row heights array (index 0 is top row, index row_count - 1 is bottom row)
+  // RULE: The height of each row must be AT LEAST the maximum of all products in that row
   const effectiveRowHeights: number[] = Array.from({ length: activeShelf.row_count }).map((_, idx) => {
+    let h = defaultEqualHeight;
     if (activeShelf.row_heights && activeShelf.row_heights.length === activeShelf.row_count) {
       const val = activeShelf.row_heights[idx];
-      if (typeof val === "number" && val > 0) return val;
+      if (typeof val === "number" && val > 0) h = val;
     }
-    return defaultEqualHeight;
+    return Math.max(minRowHeights[idx], h);
   });
 
   // Base elevation above floor / plinth for each row index (0 is top row, row_count-1 is bottom row)
@@ -127,41 +141,55 @@ export function ShelfCanvas({
   });
 
   // Adjust row height by deltaCm
+  // RULE: when adjusting, row height cannot reduce below minRowHeights[rIdx]
   const changeRowHeight = (rIdx: number, deltaCm: number) => {
-    const minH = 10;
+    const minCurrent = minRowHeights[rIdx];
     const newHeights = [...effectiveRowHeights];
+
     if (rIdx < activeShelf.row_count - 1) {
+      const minNext = minRowHeights[rIdx + 1];
       const available = newHeights[rIdx] + newHeights[rIdx + 1];
-      const target = Math.max(minH, Math.min(available - minH, newHeights[rIdx] + deltaCm));
+      const maxAllowed = available - minNext;
+      if (minCurrent > maxAllowed) return;
+      const target = Math.max(minCurrent, Math.min(maxAllowed, newHeights[rIdx] + deltaCm));
       newHeights[rIdx] = Number(target.toFixed(1));
       newHeights[rIdx + 1] = Number((available - target).toFixed(1));
     } else if (rIdx > 0) {
+      const minPrev = minRowHeights[rIdx - 1];
       const available = newHeights[rIdx - 1] + newHeights[rIdx];
-      const target = Math.max(minH, Math.min(available - minH, newHeights[rIdx] + deltaCm));
+      const maxAllowed = available - minPrev;
+      if (minCurrent > maxAllowed) return;
+      const target = Math.max(minCurrent, Math.min(maxAllowed, newHeights[rIdx] + deltaCm));
       newHeights[rIdx] = Number(target.toFixed(1));
       newHeights[rIdx - 1] = Number((available - target).toFixed(1));
     } else {
-      newHeights[rIdx] = Math.max(minH, newHeights[rIdx] + deltaCm);
+      newHeights[rIdx] = Math.max(minCurrent, Number((newHeights[rIdx] + deltaCm).toFixed(1)));
     }
     onUpdateShelf?.(activeShelf.id, { row_heights: newHeights });
   };
 
   // Set specific row height
+  // RULE: when adjusting, row height cannot reduce below minRowHeights[rIdx]
   const setSpecificRowHeight = (rIdx: number, targetHeight: number) => {
-    const minH = 10;
+    const minCurrent = minRowHeights[rIdx];
     const newHeights = [...effectiveRowHeights];
+
     if (rIdx < activeShelf.row_count - 1) {
+      const minNext = minRowHeights[rIdx + 1];
       const available = newHeights[rIdx] + newHeights[rIdx + 1];
-      const target = Math.max(minH, Math.min(available - minH, targetHeight));
+      const maxAllowed = available - minNext;
+      const target = Math.max(minCurrent, Math.min(maxAllowed, targetHeight));
       newHeights[rIdx] = Number(target.toFixed(1));
       newHeights[rIdx + 1] = Number((available - target).toFixed(1));
     } else if (rIdx > 0) {
+      const minPrev = minRowHeights[rIdx - 1];
       const available = newHeights[rIdx - 1] + newHeights[rIdx];
-      const target = Math.max(minH, Math.min(available - minH, targetHeight));
+      const maxAllowed = available - minPrev;
+      const target = Math.max(minCurrent, Math.min(maxAllowed, targetHeight));
       newHeights[rIdx] = Number(target.toFixed(1));
       newHeights[rIdx - 1] = Number((available - target).toFixed(1));
     } else {
-      newHeights[rIdx] = Math.max(minH, targetHeight);
+      newHeights[rIdx] = Math.max(minCurrent, Number(targetHeight.toFixed(1)));
     }
     onUpdateShelf?.(activeShelf.id, { row_heights: newHeights });
   };
@@ -181,12 +209,14 @@ export function ShelfCanvas({
     const availableTotal = startTopHeight + startBottomHeight;
     const pxPerCm = 3.2;
 
+    const minTop = minRowHeights[topRowIdx];
+    const minBottom = minRowHeights[topRowIdx + 1];
+
     const onMouseMove = (moveEvent: MouseEvent) => {
       const deltaPx = moveEvent.clientY - startY;
       const deltaCm = deltaPx / pxPerCm;
-      const minH = 10;
       let newTop = startTopHeight + deltaCm;
-      newTop = Math.max(minH, Math.min(availableTotal - minH, newTop));
+      newTop = Math.max(minTop, Math.min(availableTotal - minBottom, newTop));
       const newBottom = availableTotal - newTop;
 
       const newHeights = [...effectiveRowHeights];
@@ -325,7 +355,10 @@ export function ShelfCanvas({
           <div className="flex flex-col gap-1.5">
             {Array.from({ length: activeShelf.row_count }).map((_, rIdx) => {
               const rowHeightCm = effectiveRowHeights[rIdx];
+              const minRowH = minRowHeights[rIdx];
+              const maxProdH = maxProductHeights[rIdx];
               const baseElevationCm = rowElevations[rIdx];
+              const isAtMin = rowHeightCm <= minRowH + 0.1;
               const isHovered = hoveredRow?.shelfId === activeShelf.id && hoveredRow?.rowIndex === rIdx;
               const rowPlacements = (activeShelf.placements || []).filter(
                 (p) => p.row_index === rIdx
@@ -353,23 +386,37 @@ export function ShelfCanvas({
                           : "border-blue-200 bg-blue-50/50 text-blue-900 hover:border-blue-300"
                       }`}
                     >
-                      {/* Row Tag */}
+                      {/* Row Tag & Min Badge */}
                       <div className="flex items-center justify-between font-bold">
                         <span className="px-1.5 py-0.5 rounded bg-blue-200/80 text-blue-950 text-[10px]">
                           R{rIdx + 1}
                         </span>
-                        <span className="text-gray-500 text-[9px] font-semibold">
-                          Row {rIdx + 1}
-                        </span>
+                        {maxProdH > 0 ? (
+                          <span
+                            className="text-[9px] font-semibold text-amber-700 bg-amber-100/90 px-1 rounded"
+                            title={`Minimum allowed height based on tallest product (${maxProdH}cm)`}
+                          >
+                            Min {maxProdH}cm
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 text-[9px] font-semibold">
+                            Row {rIdx + 1}
+                          </span>
+                        )}
                       </div>
 
                       {/* Height Clearance Bracket with Interactive Controls */}
                       <div className="my-auto py-1 flex items-center justify-center gap-1 font-bold text-blue-900">
                         <button
                           type="button"
+                          disabled={isAtMin}
                           onClick={() => changeRowHeight(rIdx, -1)}
-                          className="w-4 h-4 rounded bg-blue-100 hover:bg-blue-300 text-blue-900 font-bold flex items-center justify-center text-[10px] transition-colors"
-                          title="Decrease height (-1cm)"
+                          className={`w-4 h-4 rounded font-bold flex items-center justify-center text-[10px] transition-colors ${
+                            isAtMin
+                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                              : "bg-blue-100 hover:bg-blue-300 text-blue-900 cursor-pointer"
+                          }`}
+                          title={isAtMin ? `Cannot reduce below max product height (${minRowH}cm)` : "Decrease height (-1cm)"}
                         >
                           -
                         </button>
@@ -378,12 +425,12 @@ export function ShelfCanvas({
                           <input
                             type="number"
                             step="0.5"
-                            min="10"
+                            min={minRowH}
                             max="300"
                             value={Number(rowHeightCm.toFixed(1))}
-                            onChange={(e) => setSpecificRowHeight(rIdx, parseFloat(e.target.value) || 10)}
+                            onChange={(e) => setSpecificRowHeight(rIdx, parseFloat(e.target.value) || minRowH)}
                             className="w-10 text-center font-mono font-bold text-[10px] text-blue-950 focus:outline-none"
-                            title="Click to edit row height in cm"
+                            title={`Row height in cm (min: ${minRowH}cm)`}
                           />
                           <span className="text-[9px] text-blue-700">cm</span>
                         </div>
@@ -450,6 +497,9 @@ export function ShelfCanvas({
                           const itemWidthPct = (product.width_cm * placement.facing_count / activeShelf.width_cm) * 100;
                           const leftOffsetPct = (placement.x_offset_cm / activeShelf.width_cm) * 100;
 
+                          // Height proportional to row height so outline hugs product physical height
+                          const itemHeightPct = Math.min(100, Math.max(15, (product.height_cm / rowHeightCm) * 100));
+
                           return (
                             <div
                               key={placement.id}
@@ -471,25 +521,25 @@ export function ShelfCanvas({
                               style={{
                                 left: `${leftOffsetPct}%`,
                                 width: `${itemWidthPct}%`,
-                                maxHeight: "100%",
+                                height: `${itemHeightPct}%`,
                               }}
-                              className={`absolute bottom-1 flex flex-col items-center justify-end group cursor-pointer transition-all ${
+                              className={`absolute bottom-0 flex flex-col items-center justify-end group cursor-pointer transition-all ${
                                 isSelected
-                                  ? "z-20 ring-2 ring-amber-500 shadow-md"
-                                  : "z-10 hover:z-20 hover:ring-1 hover:ring-blue-400"
+                                  ? "z-20 ring-2 ring-amber-500 bg-amber-500/10 rounded-t shadow-md"
+                                  : "z-10 hover:z-20 hover:ring-1 hover:ring-blue-400 rounded-t"
                               }`}
                               data-testid={`placement-${placement.id}`}
                               title={`${product.name} (${product.width_cm}cm x ${product.height_cm}cm) - At ${placement.x_offset_cm}cm`}
                             >
-                              {/* Facings row */}
-                              <div className="w-full flex items-end justify-center h-full">
+                              {/* Facings row: flex-1 so packshot scales within proportional product height */}
+                              <div className="w-full flex-1 min-h-0 flex items-end justify-center">
                                 {Array.from({ length: placement.facing_count }).map((_, fIdx) => (
                                   <div
                                     key={`facing-${fIdx}`}
                                     className="flex-1 flex flex-col items-center justify-end h-full px-0.5"
                                   >
                                     {/* Packshot Image preserving aspect ratio */}
-                                    <div className="w-full h-16 sm:h-20 flex items-end justify-center overflow-hidden">
+                                    <div className="w-full h-full flex items-end justify-center overflow-hidden">
                                       {/* eslint-disable-next-line @next/next/no-img-element */}
                                       <img
                                         src={getImageUrl(product.image_path)}
