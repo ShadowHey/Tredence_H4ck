@@ -37,6 +37,7 @@ export interface Shelf {
   row_count: number;
   has_plinth: boolean;
   plinth_height_cm: number;
+  row_heights?: number[] | null;
   order_index: number;
   placements: Placement[];
   created_at: string;
@@ -101,6 +102,7 @@ export interface ExportShelf {
   row_count: number;
   has_plinth: boolean;
   plinth_height_cm: number;
+  row_heights?: number[] | null;
   placements: ExportPlacement[];
 }
 

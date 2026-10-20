@@ -22,3 +22,12 @@ def get_db():
 def init_db(target_engine=None):
     use_engine = target_engine or engine
     Base.metadata.create_all(bind=use_engine)
+    try:
+        with use_engine.connect() as conn:
+            res = conn.exec_driver_sql("PRAGMA table_info(shelves);")
+            cols = [row[1] for row in res.fetchall()]
+            if cols and "row_heights" not in cols:
+                conn.exec_driver_sql("ALTER TABLE shelves ADD COLUMN row_heights TEXT;")
+                conn.commit()
+    except Exception:
+        pass

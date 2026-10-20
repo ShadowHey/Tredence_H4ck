@@ -1,5 +1,6 @@
 from datetime import datetime
 from sqlalchemy import (
+    JSON,
     Column,
     Integer,
     String,
@@ -66,6 +67,7 @@ class Shelf(Base):
     row_count = Column(Integer, nullable=False, default=4)
     has_plinth = Column(Boolean, default=False, nullable=False)
     plinth_height_cm = Column(Float, default=0.0, nullable=False)
+    row_heights = Column(JSON, nullable=True, default=None)
     order_index = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

@@ -25,6 +25,7 @@ def create_shelf_for_planogram(db: Session, planogram_id: int, shelf_in: ShelfCr
         has_plinth=shelf_in.has_plinth,
         plinth_height_cm=shelf_in.plinth_height_cm if shelf_in.has_plinth else 0.0,
         order_index=shelf_in.order_index,
+        row_heights=shelf_in.row_heights,
     )
     db.add(shelf)
     db.commit()

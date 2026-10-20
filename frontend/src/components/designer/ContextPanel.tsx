@@ -44,6 +44,20 @@ export function ContextPanel({
   const [activeTab, setActiveTab] = useState<"properties" | "library">("properties");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  // Calculate shelf row heights
+  const usableH = selectedShelf
+    ? selectedShelf.total_height_cm - (selectedShelf.has_plinth ? selectedShelf.plinth_height_cm : 0)
+    : 0;
+  const defaultH = selectedShelf ? Math.max(10, usableH / selectedShelf.row_count) : 10;
+  const shelfRowHeights = selectedShelf
+    ? Array.from({ length: selectedShelf.row_count }).map((_, idx) => {
+        if (selectedShelf.row_heights && selectedShelf.row_heights.length === selectedShelf.row_count) {
+          const val = selectedShelf.row_heights[idx];
+          if (typeof val === "number" && val > 0) return val;
+        }
+        return defaultH;
+      })
+    : [];
 
   // Filter products
   const categories = ["All", ...Array.from(new Set(products.map((p) => p.category || "General")))];
@@ -127,7 +141,7 @@ export function ContextPanel({
                     {selectedPlacement.product.sku}
                   </div>
                   <div className="text-[11px] text-gray-400">
-                    ₹{selectedPlacement.product.price.toFixed(2)} · {selectedPlacement.product.category}
+                    ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{selectedPlacement.product.price.toFixed(2)} Ã¢â‚¬Â¢ {selectedPlacement.product.category}
                   </div>
                 </div>
               </div>
@@ -537,14 +551,14 @@ export function ContextPanel({
                       {product.sku}
                     </span>
                     <span className="text-[10px] font-mono text-gray-300">
-                      ₹{product.price.toFixed(0)}
+                      ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{product.price.toFixed(0)}
                     </span>
                   </div>
                   <h4 className="text-xs font-semibold text-gray-100 truncate mt-0.5">
                     {product.name}
                   </h4>
                   <div className="text-[10px] text-gray-400 font-mono mt-0.5">
-                    {product.width_cm} × {product.height_cm} cm
+                    {product.width_cm}{" \u00D7 "}{product.height_cm} cm
                   </div>
                 </div>
 

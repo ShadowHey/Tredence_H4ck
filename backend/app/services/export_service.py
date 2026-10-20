@@ -46,6 +46,7 @@ def export_planogram_json(db: Session, planogram_id: int) -> PlanogramExportJSON
                 row_count=shelf.row_count,
                 has_plinth=shelf.has_plinth,
                 plinth_height_cm=shelf.plinth_height_cm,
+                row_heights=shelf.row_heights,
                 placements=exported_placements,
             )
         )

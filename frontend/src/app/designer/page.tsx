@@ -417,6 +417,7 @@ function DesignerContent() {
           onMovePlacement={handleMovePlacement}
           onDeletePlacement={handleDeletePlacement}
           collisionWarning={collisionWarning}
+          onUpdateShelf={handleUpdateShelf}
         />
 
         {/* Right: Context Panel (Properties & Product Library) */}
