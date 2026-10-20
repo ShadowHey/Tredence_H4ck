@@ -8,6 +8,7 @@ import { AddShelfModal } from "@/components/designer/AddShelfModal";
 import { AddProductModal } from "@/components/designer/AddProductModal";
 import { ContextPanel } from "@/components/designer/ContextPanel";
 import { Shelf, Product } from "@/types";
+import { api } from "@/lib/api";
 
 const mockProduct: Product = {
   id: 1,
@@ -193,6 +194,38 @@ describe("AddProductModal Component", () => {
     expect(screen.getByText("Add Catalogue Product")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("e.g. BEV-001")).toBeInTheDocument();
     expect(screen.getByText("Physical Dimensions (cm)")).toBeInTheDocument();
+  });
+
+  it("submits manual product details and calls onProductCreated with database fields", async () => {
+    const onProductCreated = vi.fn();
+    const createdMock: Product = {
+      ...mockProduct,
+      id: 99,
+      sku: "MANUAL-001",
+      name: "Manual Orange Drink",
+    };
+    vi.spyOn(api, "createProductMultipart").mockResolvedValueOnce(createdMock);
+
+    render(
+      <AddProductModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onProductCreated={onProductCreated}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("e.g. BEV-001"), {
+      target: { value: "MANUAL-001" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("e.g. Citrus Soda Can"), {
+      target: { value: "Manual Orange Drink" },
+    });
+
+    const submitBtn = screen.getByText("Save to Product Library");
+    await fireEvent.click(submitBtn);
+
+    expect(api.createProductMultipart).toHaveBeenCalled();
+    expect(onProductCreated).toHaveBeenCalledWith(createdMock);
   });
 });
 

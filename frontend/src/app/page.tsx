@@ -18,7 +18,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { DashboardMetrics } from "@/types";
+import { DashboardMetrics, Product } from "@/types";
+import { AddProductModal } from "@/components/designer/AddProductModal";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function DashboardPage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
 
   const handleDeletePlanogram = async (id: number, name: string) => {
     if (
@@ -155,6 +157,16 @@ export default function DashboardPage() {
             title="Refresh dashboard"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-amber-400" : ""}`} />
+          </button>
+
+          <button
+            onClick={() => setShowAddProductModal(true)}
+            data-testid="dashboard-add-product-btn"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#1a1e26] hover:bg-[#222733] border border-[#262b36] text-amber-400 hover:text-amber-300 font-semibold text-sm transition-colors shadow-sm"
+            title="Add a new product manually to database"
+          >
+            <Package className="w-4 h-4" />
+            <span>Add Product</span>
           </button>
 
           <button
@@ -467,6 +479,16 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      {/* Add Product Modal */}
+      <AddProductModal
+        isOpen={showAddProductModal}
+        onClose={() => setShowAddProductModal(false)}
+        onProductCreated={async (prod) => {
+          setShowAddProductModal(false);
+          await loadData();
+          setSeedMessage(`Product "${prod.name}" (${prod.sku}) created and saved to database!`);
+        }}
+      />
     </div>
   );
 }

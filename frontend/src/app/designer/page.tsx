@@ -11,6 +11,7 @@ import {
   CheckCircle,
   ArrowLeft,
   Trash2,
+  Package,
 } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -471,6 +472,16 @@ function DesignerContent() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setShowAddProductModal(true)}
+            data-testid="header-add-product-btn"
+            className="px-3 py-1.5 rounded-lg bg-[#1a1e26] hover:bg-[#222733] border border-[#262b36] text-amber-400 hover:text-amber-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            title="Create a new catalogue product manually"
+          >
+            <Package className="w-3.5 h-3.5" />
+            <span>Add Product</span>
+          </button>
+
           <button
             onClick={() => setShowAddShelfModal(true)}
             data-testid="header-add-shelf-btn"
