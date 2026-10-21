@@ -1,8 +1,8 @@
-from typing import List, Dict, Any
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.db.models import Placement, Shelf
+from app.db.models import Placement
 from app.api.schemas.planogram import (
     PlanogramCreate,
     PlanogramUpdate,

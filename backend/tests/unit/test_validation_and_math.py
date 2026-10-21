@@ -4,15 +4,12 @@ from fastapi import HTTPException
 
 from app.api.schemas.product import ProductCreate
 from app.api.schemas.shelf import ShelfCreate
-from app.api.schemas.export import PlanogramExportJSON
 from app.db.models import Shelf, Product, Placement
 from app.services.placement_service import (
     validate_placement_bounds_and_overlap,
     calculate_row_capacity,
     find_next_available_x,
 )
-from app.services.shelf_service import update_shelf
-from app.api.schemas.shelf import ShelfUpdate
 
 def test_product_schema_validation():
     # Valid product

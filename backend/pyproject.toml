@@ -18,6 +18,14 @@ dependencies = [
     "pillow>=10.2.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pyright]
+include = ["app", "tests"]
+extraPaths = [".", "app"]
+
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]

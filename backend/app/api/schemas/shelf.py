@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field, model_validator, field_validator, ConfigDict
+from app.api.schemas.product import ProductResponse
 
 class ShelfBase(BaseModel):
     name: str = Field("Shelf 01", min_length=1, max_length=255)
@@ -51,8 +52,6 @@ class ShelfUpdate(BaseModel):
                 if self.plinth_height_cm >= self.total_height_cm:
                     raise ValueError("Plinth height must be less than total shelf height.")
         return self
-
-from app.api.schemas.product import ProductResponse
 
 class PlacementInShelf(BaseModel):
     id: int

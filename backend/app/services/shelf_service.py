@@ -1,7 +1,6 @@
-from typing import List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from app.db.models import Shelf, Planogram, Placement
+from app.db.models import Shelf, Planogram
 from app.api.schemas.shelf import ShelfCreate, ShelfUpdate
 
 def get_shelf_by_id(db: Session, shelf_id: int) -> Shelf:

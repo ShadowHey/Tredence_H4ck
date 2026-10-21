@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 
-from app.db.database import Base, get_db
+from app.db.database import Base, get_db, enable_sqlite_foreign_keys
 from app.core.config import settings
 from app.main import app
 
@@ -28,6 +28,7 @@ def db_session(temp_uploads_dir):
     temp_db_file = temp_uploads_dir / f"test_{tempfile.mktemp().split('/')[-1]}.db"
     test_db_url = f"sqlite:///{temp_db_file}"
     engine = create_engine(test_db_url, connect_args={"check_same_thread": False})
+    enable_sqlite_foreign_keys(engine)
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
     Base.metadata.create_all(bind=engine)

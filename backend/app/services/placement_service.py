@@ -1,7 +1,5 @@
-from typing import List, Tuple
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
-from app.db.models import Shelf, Product, Placement
+from app.db.models import Shelf, Product
 
 EPSILON_CM = 0.01  # tolerance for floating point comparisons in cm
 

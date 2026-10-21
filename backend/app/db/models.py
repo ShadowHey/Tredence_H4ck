@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Column,
     Integer,
@@ -9,10 +9,13 @@ from sqlalchemy import (
     ForeignKey,
     Text,
     CheckConstraint,
-    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 from app.db.database import Base
+
+def utc_now():
+    """Returns timezone-aware UTC datetime."""
+    return datetime.now(timezone.utc)
 
 class Product(Base):
     __tablename__ = "products"
@@ -29,8 +32,8 @@ class Product(Base):
     depth_cm = Column(Float, nullable=False)
     image_path = Column(String(500), nullable=False)
     is_sample = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     placements = relationship("Placement", back_populates="product", passive_deletes="all")
 
@@ -48,8 +51,8 @@ class Planogram(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     shelves = relationship("Shelf", back_populates="planogram", cascade="all, delete-orphan", order_by="Shelf.order_index")
 
@@ -67,8 +70,8 @@ class Shelf(Base):
     has_plinth = Column(Boolean, default=False, nullable=False)
     plinth_height_cm = Column(Float, default=0.0, nullable=False)
     order_index = Column(Integer, default=0, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     planogram = relationship("Planogram", back_populates="shelves")
     placements = relationship("Placement", back_populates="shelf", cascade="all, delete-orphan", order_by="Placement.x_offset_cm")
@@ -91,8 +94,8 @@ class Placement(Base):
     row_index = Column(Integer, nullable=False)  # 0 to row_count - 1
     x_offset_cm = Column(Float, nullable=False, default=0.0)  # position from left edge of row in cm
     facing_count = Column(Integer, nullable=False, default=1)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     shelf = relationship("Shelf", back_populates="placements")
     product = relationship("Product", back_populates="placements")

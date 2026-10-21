@@ -1,6 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
-from app.db.models import Planogram
 from app.services.planogram_service import get_planogram_by_id
 from app.api.schemas.export import (
     PlanogramExportJSON,
@@ -73,5 +72,5 @@ def export_planogram_json(db: Session, planogram_id: int) -> PlanogramExportJSON
         description=planogram.description,
         shelves=exported_shelves,
         products=exported_products,
-        exported_at=datetime.utcnow().isoformat() + "Z",
+        exported_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     )
