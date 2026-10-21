@@ -108,3 +108,26 @@ npm run build --prefix frontend
 - `torchvision 0.23.0`
 - `open-clip-torch 3.3.0`
 - Pretrained weights: `models--timm--vit_base_patch32_clip_224.openai` cached locally in `~/.cache/huggingface/`.
+
+---
+
+### [2026-10-22 00:54 IST] Individual Cutout Downloads & Fetch Failure Fix
+- **Commit**: [`947e73a`](https://github.com/ShadowHey/Tredence_H4ck/commit/947e73a)
+- **Author**: Dhruv
+- **Branch**: `feature/dhruv`
+
+#### Files Created
+| File Path | Description / Role |
+| :--- | :--- |
+| `e2e/tests/cutout_download.spec.ts` | Chromium regression test for downloading an individual rendered cutout. |
+
+#### Files Modified
+| File Path | Changes Made |
+| :--- | :--- |
+| `backend/app/api/routes/image_processing.py` | Added the single-cutout JPEG attachment route. |
+| `backend/app/services/cutout_service.py` | Added safe persisted-cutout path resolution and archive creation support. |
+| `frontend/src/components/outputs/CutoutViewerModal.tsx` | Added native individual download links to cards and crop details. |
+| `frontend/tests/analysis-and-cutouts.test.tsx` | Added a test for the individual download control and API base URL mock. |
+
+#### Database Changes
+- None.

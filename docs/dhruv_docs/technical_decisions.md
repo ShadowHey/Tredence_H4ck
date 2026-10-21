@@ -89,3 +89,20 @@ To enable visual planogram merchandising compliance and product grouping, catalo
 - **Database Architecture**: SQLite JSON column (`embedding JSON`) added to the `products` table. Auto-migration checks `PRAGMA table_info(products)` on startup and adds the column without manual migration scripts.
 - **Deterministic Identity Requirement**: Ensured identical packshots produce identical embeddings. Verified on Product #7 ("Yellow Lays") vs duplicate copy: Cosine Similarity = **1.000000** (100.00% exact match).
 - **No Unwanted HTTP Endpoints**: Per user direction, avoided public vector comparison routes and instead built `backend/scripts/inspect_embeddings.py` for direct SQLite CLI inspection (`--list`, `--compare`, `--test-copy`, `--backfill`).
+
+---
+
+### [2026-10-22 00:54 IST] Individual Cutout Downloads & Fetch Failure Fix
+- **Commit**: [`947e73a`](https://github.com/ShadowHey/Tredence_H4ck/commit/947e73a)
+- **Status**: Implemented and verified
+
+#### Decision
+Expose a backend-owned `GET /api/v1/outputs/{output_id}/cutouts/{cutout_id}/download` route that resolves a cutout only from persisted output metadata, then serves it with `Content-Disposition: attachment`.
+
+#### Rationale
+The previous client-side blob fetch depended on a separate asset request and surfaced “Failed to fetch” when that request was interrupted. Direct attachment links use the browser download mechanism, while server-side lookup maps semantic categories (`product`, `shelf`, `empty_space`) to their actual pluralized storage directories.
+
+#### Verification
+- `backend/.venv/bin/pytest backend/tests -q` — 35 passed.
+- Frontend type-check, focused Vitest test, and production build passed.
+- Chromium Playwright confirmed a downloaded `.jpg` and no “Failed to fetch” banner.

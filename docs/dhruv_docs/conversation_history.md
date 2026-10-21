@@ -93,3 +93,17 @@ Dhruv requested semantic vector embeddings for catalog products using CLIP:
 - Calculated cross-product separation against Amul Chocolate (#8): **0.581489 (58.15%)**.
 - All 14 backend pytest unit and integration tests passed in 4.34s.
 - Committed and pushed to `feature/dhruv`.
+
+---
+
+### [2026-10-22 00:54 IST] Individual Cutout Downloads & Fetch Failure Fix
+- **Commit**: [`947e73a`](https://github.com/ShadowHey/Tredence_H4ck/commit/947e73a)
+- **Participants**: Dhruv & Codex
+
+#### Request
+Dhruv reported that the cutout inspector showed “Failed to fetch” and asked for a fix verified in Playwright.
+
+#### Outcome
+- Diagnosed the failure in the individual browser-side cutout download path rather than the overall output-analysis page.
+- Implemented a server-resolved JPEG attachment endpoint and replaced blob fetching with native download links on each card and its detail dialog.
+- Confirmed the exact visible cutout downloads in Chromium with no error banner.

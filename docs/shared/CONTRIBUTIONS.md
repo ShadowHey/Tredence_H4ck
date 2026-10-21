@@ -178,3 +178,25 @@ This document is automatically updated upon every feature or fix commit. It info
   - `frontend/src/components/designer/ContextPanel.tsx`: Added trigger button and state handler.
   - `frontend/src/components/designer/ShelfCanvas.tsx`: Product placement sync.
   - `frontend/tests/components.test.tsx`: Unit tests for modal submission and field validations.
+
+---
+
+### [2026-10-22 00:54 IST] Individual Cutout Downloads and Reliable Attachment Delivery
+- **Contributor**: Dhruv
+- **Commit**: [`947e73a`](https://github.com/ShadowHey/Tredence_H4ck/commit/947e73a)
+- **Summary of What Was Done**:
+  - Added an authenticated-by-record, server-resolved endpoint for downloading one extracted cutout as a JPEG attachment.
+  - Replaced the browser-side blob fetch with ordinary download links, preventing the user-facing “Failed to fetch” state during cutout downloads.
+  - Added a Chromium Playwright journey that opens the inspector, downloads one exact crop, and verifies the absence of the error banner.
+- **How to Run / Test**:
+  ```bash
+  backend/.venv/bin/pytest backend/tests -q
+  cd frontend && npx tsc --noEmit && npm test -- --run tests/analysis-and-cutouts.test.tsx && npm run build
+  cd ../e2e && npx playwright test tests/cutout_download.spec.ts --reporter=list
+  ```
+- **Files Affected**:
+  - `backend/app/api/routes/image_processing.py`: Added the individual cutout attachment endpoint.
+  - `backend/app/services/cutout_service.py`: Resolves persisted category folders safely and builds cutout archives.
+  - `frontend/src/components/outputs/CutoutViewerModal.tsx`: Added per-card and detail-view download links.
+  - `frontend/tests/analysis-and-cutouts.test.tsx`: Covered the visible individual download control.
+  - `e2e/tests/cutout_download.spec.ts` *(New)*: Browser download regression coverage.
