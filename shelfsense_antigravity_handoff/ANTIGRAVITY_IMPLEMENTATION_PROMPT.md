@@ -7,7 +7,7 @@ You are working in the existing `Tredence_H4ck` repository. Implement the **firs
 3. MoEngage analytics dashboard: use for the dark premium SaaS shell, sidebar, cards, hierarchy and restrained color palette.
 4. Blender Outliner: use for the left-side nested scene hierarchy of planogram > shelves > rows > product placements.
 
-Read `AGENTS.md`, `README.md`, `PRODUCT_SPEC.md`, and `sample_assets/README.md` before you start. Treat `PRODUCT_SPEC.md` as the requirements source of truth. Treat the screenshots as visual references, not images to embed as product assets. If the repository already has code, inspect it and preserve unrelated work.
+Read the repository-root `AGENTS.md`, `README.md`, `sample_assets/README.md`, and this handoff's `PRODUCT_SPEC.md` before you start. Treat `PRODUCT_SPEC.md` as the requirements source of truth. Treat the screenshots as visual references, not images to embed as product assets. The repository-root `sample_assets/` directory is the single canonical source of demo catalogue data and packshots. If the repository already has code, inspect it and preserve unrelated work.
 
 ## Desired result
 
@@ -37,7 +37,7 @@ Keep a modular monolith in the same repository. Do not add authentication, cloud
 1. On first opening the designer, the shelf canvas is empty and asks the user to add a shelf.
 2. Add Shelf creates a selectable shelf node in the outliner and a visible shelf in the canvas.
 3. A shelf supports name, width cm, total height cm, depth cm, row count (1-12) and optional bottom plinth/base-header with a height. All visible measurements and editor properties must agree with stored dimensions.
-4. Product creation supports product image, name, unique SKU, width/height/depth in cm, price and currency. Include preview, validation, friendly errors, and persistent save. Seed at least three sample products, preferably all six from `sample_assets/catalogue.sample.json` and `sample_assets/images/`.
+4. Product creation supports product image, name, unique SKU, width/height/depth in cm, price and currency. Include preview, validation, friendly errors, and persistent save. Seed at least three sample products, preferably all six from the repository-root `sample_assets/catalogue.sample.json` and `sample_assets/images/`.
 5. Users can drag a catalogue product to a row. Dropping creates a placement; dragging it again creates another facing. Support moving placements between rows and horizontal ordering. Product width controls occupied row width; product height influences its visual display while preserving aspect ratio. Product depth is recorded even though this editor is front-facing 2D.
 6. Use snapping/physical coordinates. Reject overlap or a placement beyond available row width; explain why instead of silently shrinking items. Show row capacity/used width in cm.
 7. Outliner tree represents Planogram > Shelves > Rows > Product placements, supports selection and expand/collapse, and updates with data changes. Allow adding multiple shelves.
