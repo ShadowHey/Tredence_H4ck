@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
@@ -11,7 +12,8 @@ from sqlalchemy.exc import IntegrityError
 from app.core.config import settings
 from app.core.logging_config import setup_unified_logging, log_backend
 from app.db.database import init_db
-from app.api.routes import health, products, planograms, seed, logs
+from app.services.image_processing_service import process_pending_jobs, recover_interrupted_jobs
+from app.api.routes import health, products, planograms, seed, logs, image_processing
 
 logger = logging.getLogger("shelfsense")
 
@@ -21,6 +23,9 @@ async def lifespan(app: FastAPI):
     setup_unified_logging()
     # Initialize database tables on startup
     init_db()
+    # Resume durable image jobs that were in flight if the server previously stopped.
+    recover_interrupted_jobs()
+    asyncio.create_task(asyncio.to_thread(process_pending_jobs))
     log_backend("INFO", "STARTUP", "FastAPI server and SQLite database initialized.")
     yield
     log_backend("INFO", "SHUTDOWN", "FastAPI server shutting down.")
@@ -94,6 +99,7 @@ app.include_router(products.router, prefix=settings.API_V1_PREFIX)
 app.include_router(planograms.router, prefix=settings.API_V1_PREFIX)
 app.include_router(seed.router, prefix=settings.API_V1_PREFIX)
 app.include_router(logs.router, prefix=settings.API_V1_PREFIX)
+app.include_router(image_processing.router, prefix=settings.API_V1_PREFIX)
 
 @app.get("/")
 def root():
@@ -104,4 +110,3 @@ def root():
         "health": "/health",
         "api_v1": settings.API_V1_PREFIX,
     }
-

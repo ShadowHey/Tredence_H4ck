@@ -6,6 +6,8 @@ import {
   LayoutDashboard,
   Layers,
   Store,
+  ImagePlus,
+  Images,
 } from "lucide-react";
 
 export function Sidebar() {
@@ -23,6 +25,18 @@ export function Sidebar() {
       href: "/designer",
       icon: Layers,
       active: pathname.startsWith("/designer"),
+    },
+    {
+      label: "Input Images",
+      href: "/input-images",
+      icon: ImagePlus,
+      active: pathname.startsWith("/input-images"),
+    },
+    {
+      label: "Outputs",
+      href: "/outputs",
+      icon: Images,
+      active: pathname.startsWith("/outputs"),
     },
   ];
 
