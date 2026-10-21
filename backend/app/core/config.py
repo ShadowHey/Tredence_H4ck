@@ -27,8 +27,13 @@ class Settings(BaseSettings):
         "image/jpeg",
         "image/png",
         "image/webp",
+        "image/bmp",
         "image/svg+xml"
     ]
+
+    IMAGE_PROCESSING_MAX_UPLOAD_SIZE_BYTES: int = 15 * 1024 * 1024
+    IMAGE_PROCESSING_TIMEOUT_SECONDS: int = 300
+    IMAGE_PARSING_DIR: Path = BASE_DIR.parent / "image-parsing"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

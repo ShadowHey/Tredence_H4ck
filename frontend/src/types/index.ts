@@ -126,3 +126,51 @@ export interface PlanogramExportJSON {
   }[];
   exported_at: string;
 }
+
+export type InputImageStatus = "ready" | "queued" | "processing" | "processed" | "failed";
+
+export interface ShelfSnapshot {
+  id: number;
+  name: string;
+  width_cm: number;
+  total_height_cm: number;
+  depth_cm: number;
+  row_count: number;
+}
+
+export interface InputImage {
+  id: number;
+  original_filename: string;
+  storage_path: string;
+  content_type: string;
+  size_bytes: number;
+  status: InputImageStatus;
+  planogram_id?: number | null;
+  shelf_id?: number | null;
+  shelf_snapshot?: ShelfSnapshot | null;
+  created_at: string;
+  updated_at: string;
+  job_id?: number | null;
+  error_message?: string | null;
+  output_id?: number | null;
+}
+
+export interface ProcessedOutput {
+  id: number;
+  input_image_id: number;
+  job_id: number;
+  annotated_image_path: string;
+  result_json_path: string;
+  metrics: {
+    product_count?: number;
+    empty_region_count?: number;
+    shelf_row_count?: number;
+    empty_area_percentage?: number | null;
+  };
+  created_at: string;
+  source_filename: string;
+  planogram_id?: number | null;
+  planogram_name?: string | null;
+  shelf_id?: number | null;
+  shelf_snapshot?: ShelfSnapshot | null;
+}
