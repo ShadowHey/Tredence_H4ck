@@ -29,5 +29,11 @@ def init_db(target_engine=None):
             if cols and "row_heights" not in cols:
                 conn.exec_driver_sql("ALTER TABLE shelves ADD COLUMN row_heights TEXT;")
                 conn.commit()
+
+            res_prod = conn.exec_driver_sql("PRAGMA table_info(products);")
+            prod_cols = [row[1] for row in res_prod.fetchall()]
+            if prod_cols and "embedding" not in prod_cols:
+                conn.exec_driver_sql("ALTER TABLE products ADD COLUMN embedding JSON;")
+                conn.commit()
     except Exception:
         pass

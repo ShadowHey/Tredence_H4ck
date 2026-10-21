@@ -53,6 +53,25 @@ def create_product(db: Session, product_in: ProductCreate) -> Product:
     db.add(product)
     db.commit()
     db.refresh(product)
+
+    # Compute and persist vector embedding for the product (background job tracking)
+    import time
+    from app.core.logging_config import log_job_start, log_job_done, log_job_error
+
+    task_id = f"job_emb_{product.id}"
+    log_job_start("CLIP", task_id, f"Product #{product.id} ('{product.name}') | SKU: {product.sku}")
+    t0 = time.perf_counter()
+    try:
+        from app.services.embedding_service import embedding_service
+        vec = embedding_service.compute_image_embedding(product.image_path)
+        product.embedding = vec
+        db.commit()
+        db.refresh(product)
+        duration_ms = (time.perf_counter() - t0) * 1000
+        log_job_done("CLIP", task_id, duration_ms, f"Product #{product.id} 512-dim vector stored in SQLite")
+    except Exception as e:
+        log_job_error("CLIP", task_id, f"Embedding generation failed for product #{product.id}: {e}")
+
     return product
 
 def update_product(db: Session, product_id: int, product_in: ProductUpdate) -> Product:
@@ -62,6 +81,25 @@ def update_product(db: Session, product_id: int, product_in: ProductUpdate) -> P
         setattr(product, field, value)
     db.commit()
     db.refresh(product)
+
+    if "image_path" in update_data:
+        import time
+        from app.core.logging_config import log_job_start, log_job_done, log_job_error
+
+        task_id = f"job_emb_upd_{product.id}"
+        log_job_start("CLIP", task_id, f"Updated image for Product #{product.id} ('{product.name}')")
+        t0 = time.perf_counter()
+        try:
+            from app.services.embedding_service import embedding_service
+            vec = embedding_service.compute_image_embedding(product.image_path)
+            product.embedding = vec
+            db.commit()
+            db.refresh(product)
+            duration_ms = (time.perf_counter() - t0) * 1000
+            log_job_done("CLIP", task_id, duration_ms, f"Product #{product.id} vector updated in SQLite")
+        except Exception as e:
+            log_job_error("CLIP", task_id, f"Embedding update failed: {e}")
+
     return product
 
 def delete_product(db: Session, product_id: int) -> dict:

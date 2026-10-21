@@ -30,6 +30,7 @@ class Product(Base):
     depth_cm = Column(Float, nullable=False)
     image_path = Column(String(500), nullable=False)
     is_sample = Column(Boolean, default=False, nullable=False)
+    embedding = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 

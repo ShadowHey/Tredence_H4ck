@@ -3,6 +3,7 @@
 import { useState, useRef, useMemo, useEffect } from "react";
 import { Package, Upload, AlertCircle, Image as ImageIcon, Sparkles, Check, X } from "lucide-react";
 import { api } from "@/lib/api";
+import { logFrontendAction } from "@/lib/logger";
 import { Product } from "@/types";
 
 interface AddProductModalProps {
@@ -211,6 +212,10 @@ export function AddProductModal({
       formData.append("image", finalImageFile);
 
       const created = await api.createProductMultipart(formData);
+      logFrontendAction(
+        "ACTION:PRODUCT_ADD",
+        `Created product "${created.name}" (SKU: ${created.sku}, Category: ${created.category}, ${created.width_cm}x${created.height_cm}x${created.depth_cm}cm)`
+      );
       onProductCreated(created);
       onClose();
     } catch (err: unknown) {
