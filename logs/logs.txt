@@ -3,3 +3,70 @@
 [2026-10-21 06:38:30.109] [JOB     ] [INFO ] [JOB-START:CLIP] Task: job_emb_12 | Product #12 ('Salted Almonds') | SKU: SNK-PREMIUM-01
 [2026-10-21 06:38:30.185] [JOB     ] [INFO ] [JOB-DONE:CLIP] Task: job_emb_12 | Product #12 512-dim vector stored in SQLite | Duration: 75.9ms
 [2026-10-21 06:38:30.186] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/products -> 201 (84.1ms)
+[2026-10-21 06:54:26.028] [JOB     ] [INFO ] [JOB-START:CLIP] Task: job_emb_13 | Product #13 ('Amul Dark Chocolate') | SKU: BEV-003
+[2026-10-21 06:54:26.270] [JOB     ] [INFO ] [JOB-DONE:CLIP] Task: job_emb_13 | Product #13 512-dim vector stored in SQLite | Duration: 241.5ms
+[2026-10-21 06:54:26.272] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/products -> 201 (281.8ms)
+[2026-10-21 06:54:26.282] [FRONTEND] [INFO ] [ACTION:PRODUCT_ADD] Created product "Amul Dark Chocolate" (SKU: BEV-003, Category: Snacks, 8x15x5cm)
+[2026-10-21 06:54:26.331] [BACKEND ] [INFO ] [HTTP:GET] /uploads/products/35da7360d3c643948653a8145a8e5df2.jpg -> 200 (7.4ms)
+[2026-10-21 08:03:04.652] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (61.6ms)
+[2026-10-21 08:03:04.658] [BACKEND ] [INFO ] [HTTP:GET] /v1/models -> 404 (1.7ms)
+[2026-10-21 08:03:34.673] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (7.1ms)
+[2026-10-21 08:03:34.677] [BACKEND ] [INFO ] [HTTP:GET] /v1/models -> 404 (0.5ms)
+[2026-10-21 08:04:04.692] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (10.1ms)
+[2026-10-21 08:04:04.694] [BACKEND ] [INFO ] [HTTP:GET] /v1/models -> 404 (0.4ms)
+[2026-10-21 08:04:34.714] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (9.2ms)
+[2026-10-21 08:04:34.718] [BACKEND ] [INFO ] [HTTP:GET] /v1/models -> 404 (0.8ms)
+[2026-10-21 08:05:04.731] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (5.8ms)
+[2026-10-21 08:05:04.733] [BACKEND ] [INFO ] [HTTP:GET] /v1/models -> 404 (0.3ms)
+[2026-10-21 08:05:34.746] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (8.0ms)
+[2026-10-21 08:05:34.749] [BACKEND ] [INFO ] [HTTP:GET] /v1/models -> 404 (0.4ms)
+[2026-10-21 08:06:04.774] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (17.6ms)
+[2026-10-21 08:06:04.777] [BACKEND ] [INFO ] [HTTP:GET] /v1/models -> 404 (0.4ms)
+[2026-10-21 08:06:34.792] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (7.7ms)
+[2026-10-21 08:06:34.795] [BACKEND ] [INFO ] [HTTP:GET] /v1/models -> 404 (0.5ms)
+[2026-10-21 08:07:04.810] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (6.9ms)
+[2026-10-21 08:07:04.813] [BACKEND ] [INFO ] [HTTP:GET] /v1/models -> 404 (0.4ms)
+[2026-10-21 08:07:34.833] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (12.2ms)
+[2026-10-21 08:07:34.837] [BACKEND ] [INFO ] [HTTP:GET] /v1/models -> 404 (0.9ms)
+[2026-10-21 08:07:49.619] [BACKEND ] [INFO ] [STARTUP] FastAPI server and SQLite database initialized.
+[2026-10-21 08:07:49.620] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (0.8ms)
+[2026-10-21 08:07:49.621] [BACKEND ] [INFO ] [SHUTDOWN] FastAPI server shutting down.
+[2026-10-21 08:07:49.628] [BACKEND ] [INFO ] [STARTUP] FastAPI server and SQLite database initialized.
+[2026-10-21 08:07:49.636] [JOB     ] [INFO ] [JOB-START:CLIP] Task: job_emb_1 | Product #1 ('Integration Cola Can') | SKU: TEST-INT-001
+[2026-10-21 08:07:52.522] [JOB     ] [ERROR] [JOB-ERROR:CLIP] Task: job_emb_1 | Error: Embedding generation failed for product #1: cannot identify image file '/var/folders/lg/xzc3xqgd2lz2wqf74144zb1r0000gn/T/test_uploads_pkw7u0la/products/d0447f612a414d91a3961357c73a7374.png'
+[2026-10-21 08:07:52.525] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/products -> 201 (2896.6ms)
+[2026-10-21 08:07:52.531] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/products -> 409 (4.7ms)
+[2026-10-21 08:07:52.534] [BACKEND ] [INFO ] [HTTP:GET] /api/v1/products/1 -> 200 (2.2ms)
+[2026-10-21 08:07:52.535] [BACKEND ] [INFO ] [SHUTDOWN] FastAPI server shutting down.
+[2026-10-21 08:07:52.594] [BACKEND ] [INFO ] [STARTUP] FastAPI server and SQLite database initialized.
+[2026-10-21 08:07:52.603] [JOB     ] [INFO ] [JOB-START:CLIP] Task: job_emb_1 | Product #1 ('Flow Cookie Box') | SKU: PROD-FLOW-1
+[2026-10-21 08:07:52.604] [JOB     ] [ERROR] [JOB-ERROR:CLIP] Task: job_emb_1 | Error: Embedding generation failed for product #1: Product image file not found: 'uploads/sample.png'
+[2026-10-21 08:07:52.604] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/products/direct -> 201 (9.2ms)
+[2026-10-21 08:07:52.611] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/planograms -> 201 (5.8ms)
+[2026-10-21 08:07:52.620] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/planograms/1/shelves -> 201 (8.3ms)
+[2026-10-21 08:07:52.625] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/shelves/1/placements -> 201 (5.0ms)
+[2026-10-21 08:07:52.627] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/shelves/1/placements -> 422 (1.2ms)
+[2026-10-21 08:07:52.628] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/shelves/1/placements -> 422 (1.0ms)
+[2026-10-21 08:07:52.630] [BACKEND ] [INFO ] [HTTP:GET] /api/v1/shelves/1/capacity/0 -> 200 (1.1ms)
+[2026-10-21 08:07:52.636] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/shelves/1/placements -> 201 (5.2ms)
+[2026-10-21 08:07:52.640] [BACKEND ] [INFO ] [HTTP:PATCH] /api/v1/shelves/1 -> 422 (3.8ms)
+[2026-10-21 08:07:52.642] [BACKEND ] [INFO ] [HTTP:GET] /api/v1/planograms/1/export.json -> 200 (1.3ms)
+[2026-10-21 08:07:52.758] [BACKEND ] [INFO ] [HTTP:GET] /api/v1/planograms/metrics -> 200 (115.9ms)
+[2026-10-21 08:07:52.759] [BACKEND ] [INFO ] [SHUTDOWN] FastAPI server shutting down.
+[2026-10-21 08:07:52.768] [BACKEND ] [INFO ] [STARTUP] FastAPI server and SQLite database initialized.
+[2026-10-21 08:07:52.772] [JOB     ] [INFO ] [JOB-START:CLIP] Task: job_emb_1 | Product #1 ('Adjust Can') | SKU: PROD-ADJUST-1
+[2026-10-21 08:07:52.772] [JOB     ] [ERROR] [JOB-ERROR:CLIP] Task: job_emb_1 | Error: Embedding generation failed for product #1: Product image file not found: 'uploads/sample.png'
+[2026-10-21 08:07:52.772] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/products/direct -> 201 (3.8ms)
+[2026-10-21 08:07:52.775] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/planograms -> 201 (2.7ms)
+[2026-10-21 08:07:52.779] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/planograms/1/shelves -> 201 (3.0ms)
+[2026-10-21 08:07:52.783] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/shelves/1/placements -> 201 (3.5ms)
+[2026-10-21 08:07:52.786] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/shelves/1/placements -> 201 (2.2ms)
+[2026-10-21 08:07:52.788] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/shelves/1/placements -> 201 (2.1ms)
+[2026-10-21 08:07:52.791] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/shelves/1/placements -> 201 (2.0ms)
+[2026-10-21 08:07:52.794] [BACKEND ] [INFO ] [HTTP:DELETE] /api/v1/placements/2 -> 200 (2.8ms)
+[2026-10-21 08:07:52.796] [BACKEND ] [INFO ] [HTTP:GET] /api/v1/planograms/1 -> 200 (1.3ms)
+[2026-10-21 08:07:52.796] [BACKEND ] [INFO ] [SHUTDOWN] FastAPI server shutting down.
+[2026-10-21 08:07:57.550] [FRONTEND] [INFO ] [ACTION:SHELF_ADD] Created shelf "Shelf 01" (120x180cm, 4 rows)
+[2026-10-21 08:07:57.550] [FRONTEND] [INFO ] [ACTION:PRODUCT_ADD] Created product "Manual Orange Drink" (SKU: MANUAL-001, Category: Beverages, 6.5x12.2x6.5cm)
+[2026-10-21 08:08:04.851] [BACKEND ] [INFO ] [HTTP:GET] /health -> 200 (6.6ms)
+[2026-10-21 08:08:04.854] [BACKEND ] [INFO ] [HTTP:GET] /v1/models -> 404 (0.4ms)
