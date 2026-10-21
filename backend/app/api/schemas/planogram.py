@@ -38,3 +38,7 @@ class PlanogramResponse(PlanogramBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class PlanogramCloneRequest(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255, description="Name for the cloned planogram")
+

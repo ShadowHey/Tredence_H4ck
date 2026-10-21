@@ -1,7 +1,6 @@
-from typing import List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from app.db.models import Shelf, Planogram, Placement
+from app.db.models import Shelf, Planogram
 from app.api.schemas.shelf import ShelfCreate, ShelfUpdate
 
 def get_shelf_by_id(db: Session, shelf_id: int) -> Shelf:
@@ -54,9 +53,9 @@ def update_shelf(db: Session, shelf_id: int, shelf_in: ShelfUpdate) -> Shelf:
 
     # Shelf width reduction check: do existing placements exceed new width?
     if "width_cm" in update_data and update_data["width_cm"] is not None:
-        new_width = update_data["width_cm"]
+        new_width = float(update_data["width_cm"])
         for p in shelf.placements:
-            item_end = p.x_offset_cm + (p.product.width_cm * p.facing_count)
+            item_end = float(p.x_offset_cm) + (float(p.product.width_cm) * p.facing_count)
             if item_end > new_width + 0.01:
                 raise HTTPException(
                     status_code=422,
@@ -65,6 +64,27 @@ def update_shelf(db: Session, shelf_id: int, shelf_in: ShelfUpdate) -> Shelf:
                         f"extends to {item_end:.1f}cm on Row {p.row_index + 1}."
                     )
                 )
+
+    # Vertical clearance check: do existing placements exceed new row vertical clearance?
+    new_total_height = float(update_data.get("total_height_cm", shelf.total_height_cm))
+    new_row_count = int(update_data.get("row_count", shelf.row_count))
+    new_has_plinth = bool(update_data.get("has_plinth", shelf.has_plinth))
+    new_plinth_height = float(update_data.get("plinth_height_cm", shelf.plinth_height_cm if new_has_plinth else 0.0))
+    new_usable_height = max(0.0, new_total_height - (new_plinth_height if new_has_plinth else 0.0))
+    new_row_clearance = new_usable_height / new_row_count if new_row_count > 0 else 0.0
+
+    for p in shelf.placements:
+        if p.product and float(p.product.height_cm) > new_row_clearance + 0.01:
+            overflow = round(float(p.product.height_cm) - new_row_clearance, 2)
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Cannot update shelf dimensions because product '{p.product.name}' (SKU: {p.product.sku}) "
+                    f"height ({float(p.product.height_cm):.1f}cm) exceeds new row clearance ({new_row_clearance:.1f}cm) "
+                    f"by {overflow:.1f}cm on Row {p.row_index + 1}."
+                )
+            )
+
 
     for field, value in update_data.items():
         setattr(shelf, field, value)

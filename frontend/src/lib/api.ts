@@ -123,6 +123,13 @@ export const api = {
       method: "DELETE",
     }),
 
+  clonePlanogram: (id: number, name?: string) =>
+    request<Planogram>(`/api/v1/planograms/${id}/clone`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(name ? { name } : {}),
+    }),
+
   // Shelves
   createShelf: (planogramId: number, data: Partial<Shelf>) =>
     request<Shelf>(`/api/v1/planograms/${planogramId}/shelves`, {
@@ -154,6 +161,41 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  autoPackPlacement: (shelfId: number, data: { product_id: number; row_index: number; facing_count?: number }) =>
+    request<Placement>(`/api/v1/shelves/${shelfId}/placements/auto-pack`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+
+  suggestSlot: (shelfId: number, data: { product_id: number; row_index: number; facing_count?: number }) =>
+    request<{ shelf_id: number; product_id: number; row_index: number; x_offset_cm: number; facing_count: number }>(
+      `/api/v1/shelves/${shelfId}/placements/suggest-slot`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }
+    ),
+
+  autoArrangeRow: (shelfId: number, rowIndex: number) =>
+    request<{ shelf_id: number; row_index: number; rearranged_count: number; placements: Placement[] }>(
+      `/api/v1/shelves/${shelfId}/rows/${rowIndex}/auto-arrange`,
+      {
+        method: "POST",
+      }
+    ),
+
+  batchCreatePlacements: (
+    shelfId: number,
+    placements: Array<{ product_id: number; row_index: number; x_offset_cm: number; facing_count?: number }>
+  ) =>
+    request<Placement[]>(`/api/v1/shelves/${shelfId}/placements/batch`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ placements }),
+    }),
+
   updatePlacement: (placementId: number, data: { row_index?: number; x_offset_cm?: number; facing_count?: number }) =>
     request<Placement>(`/api/v1/placements/${placementId}`, {
       method: "PATCH",
@@ -166,6 +208,21 @@ export const api = {
       method: "DELETE",
     }),
 
+  // Categories & CSV
+  getCategories: () =>
+    request<Array<{ category: string; count: number }>>("/api/v1/products/categories"),
+
+  getExportProductsCSVUrl: () => `${API_BASE_URL}/api/v1/products/export/csv`,
+
+  importProductsCSV: (formData: FormData) =>
+    request<{ total_rows: number; created: number; updated: number; errors: string[] }>(
+      "/api/v1/products/import/csv",
+      {
+        method: "POST",
+        body: formData,
+      }
+    ),
+
   // Export
   exportPlanogramJSON: (planogramId: number) =>
     request<PlanogramExportJSON>(`/api/v1/planograms/${planogramId}/export.json`),
@@ -176,3 +233,4 @@ export const api = {
       method: "POST",
     }),
 };
+

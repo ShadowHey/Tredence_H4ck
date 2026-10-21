@@ -25,3 +25,25 @@ class PlacementResponse(PlacementBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class AutoPackRequest(BaseModel):
+    product_id: int = Field(..., description="ID of product to pack")
+    row_index: int = Field(..., ge=0, description="Row index to pack into")
+    facing_count: int = Field(1, ge=1, description="Number of facings")
+
+class SlotSuggestionResponse(BaseModel):
+    shelf_id: int
+    product_id: int
+    row_index: int
+    x_offset_cm: float
+    facing_count: int
+
+class AutoArrangeResponse(BaseModel):
+    shelf_id: int
+    row_index: int
+    rearranged_count: int
+    placements: list[PlacementResponse]
+
+class BatchPlacementRequest(BaseModel):
+    placements: list[PlacementCreate] = Field(..., min_length=1, description="List of placements to create atomically")
+

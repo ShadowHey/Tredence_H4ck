@@ -1,7 +1,8 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.db.models import Planogram, Shelf, Placement, Product
+
 from app.api.schemas.planogram import PlanogramCreate, PlanogramUpdate, PlanogramSummary
 
 def list_planograms(db: Session) -> List[PlanogramSummary]:
@@ -58,6 +59,50 @@ def delete_planogram(db: Session, planogram_id: int) -> dict:
     db.delete(planogram)
     db.commit()
     return {"message": f"Planogram '{planogram.name}' deleted successfully."}
+
+def clone_planogram(db: Session, planogram_id: int, new_name: Optional[str] = None) -> Planogram:
+    """
+    Clones an existing planogram with all shelves and placements as a reusable template.
+    """
+    source = get_planogram_by_id(db, planogram_id)
+    cloned_name = new_name.strip() if new_name and new_name.strip() else f"{source.name} (Copy)"
+
+    cloned = Planogram(
+        name=cloned_name,
+        description=f"Cloned from '{source.name}'. {source.description or ''}".strip(),
+    )
+    db.add(cloned)
+    db.flush()
+
+    for s in source.shelves:
+        cloned_shelf = Shelf(
+            planogram_id=cloned.id,
+            name=s.name,
+            width_cm=s.width_cm,
+            total_height_cm=s.total_height_cm,
+            depth_cm=s.depth_cm,
+            row_count=s.row_count,
+            has_plinth=s.has_plinth,
+            plinth_height_cm=s.plinth_height_cm,
+            order_index=s.order_index,
+        )
+        db.add(cloned_shelf)
+        db.flush()
+
+        for p in s.placements:
+            cloned_placement = Placement(
+                shelf_id=cloned_shelf.id,
+                product_id=p.product_id,
+                row_index=p.row_index,
+                x_offset_cm=p.x_offset_cm,
+                facing_count=p.facing_count,
+            )
+            db.add(cloned_placement)
+
+    db.commit()
+    db.refresh(cloned)
+    return cloned
+
 
 def get_dashboard_metrics(db: Session) -> Dict[str, Any]:
     """
