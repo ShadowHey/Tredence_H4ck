@@ -131,3 +131,41 @@ Tredence_H4ck/
 
 - **Implemented**: Full-stack planogram designer, physical cm coordinate system, zero-overlap collision validation, Blender-style outliner, MoEngage-style dark dashboard, product catalogue with file uploads, PNG & versioned JSON exports, and full test suites.
 - **Future Scope (Stage 2+)**: Computer vision shelf auditing, live photograph compliance scoring, YOLO/RT-DETR object detection, CLIP product embeddings, OCR price-tag reading.
+
+
+ROOT DIRECTORY USECASE AND FOLDER-FILE WORK
+
+
+`backend/` — FastAPI backend application. Contains API routes, SQLAlchemy database models, business logic services, upload/file storage, backend scripts, and backend unit/integration tests. It owns SQLite access and persistent uploaded product files.
+
+`frontend/` — Next.js and TypeScript web application. Contains the dashboard, planogram designer UI, reusable React components, API client, frontend utilities, type definitions, and Vitest unit tests.
+
+`image-parsing/` — Independent computer-vision and ML pipeline for shelf-image analysis. Contains YOLO model weights, CV configuration, shelf-image inputs, detection/segmentation source code, CLI tools, generated annotations/JSON/CSV outputs, and its own test suite.
+
+`e2e/` — Playwright browser automation package. Contains end-to-end user-journey tests for the running frontend and its Playwright-specific configuration and dependencies.
+
+`sample_assets/` — Single canonical collection of version-controlled demo catalogue data and unbranded product packshots. Used when seeding the application with sample products.
+
+`scripts/` — Repository-level maintenance and developer scripts that are not owned by one application module. Currently includes catalogue seeding functionality.
+
+`logs/` — Local development observability tools. Contains the log collector/viewer script and runtime logs produced by frontend activity, backend API requests, and background jobs.
+
+`docs/` — Project documentation and persistent team context.
+
+`docs/shared/` — Team-wide source-of-truth documents: architecture, API contract, product specification, user guide, test plan, testing procedures, and the universal contributions ledger.
+
+`docs/dhruv_docs/` — Dhruv’s contributor journal: decisions, history, affected files, and timeline of work.
+
+`docs/kumar_docs/` — Kumar Saurav’s contributor journal: decisions, history, affected files, and timeline of work.
+
+`docs/gyan_docs/` — Gyan’s contributor journal: decisions, history, affected files, and timeline of work.
+
+`docs/archive/` — Historical handoff packages, old specifications, original prompts, raw working notes, and legacy documents that are useful as reference but are not active project documentation.
+
+`Makefile` — Central shortcut list for common developer commands: dependency installation, sample-data seeding, starting backend/frontend services, testing, linting, builds, and cleanup.
+
+`README.md` — Main project entry point. Explains ShelfSense AI’s purpose, architecture, setup, commands, testing workflow, and high-level repository map.
+
+`AGENTS.md` — Rules for humans and AI coding agents. Defines architecture standards, testing expectations, physical-coordinate requirements, visual direction, and the documentation protocol.
+
+`.gitignore` — Defines local/generated files that Git must not track, including virtual environments, dependencies, databases, uploads, caches, test reports, and environment variables.

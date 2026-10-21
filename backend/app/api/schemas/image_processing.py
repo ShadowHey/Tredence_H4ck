@@ -60,3 +60,56 @@ class ProcessedOutputResponse(BaseModel):
 
 class ExportRequest(BaseModel):
     output_ids: list[int] = Field(min_length=1)
+
+
+class CutoutItem(BaseModel):
+    id: str
+    category: str
+    crop_path: str
+    bbox_xyxy: list[int]
+    confidence: float
+    row_number: Optional[int] = None
+    cluster_id: Optional[int] = None
+    area_px: Optional[int] = None
+
+
+class CutoutsResponse(BaseModel):
+    output_id: int
+    source_filename: str
+    total_count: int
+    products: list[CutoutItem]
+    shelves: list[CutoutItem]
+    empty_spaces: list[CutoutItem]
+
+
+class CatalogMatchedProduct(BaseModel):
+    id: int
+    sku: str
+    name: str
+    category: str
+    image_path: str
+    price: float
+    currency: str
+
+
+class ClusterRow(BaseModel):
+    cluster_id: int
+    item_count: int
+    similar_objects: list[CutoutItem]
+    similarity_percentage: float
+    is_catalog_match: bool
+    catalog_confidence: float
+    catalog_product: Optional[CatalogMatchedProduct] = None
+
+
+class OutputAnalysisResponse(BaseModel):
+    output_id: int
+    source_filename: str
+    planogram_name: Optional[str] = None
+    shelf_name: Optional[str] = None
+    shelf_dimensions: Optional[str] = None
+    total_detections: int
+    total_clusters: int
+    matched_clusters_count: int
+    catalog_confidence_threshold: float = 0.95
+    clusters: list[ClusterRow]

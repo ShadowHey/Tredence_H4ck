@@ -1,4 +1,4 @@
-For the unified logging feature 
+"21 OCT , 7 AM , Dhruv Bisht , UNIFIED LOGGING FEATURE"
 
 Ran command: `ls -la backend/app/`
 Viewed main.py:1-50
@@ -168,4 +168,161 @@ Tredence_H4ck/
    - Frontend vitest suite: **9/9 passed**
 3. **Git Status**: Synced with `origin/feature/dhruv`.
 
-date: 21 october, 7 am 
+DONE
+
+---
+
+"21 OCT , 9 AM , Dhruv Bisht , IMPROVED DOCS FEATURE"
+
+Multi-Collaborator Documentation System Implemented
+The documentation architecture has been reorganized and deployed. All specifications, team registries, collaborator workspace journals, and agent protocols have been committed and pushed to origin feature/dhruv (7e1b2f0).
+
+1. Implemented Directory Tree
+
+docs/
+├── HandSaved.md                           # 📝 Preserved user notes & scratchpad
+│
+├── shared/                                # 🌐 GLOBAL SOURCE OF TRUTH (All collaborators & AI agents)
+│   ├── ARCHITECTURE.md                    # System architecture, tech stack & data pipelines
+│   ├── API_CONTRACT.md                    # REST endpoints, schemas, payloads & error codes
+│   ├── PRODUCT_SPEC.md                    # Physical coordinates (cm vs px), rules & collision bounds
+│   ├── USER_GUIDE.md                      # Planogram operator walkthrough & feature manual
+│   ├── TEST_PLAN.md                       # Comprehensive testing strategy & edge cases
+│   ├── TESTING.md                         # Unit & integration testing execution guidelines
+│   └── CONTRIBUTIONS.md                   # 🌟 Universal ledger: Contributor, Feature, Commit, How to Run, Summary & Files Affected
+│
+├── dhruv_docs/                            # 👤 DHRUV'S WORKSPACE LOG
+│   ├── README.md                          # Master timeline with Date & Time, commit links & active tasks
+│   ├── technical_decisions.md             # Architecture Decision Records (ADRs) with Date & Time
+│   ├── conversation_history.md            # Discussion transcripts & reasoning evolution with Date & Time
+│   ├── files_affected.md                  # Blast-radius tracking (files modified/added per commit)
+│   └── DECISIONS_Stage1.md                # Historical Stage 1 specification log (moved from root)
+│
+├── kumar_docs/                            # 👤 KUMAR SAURAV'S WORKSPACE LOG
+│   ├── README.md                          # Master timeline with Date & Time, commit links & active tasks
+│   ├── technical_decisions.md             # Frontend UI decisions & canvas rules stamped with Date & Time
+│   ├── conversation_history.md            # Discussion transcripts & reasoning stamped with Date & Time
+│   └── files_affected.md                  # Blast-radius tracking for frontend components
+│
+└── gyan_docs/                             # 👤 GYAN'S WORKSPACE LOG
+    ├── README.md                          # Master timeline with Date & Time, commit links & active tasks
+    ├── technical_decisions.md             # Integration & CV pipeline decisions stamped with Date & Time
+    ├── conversation_history.md            # Discussion transcripts & reasoning stamped with Date & Time
+    └── files_affected.md                  # Blast-radius tracking for test & service integrations
+
+2. Universal Ledger: 
+
+docs/shared/CONTRIBUTIONS.md
+Populated with live, verified data including exact copy-pasteable commands on how to run/test each feature:
+
+3. Collaborator Journals (Backfilled & Initialized)
+Each collaborator’s folder contains the complete 4-file system with mandatory Date & Time stamps:
+
+
+
+docs/dhruv_docs/
+:
+
+
+
+README.md
+: Master timeline connecting 19710ad (Unified Logging), 38b2583 (CLIP Vector Embeddings), and d4d47e5 (Stage 1 Core).
+
+
+technical_decisions.md
+: Detailed ADRs for CLIP CPU inference singleton, $L_2$ unit normalization, zero-touch SQLite migration, and thread-safe immediate-flush logging.
+
+
+conversation_history.md
+: Context and requirement logs from the prompts.
+
+
+files_affected.md
+: Exact per-commit blast-radius maps detailing modified files, new files, and DB schema changes.
+
+
+DECISIONS_Stage1.md
+: Stage 1 specification archive moved from root.
+
+
+docs/kumar_docs/
+:
+
+
+
+README.md
+, 
+
+technical_decisions.md
+, 
+
+conversation_history.md
+, and 
+
+files_affected.md
+ populated with Kumar's manual product modal, shelf headroom clearance, and auto-shifting logic.
+
+
+docs/gyan_docs/
+:
+
+Initialized with standard templates ready for integration pipelines and CV inference models.
+
+4. Updated Root Protocol (
+
+AGENTS.md
+)
+Added clear rules to 
+
+AGENTS.md
+ governing how coding agents interact with the repository:
+
+Context Discovery: Any agent reading previous work must inspect docs/shared/CONTRIBUTIONS.md first, then drill down into docs/<name>_docs/.
+Auto-Updating on Completion: Whenever an agent commits code for a collaborator, it must append to docs/shared/CONTRIBUTIONS.md (with "How to Run" commands) and the 4 files in docs/<author>_docs/ with exact Date & Time.
+Zero Merge Conflicts: Agents never touch another collaborator's journal folder.
+
+DONE
+
+---
+
+## 2026-10-21 21:07 IST DHRUV — Shelf Image Intake, Processing & Outputs
+
+### Requirement and Design Decisions
+
+Dhruv requested two new workspace pages: **Input Images** and **Outputs**. Multiple shelf photographs can be uploaded for staging, but each photograph must be selected and processed individually after the user chooses one existing Planogram and one Shelf belonging to it. Every generated result must remain traceable to its original image, planogram, and shelf.
+
+### Implemented Workflow
+
+```text
+Upload shelf photographs → select one input image → choose planogram + shelf
+→ queue serial background job → image-parsing annotation + JSON
+→ review/export/delete traceable output
+```
+
+- Added persistent SQLite records for input images, processing jobs, and processed outputs.
+- Added sequential and restart-recoverable processing through the isolated `image-parsing` environment.
+- Added Input Images and Outputs navigation pages, source/shelf snapshots, ZIP export, output deletion, and tests across backend, frontend, and Playwright.
+- Diagnosed and fixed the live upload failure: the backend was an old non-reloading Uvicorn process that did not include the new `/api/v1/input-images` routes and returned `404 Not Found`. Restarting it with `--reload` registered the routes.
+
+### Live Verification
+
+Used existing sample shelf photos `test_image.jpg` and `test_987.jpg`:
+
+- Uploaded both images and assigned them to `Pipeline Verification Planogram` / `Pipeline Verification Shelf`.
+- Processed both one at a time with the real CV pipeline.
+- Verified annotated JPG and detection JSON output generation, traceability, and ZIP export manifest.
+- Verified 90 product detections for `test_image.jpg` and 173 for `test_987.jpg`.
+
+### Commits Pushed to `origin/feature/dhruv`
+
+- `c104bb2` — `chore(assets): remove duplicate handoff catalogue`
+- `30474fc` — `feat(image-processing): add shelf-linked intake and outputs`
+- `b67ff48` — `docs: record image processing and asset cleanup`
+
+### Verification Commands
+
+```bash
+backend/.venv/bin/pytest backend/tests -v
+cd frontend && npx tsc --noEmit && npm test && npm run build
+cd e2e && npx playwright test --list
+```

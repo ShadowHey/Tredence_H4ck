@@ -2,6 +2,39 @@
 
 ---
 
+### [2026-10-21 22:45 IST] YOLO Cutout Extraction, Semantic Clustering & 4-Column Analysis Table
+- **Commit**: [`8a0b94e`](https://github.com/ShadowHey/Tredence_H4ck/commit/8a0b94e)
+- **Status**: Implemented & Verified in Production
+
+#### 1. Context & Problem Statement
+From the YOLO shelf detection pipeline, bounding box coordinates are produced for products, shelf structures, and void spaces. Operators need to:
+1. Visually inspect the individual cropped images categorized into three distinct buckets: `products`, `shelves`, and `empty_spaces`.
+2. Group repeated identical product faces on a shelf (visual clustering).
+3. Semantically match detected visual clusters against the product catalog using dense vector embeddings.
+4. Enforce a strict $\ge 95\%$ confidence cutoff for catalog matches, presenting a clean 4-column compliance view where non-matches strictly omit any catalog packshot image.
+
+#### 2. Options Considered
+- **Option 1**: Compute CLIP vectors sequentially on each cropped bounding box on HTTP request.
+  - *Cons*: Sequential CLIP processing takes ~360ms per crop. A shelf with 150+ products would take >50 seconds to respond, blocking the UI thread.
+- **Option 2 (Chosen)**: Fast batched PyTorch CLIP inference (`compute_image_embeddings_batch`, batch size 32) coupled with asynchronous precomputation upon job completion.
+  - *Pros*: Cuts inference time to **15.6ms per crop**. 150+ crops are embedded in <2.5 seconds. Results are persisted to disk (`cutouts.json`, `analysis.json`) for instant sub-10ms UI reads.
+
+#### 3. Key Architectural Decisions
+- **Disk Cutout Organization**:
+  Stored in `uploads/image_processing/outputs/{job_id}/cutouts/` with separate subdirectories for `products/`, `shelves/`, and `empty_spaces/`.
+- **Intra-Shelf Clustering**:
+  Uses a leader-clustering algorithm with a strict visual similarity threshold $\tau = 0.88$. Items above $\tau$ are grouped into the same cluster.
+- **Catalog Matching Rule**:
+  Cluster centroid vectors are compared against SQLite `products.embedding` vectors via cosine similarity. If $\max(\text{similarity}) \ge 0.95$, `is_catalog_match = True`, and the catalog product details and packshot image are linked. If $< 0.95$, `is_catalog_match = False` and no catalog product is displayed.
+- **The 4-Column Table Specification**:
+  Implemented in `frontend/src/components/analysis/AnalysisTable.tsx`:
+  1. `Similar Objects`: Horizontal scrollable thumbnails of crops belonging to this cluster.
+  2. `Similarity Percentage`: Cluster visual cohesion percentage with color-coded meter.
+  3. `Is object similar to someone in the product catalog?`: Strictly `Yes` (green check) or `No` (gray cross).
+  4. `Similar Product`: Catalog packshot image and details if `Yes`; strictly NO product image rendered if `No`.
+
+---
+
 ### [2026-10-21 15:05 IST] Image Intake, Shelf Assignment & Annotated Outputs
 - **Commit**: [`30474fc`](https://github.com/ShadowHey/Tredence_H4ck/commit/30474fc)
 - **Status**: Implemented and verified.
@@ -56,3 +89,20 @@ To enable visual planogram merchandising compliance and product grouping, catalo
 - **Database Architecture**: SQLite JSON column (`embedding JSON`) added to the `products` table. Auto-migration checks `PRAGMA table_info(products)` on startup and adds the column without manual migration scripts.
 - **Deterministic Identity Requirement**: Ensured identical packshots produce identical embeddings. Verified on Product #7 ("Yellow Lays") vs duplicate copy: Cosine Similarity = **1.000000** (100.00% exact match).
 - **No Unwanted HTTP Endpoints**: Per user direction, avoided public vector comparison routes and instead built `backend/scripts/inspect_embeddings.py` for direct SQLite CLI inspection (`--list`, `--compare`, `--test-copy`, `--backfill`).
+
+---
+
+### [2026-10-22 00:54 IST] Individual Cutout Downloads & Fetch Failure Fix
+- **Commit**: [`947e73a`](https://github.com/ShadowHey/Tredence_H4ck/commit/947e73a)
+- **Status**: Implemented and verified
+
+#### Decision
+Expose a backend-owned `GET /api/v1/outputs/{output_id}/cutouts/{cutout_id}/download` route that resolves a cutout only from persisted output metadata, then serves it with `Content-Disposition: attachment`.
+
+#### Rationale
+The previous client-side blob fetch depended on a separate asset request and surfaced “Failed to fetch” when that request was interrupted. Direct attachment links use the browser download mechanism, while server-side lookup maps semantic categories (`product`, `shelf`, `empty_space`) to their actual pluralized storage directories.
+
+#### Verification
+- `backend/.venv/bin/pytest backend/tests -q` — 35 passed.
+- Frontend type-check, focused Vitest test, and production build passed.
+- Chromium Playwright confirmed a downloaded `.jpg` and no “Failed to fetch” banner.

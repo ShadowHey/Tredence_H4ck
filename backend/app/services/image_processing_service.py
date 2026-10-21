@@ -231,6 +231,14 @@ def process_pending_jobs() -> None:
                     job.status = "completed"
                     job.completed_at = datetime.utcnow()
                     db.commit()
+                    db.refresh(output)
+
+                    try:
+                        from app.services.cutout_service import extract_cutouts_and_analyze
+                        extract_cutouts_and_analyze(db, output.id)
+                    except Exception as err:
+                        log_backend("WARN", "ANALYSIS_DEFERRED", f"Job {job_id}: cutout analysis deferred: {err}")
+
                     log_backend("INFO", "IMAGE_DONE", f"Job {job_id}: input {input_id} processed successfully.")
                 finally:
                     db.close()

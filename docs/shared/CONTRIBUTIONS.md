@@ -9,6 +9,7 @@ This document is automatically updated upon every feature or fix commit. It info
 
 | Date & Time | Contributor | Feature / Fix | Commit | How to Run / Test | Summary of What Was Done | Files Affected |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-10-21 22:45 IST` | **Dhruv** | YOLO Cutout Extraction, Visual Clustering & 4-Col Analysis | `8a0b94e` | `backend/.venv/bin/pytest backend/tests/ -v && npm test --prefix frontend` | Cutout extraction into products/shelves/empty_spaces, batched CLIP embeddings, intra-shelf clustering, strict >= 95% catalog matching, Cutouts modal, and 4-column Analysis Table | 13 files (`backend/*`, `frontend/*`) |
 | `2026-10-21 15:05 IST` | **Dhruv** | Shelf-Linked Image Intake & Annotated Outputs | `30474fc` | `backend/.venv/bin/pytest backend/tests -v` | Added persistent one-image-at-a-time shelf-photo intake, serial CV processing, annotated outputs, ZIP export, and UI/E2E coverage | 15 files (`backend/*`, `frontend/*`, `e2e/*`) |
 | `2026-10-21 14:55 IST` | **Dhruv** | Canonical Demo Asset Cleanup | `c104bb2` | `diff -qr sample_assets shelfsense_antigravity_handoff/sample_assets` | Removed the duplicate handoff catalogue and made root `sample_assets/` the only canonical demo asset source | 16 files (`shelfsense_antigravity_handoff/*`) |
 | `2026-10-21 07:00 IST` | **Dhruv** | Unified Root Logging & Real-Time Job Streamer | `19710ad` | `python logs/log_collector.py --follow` | Root `logs/logs.txt`, background job timing, HTTP middleware & frontend log ingestion | 10 files (`logs/*`, `backend/*`, `frontend/src/lib/logger.ts`, modals) |
@@ -19,6 +20,52 @@ This document is automatically updated upon every feature or fix commit. It info
 ---
 
 ## 2. Detailed Contribution Records
+ 
+### [2026-10-21 22:45 IST] YOLO Cutout Extraction, Semantic Clustering & 4-Column Analysis Table
+- **Contributor**: Dhruv
+- **Commit**: [`8a0b94e`](https://github.com/ShadowHey/Tredence_H4ck/commit/8a0b94e)
+- **Summary of What Was Done**:
+  - Implemented automatic YOLO bounding box cropping into 3 categorized directories: `products/`, `shelves/`, and `empty_spaces/` stored under `uploads/image_processing/outputs/{job_id}/cutouts/`.
+  - Added fast batched PyTorch CLIP inference (`compute_image_embeddings_batch`), achieving ~15.6ms per crop and embedding 150+ crops in under 2.5 seconds.
+  - Implemented intra-shelf visual clustering with cohesion threshold $\tau = 0.88$ to group identical facings on the shelf.
+  - Implemented semantic catalog comparison against SQLite `products.embedding` enforcing strict $\ge 95\%$ confidence cutoff (`CATALOG_MATCH_THRESHOLD = 0.95`).
+  - Created interactive `CutoutViewerModal` component with 3 distinct tabs (`Products`, `Shelves / Rows`, `Empty Spaces`), confidence badges, row tags, and crop inspection zoom.
+  - Implemented top-level `/analysis` page with active shelf card, metric badges, output switcher, and the strict **4-column table**:
+    - **Col 1: Similar Objects** (horizontal thumbnail preview/cluster with zoom click).
+    - **Col 2: Similarity Percentage** (cluster cohesion score pill with visual meter).
+    - **Col 3: Is object similar to someone in the product catalog?** (strictly `Yes` with green check or `No` with gray cross).
+    - **Col 4: Similar Product** (if `Yes` and $\ge 95\%$, renders catalog packshot image, name, SKU, category, and price; if `No`, strictly displays NO product image).
+  - Added unit test suites covering all backend routes and frontend components (35 backend tests + 17 frontend tests all passing).
+- **How to Run / Test**:
+  ```bash
+  # 1. Run all backend tests
+  backend/.venv/bin/pytest backend/tests/ -v
+
+  # 2. Run frontend unit tests
+  npm test --prefix frontend
+
+  # 3. Build frontend bundle
+  npm run build --prefix frontend
+
+  # 4. Open in browser
+  # Navigate to http://localhost:3000/outputs -> Click any shelf image card -> View Cutouts Inspector modal
+  # Navigate to http://localhost:3000/analysis -> View 4-Column Table, filter pills, and crop zoom
+  ```
+- **Files Affected**:
+  - `backend/app/services/cutout_service.py` *(New)*
+  - `backend/app/services/embedding_service.py` *(Modified)*
+  - `backend/app/services/image_processing_service.py` *(Modified)*
+  - `backend/app/api/schemas/image_processing.py` *(Modified)*
+  - `backend/app/api/routes/image_processing.py` *(Modified)*
+  - `backend/tests/unit/test_cutouts_and_analysis.py` *(New)*
+  - `frontend/src/types/index.ts` *(Modified)*
+  - `frontend/src/lib/api.ts` *(Modified)*
+  - `frontend/src/components/shell/Sidebar.tsx` *(Modified)*
+  - `frontend/src/components/outputs/CutoutViewerModal.tsx` *(New)*
+  - `frontend/src/app/outputs/page.tsx` *(Modified)*
+  - `frontend/src/components/analysis/AnalysisTable.tsx` *(New)*
+  - `frontend/src/app/analysis/page.tsx` *(New)*
+  - `frontend/tests/analysis-and-cutouts.test.tsx` *(New)*
 
 ### [2026-10-21 15:05 IST] Shelf-Linked Image Intake & Annotated Outputs
 - **Contributor**: Dhruv
@@ -131,3 +178,25 @@ This document is automatically updated upon every feature or fix commit. It info
   - `frontend/src/components/designer/ContextPanel.tsx`: Added trigger button and state handler.
   - `frontend/src/components/designer/ShelfCanvas.tsx`: Product placement sync.
   - `frontend/tests/components.test.tsx`: Unit tests for modal submission and field validations.
+
+---
+
+### [2026-10-22 00:54 IST] Individual Cutout Downloads and Reliable Attachment Delivery
+- **Contributor**: Dhruv
+- **Commit**: [`947e73a`](https://github.com/ShadowHey/Tredence_H4ck/commit/947e73a)
+- **Summary of What Was Done**:
+  - Added an authenticated-by-record, server-resolved endpoint for downloading one extracted cutout as a JPEG attachment.
+  - Replaced the browser-side blob fetch with ordinary download links, preventing the user-facing “Failed to fetch” state during cutout downloads.
+  - Added a Chromium Playwright journey that opens the inspector, downloads one exact crop, and verifies the absence of the error banner.
+- **How to Run / Test**:
+  ```bash
+  backend/.venv/bin/pytest backend/tests -q
+  cd frontend && npx tsc --noEmit && npm test -- --run tests/analysis-and-cutouts.test.tsx && npm run build
+  cd ../e2e && npx playwright test tests/cutout_download.spec.ts --reporter=list
+  ```
+- **Files Affected**:
+  - `backend/app/api/routes/image_processing.py`: Added the individual cutout attachment endpoint.
+  - `backend/app/services/cutout_service.py`: Resolves persisted category folders safely and builds cutout archives.
+  - `frontend/src/components/outputs/CutoutViewerModal.tsx`: Added per-card and detail-view download links.
+  - `frontend/tests/analysis-and-cutouts.test.tsx`: Covered the visible individual download control.
+  - `e2e/tests/cutout_download.spec.ts` *(New)*: Browser download regression coverage.
