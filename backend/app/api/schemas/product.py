@@ -44,3 +44,21 @@ class ProductResponse(ProductBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class CategoryCountResponse(BaseModel):
+    category: str
+    count: int
+
+class ProductImportResult(BaseModel):
+    total_rows: int
+    created: int
+    updated: int
+    errors: list[str] = []
+
+class PaginatedProductsResponse(BaseModel):
+    items: list[ProductResponse]
+    total: int
+    page: int
+    limit: int
+    total_pages: int
+
