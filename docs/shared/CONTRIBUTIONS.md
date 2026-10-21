@@ -9,7 +9,7 @@ This document is automatically updated upon every feature or fix commit. It info
 
 | Date & Time | Contributor | Feature / Fix | Commit | How to Run / Test | Summary of What Was Done | Files Affected |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `2026-10-21 22:45 IST` | **Dhruv** | YOLO Cutout Extraction, Visual Clustering & 4-Col Analysis | `Pending` | `backend/.venv/bin/pytest backend/tests/ -v && npm test --prefix frontend` | Cutout extraction into products/shelves/empty_spaces, batched CLIP embeddings, intra-shelf clustering, strict >= 95% catalog matching, Cutouts modal, and 4-column Analysis Table | 13 files (`backend/*`, `frontend/*`) |
+| `2026-10-21 22:45 IST` | **Dhruv** | YOLO Cutout Extraction, Visual Clustering & 4-Col Analysis | `8a0b94e` | `backend/.venv/bin/pytest backend/tests/ -v && npm test --prefix frontend` | Cutout extraction into products/shelves/empty_spaces, batched CLIP embeddings, intra-shelf clustering, strict >= 95% catalog matching, Cutouts modal, and 4-column Analysis Table | 13 files (`backend/*`, `frontend/*`) |
 | `2026-10-21 15:05 IST` | **Dhruv** | Shelf-Linked Image Intake & Annotated Outputs | `30474fc` | `backend/.venv/bin/pytest backend/tests -v` | Added persistent one-image-at-a-time shelf-photo intake, serial CV processing, annotated outputs, ZIP export, and UI/E2E coverage | 15 files (`backend/*`, `frontend/*`, `e2e/*`) |
 | `2026-10-21 14:55 IST` | **Dhruv** | Canonical Demo Asset Cleanup | `c104bb2` | `diff -qr sample_assets shelfsense_antigravity_handoff/sample_assets` | Removed the duplicate handoff catalogue and made root `sample_assets/` the only canonical demo asset source | 16 files (`shelfsense_antigravity_handoff/*`) |
 | `2026-10-21 07:00 IST` | **Dhruv** | Unified Root Logging & Real-Time Job Streamer | `19710ad` | `python logs/log_collector.py --follow` | Root `logs/logs.txt`, background job timing, HTTP middleware & frontend log ingestion | 10 files (`logs/*`, `backend/*`, `frontend/src/lib/logger.ts`, modals) |
@@ -23,7 +23,7 @@ This document is automatically updated upon every feature or fix commit. It info
  
 ### [2026-10-21 22:45 IST] YOLO Cutout Extraction, Semantic Clustering & 4-Column Analysis Table
 - **Contributor**: Dhruv
-- **Commit**: `Pending`
+- **Commit**: [`8a0b94e`](https://github.com/ShadowHey/Tredence_H4ck/commit/8a0b94e)
 - **Summary of What Was Done**:
   - Implemented automatic YOLO bounding box cropping into 3 categorized directories: `products/`, `shelves/`, and `empty_spaces/` stored under `uploads/image_processing/outputs/{job_id}/cutouts/`.
   - Added fast batched PyTorch CLIP inference (`compute_image_embeddings_batch`), achieving ~15.6ms per crop and embedding 150+ crops in under 2.5 seconds.
