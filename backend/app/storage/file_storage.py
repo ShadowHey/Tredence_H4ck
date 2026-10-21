@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import uuid
-import shutil
 from pathlib import Path
 from fastapi import UploadFile, HTTPException
 from app.core.config import settings

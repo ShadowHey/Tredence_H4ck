@@ -1,14 +1,21 @@
 import asyncio
+import logging
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 import time
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import IntegrityError
 from app.core.config import settings
 from app.core.logging_config import setup_unified_logging, log_backend
 from app.db.database import init_db
 from app.services.image_processing_service import process_pending_jobs, recover_interrupted_jobs
 from app.api.routes import health, products, planograms, seed, logs, image_processing
+
+logger = logging.getLogger("shelfsense")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,6 +37,32 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
+
+# Exception handlers
+@app.exception_handler(IntegrityError)
+async def handle_integrity_error(request: Request, exc: IntegrityError):
+    orig_msg = str(exc.orig) if hasattr(exc, "orig") and exc.orig else str(exc)
+    logger.warning("Database IntegrityError: %s", orig_msg)
+
+    if "UNIQUE constraint failed" in orig_msg:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={"detail": f"Conflict: Unique constraint violation. {orig_msg}"},
+        )
+    if "FOREIGN KEY constraint failed" in orig_msg:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "Foreign key constraint failed: referenced entity does not exist or cannot be removed."},
+        )
+    if "CHECK constraint failed" in orig_msg:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={"detail": f"Check constraint failed: physical measurement or value rule violated. {orig_msg}"},
+        )
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"detail": f"Database integrity error: {orig_msg}"},
+    )
 
 # CORS
 app.add_middleware(

@@ -1,16 +1,25 @@
-from typing import List, Dict, Any
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.db.models import Placement, Shelf
+from app.db.models import Placement
 from app.api.schemas.planogram import (
     PlanogramCreate,
     PlanogramUpdate,
     PlanogramResponse,
     PlanogramSummary,
+    PlanogramCloneRequest,
 )
 from app.api.schemas.shelf import ShelfCreate, ShelfUpdate, ShelfResponse
-from app.api.schemas.placement import PlacementCreate, PlacementUpdate, PlacementResponse
+from app.api.schemas.placement import (
+    PlacementCreate,
+    PlacementUpdate,
+    PlacementResponse,
+    AutoPackRequest,
+    SlotSuggestionResponse,
+    AutoArrangeResponse,
+    BatchPlacementRequest,
+)
 from app.api.schemas.export import PlanogramExportJSON
 from app.services import (
     planogram_service,
@@ -52,9 +61,20 @@ def update_planogram(
 def delete_planogram(planogram_id: int, db: Session = Depends(get_db)):
     return planogram_service.delete_planogram(db, planogram_id)
 
+@router.post("/planograms/{planogram_id}/clone", response_model=PlanogramResponse, status_code=status.HTTP_201_CREATED)
+def clone_planogram(
+    planogram_id: int,
+    clone_in: Optional[PlanogramCloneRequest] = None,
+    db: Session = Depends(get_db)
+):
+    """Duplicates a planogram along with all shelves and placements as a template."""
+    new_name = clone_in.name if clone_in else None
+    return planogram_service.clone_planogram(db, planogram_id, new_name=new_name)
+
 @router.get("/planograms/{planogram_id}/export.json", response_model=PlanogramExportJSON)
 def export_planogram(planogram_id: int, db: Session = Depends(get_db)):
     return export_service.export_planogram_json(db, planogram_id)
+
 
 # --- Shelves ---
 
@@ -130,9 +150,9 @@ def update_placement(
     shelf = placement.shelf
     product = placement.product
 
-    target_row = placement_in.row_index if placement_in.row_index is not None else placement.row_index
-    target_x = placement_in.x_offset_cm if placement_in.x_offset_cm is not None else placement.x_offset_cm
-    target_facings = placement_in.facing_count if placement_in.facing_count is not None else placement.facing_count
+    target_row = int(placement_in.row_index) if placement_in.row_index is not None else int(placement.row_index)
+    target_x = float(placement_in.x_offset_cm) if placement_in.x_offset_cm is not None else float(placement.x_offset_cm)
+    target_facings = int(placement_in.facing_count) if placement_in.facing_count is not None else int(placement.facing_count)
 
     # Validate physical bounds and collision against other placements
     placement_service.validate_placement_bounds_and_overlap(
@@ -141,7 +161,7 @@ def update_placement(
         row_index=target_row,
         x_offset_cm=target_x,
         facing_count=target_facings,
-        exclude_placement_id=placement.id
+        exclude_placement_id=int(placement.id)
     )
 
     placement.row_index = target_row
@@ -150,6 +170,7 @@ def update_placement(
     db.commit()
     db.refresh(placement)
     return placement
+
 
 @router.delete("/placements/{placement_id}")
 def delete_placement(placement_id: int, db: Session = Depends(get_db)):
@@ -182,3 +203,75 @@ def delete_placement(placement_id: int, db: Session = Depends(get_db)):
 
     db.commit()
     return {"message": "Placement deleted successfully."}
+
+@router.post("/shelves/{shelf_id}/placements/auto-pack", response_model=PlacementResponse, status_code=status.HTTP_201_CREATED)
+def auto_pack_placement(
+    shelf_id: int,
+    request: AutoPackRequest,
+    db: Session = Depends(get_db)
+):
+    """Finds next available horizontal slot on row and places the product."""
+    shelf = shelf_service.get_shelf_by_id(db, shelf_id)
+    product = product_service.get_product_by_id(db, request.product_id)
+    next_x = placement_service.find_next_available_x(shelf, product, request.row_index, request.facing_count)
+
+    placement = Placement(
+        shelf_id=shelf_id,
+        product_id=request.product_id,
+        row_index=request.row_index,
+        x_offset_cm=round(next_x, 2),
+        facing_count=request.facing_count,
+    )
+    db.add(placement)
+    db.commit()
+    db.refresh(placement)
+    return placement
+
+@router.post("/shelves/{shelf_id}/placements/suggest-slot", response_model=SlotSuggestionResponse)
+def suggest_slot(
+    shelf_id: int,
+    request: AutoPackRequest,
+    db: Session = Depends(get_db)
+):
+    """Calculates next open slot coordinate without creating placement."""
+    shelf = shelf_service.get_shelf_by_id(db, shelf_id)
+    product = product_service.get_product_by_id(db, request.product_id)
+    next_x = placement_service.find_next_available_x(shelf, product, request.row_index, request.facing_count)
+    return SlotSuggestionResponse(
+        shelf_id=shelf_id,
+        product_id=request.product_id,
+        row_index=request.row_index,
+        x_offset_cm=next_x,
+        facing_count=request.facing_count
+    )
+
+@router.post("/shelves/{shelf_id}/rows/{row_index}/auto-arrange", response_model=AutoArrangeResponse)
+def auto_arrange_row(
+    shelf_id: int,
+    row_index: int,
+    db: Session = Depends(get_db)
+):
+    """Compacts and left-aligns all existing placements on row with 0 gaps."""
+    shelf = shelf_service.get_shelf_by_id(db, shelf_id)
+    rearranged = placement_service.auto_arrange_row(db, shelf, row_index)
+    return AutoArrangeResponse(
+        shelf_id=shelf_id,
+        row_index=row_index,
+        rearranged_count=len(rearranged),
+        placements=rearranged
+    )
+
+@router.post("/shelves/{shelf_id}/placements/batch", response_model=List[PlacementResponse], status_code=status.HTTP_201_CREATED)
+def create_batch_placements(
+    shelf_id: int,
+    batch_in: BatchPlacementRequest,
+    db: Session = Depends(get_db)
+):
+    """Atomically adds multiple placements to a shelf with cumulative bounds and collision validation."""
+    shelf = shelf_service.get_shelf_by_id(db, shelf_id)
+    product_ids = {p.product_id for p in batch_in.placements}
+    products = db.query(product_service.Product).filter(product_service.Product.id.in_(product_ids)).all()
+    lookup = {int(p.id): p for p in products}
+    return placement_service.batch_create_placements(db, shelf, batch_in.placements, lookup)
+
+

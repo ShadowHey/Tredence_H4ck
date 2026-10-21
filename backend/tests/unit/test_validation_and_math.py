@@ -4,15 +4,12 @@ from fastapi import HTTPException
 
 from app.api.schemas.product import ProductCreate
 from app.api.schemas.shelf import ShelfCreate
-from app.api.schemas.export import PlanogramExportJSON
 from app.db.models import Shelf, Product, Placement
 from app.services.placement_service import (
     validate_placement_bounds_and_overlap,
     calculate_row_capacity,
     find_next_available_x,
 )
-from app.services.shelf_service import update_shelf
-from app.api.schemas.shelf import ShelfUpdate
 
 def test_product_schema_validation():
     # Valid product
@@ -163,3 +160,20 @@ def test_next_available_x():
     # Next open slot is at 20cm
     next_x = find_next_available_x(shelf, prod, row_index=0)
     assert next_x == 20.0
+
+def test_vertical_clearance_validation():
+    # Shelf with total height 100cm, 4 rows -> clearance = 25cm per row
+    shelf = Shelf(id=1, width_cm=100.0, total_height_cm=100.0, row_count=4, plinth_height_cm=0.0)
+    shelf.placements = []
+
+    # Fits: product height 20cm <= 25cm clearance
+    fitting_prod = Product(id=1, sku="FIT", name="Fitting Box", width_cm=10.0, height_cm=20.0, depth_cm=10.0, price=5.0, image_path="")
+    validate_placement_bounds_and_overlap(shelf, fitting_prod, row_index=0, x_offset_cm=0.0)
+
+    # Exceeds: product height 30cm > 25cm clearance -> 422
+    tall_prod = Product(id=2, sku="TALL", name="Tall Bottle", width_cm=10.0, height_cm=30.0, depth_cm=10.0, price=5.0, image_path="")
+    with pytest.raises(HTTPException) as exc_info:
+        validate_placement_bounds_and_overlap(shelf, tall_prod, row_index=0, x_offset_cm=0.0)
+    assert exc_info.value.status_code == 422
+    assert "exceeds row vertical clearance" in exc_info.value.detail
+

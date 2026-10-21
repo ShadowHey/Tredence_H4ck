@@ -1,0 +1,16 @@
+{
+  "include": [
+    "backend",
+    "image-parsing"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.pytest_cache"
+  ],
+  "extraPaths": [
+    "backend",
+    "backend/app",
+    "image-parsing/src"
+  ]
+}

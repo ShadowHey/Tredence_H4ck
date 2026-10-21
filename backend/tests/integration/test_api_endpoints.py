@@ -1,5 +1,4 @@
 import io
-import pytest
 
 def test_health_check(client):
     res = client.get("/health")
@@ -85,6 +84,7 @@ def test_planogram_shelf_and_placement_workflow(client):
     })
     assert place_res.status_code == 201
     place_id = place_res.json()["id"]
+    assert place_id > 0
 
     # 5. Overlapping placement on Row 0 at 10cm is rejected with 422
     dup_res = client.post(f"/api/v1/shelves/{shelf_id}/placements", json={
@@ -148,6 +148,38 @@ def test_planogram_shelf_and_placement_workflow(client):
     assert metrics["total_planograms"] >= 1
     assert metrics["total_shelves"] >= 1
     assert metrics["total_products"] >= 1
+
+def test_foreign_key_and_integrity_error_responses(client):
+    # Non-existent shelf
+    res = client.post("/api/v1/shelves/99999/placements", json={
+        "product_id": 1,
+        "row_index": 0,
+        "x_offset_cm": 0.0,
+        "facing_count": 1
+    })
+    assert res.status_code == 404
+    assert "Shelf with ID 99999 not found" in res.json()["detail"]
+
+    # Non-existent product
+    plano_res = client.post("/api/v1/planograms", json={"name": "FK Test Plano"})
+    plano_id = plano_res.json()["id"]
+    shelf_res = client.post(f"/api/v1/planograms/{plano_id}/shelves", json={
+        "name": "FK Shelf",
+        "width_cm": 120.0,
+        "total_height_cm": 180.0,
+        "depth_cm": 40.0,
+        "row_count": 4
+    })
+    shelf_id = shelf_res.json()["id"]
+
+    res_missing_prod = client.post(f"/api/v1/shelves/{shelf_id}/placements", json={
+        "product_id": 88888,
+        "row_index": 0,
+        "x_offset_cm": 0.0,
+        "facing_count": 1
+    })
+    assert res_missing_prod.status_code == 404
+    assert "Product with ID 88888 not found" in res_missing_prod.json()["detail"]
 
 
 def test_delete_middle_placement_self_adjusts_subsequent_products(client):
