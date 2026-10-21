@@ -133,6 +133,42 @@ class ClipEmbeddingService:
 
         return vector
 
+    def compute_image_embeddings_batch(
+        self,
+        images: List[Union[str, Path, Image.Image]],
+        batch_size: int = 32,
+    ) -> List[List[float]]:
+        """Compute L2-normalized 512-dim embeddings for a list of images in batches."""
+        if not images:
+            return []
+
+        self._ensure_model_loaded()
+
+        pil_images: List[Image.Image] = []
+        for img_input in images:
+            if isinstance(img_input, (str, Path)):
+                resolved = self.resolve_image_path(str(img_input))
+                if resolved is None or not resolved.is_file():
+                    raise FileNotFoundError(f"Image file not found: '{img_input}'")
+                pil_images.append(Image.open(resolved).convert("RGB"))
+            elif isinstance(img_input, Image.Image):
+                pil_images.append(img_input.convert("RGB"))
+            else:
+                raise ValueError(f"Unsupported image input type: {type(img_input)}")
+
+        all_vectors: List[List[float]] = []
+
+        for i in range(0, len(pil_images), batch_size):
+            chunk = pil_images[i : i + batch_size]
+            tensors = torch.stack([self._preprocess(img) for img in chunk]).to(self._device)
+            with torch.no_grad():
+                features = self._model.encode_image(tensors)
+                features = features / features.norm(dim=-1, keepdim=True)
+                chunk_vectors = features.cpu().tolist()
+                all_vectors.extend(chunk_vectors)
+
+        return all_vectors
+
     @staticmethod
     def cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
         """Calculate cosine similarity between two L2-normalized vectors."""

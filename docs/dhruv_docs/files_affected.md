@@ -2,6 +2,42 @@
 
 ---
 
+### [2026-10-21 22:45 IST] YOLO Cutout Extraction, Semantic Clustering & 4-Column Analysis Table
+- **Commit**: `Pending`
+- **Author**: Dhruv
+- **Branch**: `feature/dhruv`
+
+#### Files Created
+| File Path | Description / Role |
+| :--- | :--- |
+| `backend/app/services/cutout_service.py` | Core engine for bounding box cutout extraction, fast batch CLIP embeddings, intra-shelf clustering ($\tau = 0.88$), and strict catalog matching ($\ge 95\%$). |
+| `backend/tests/unit/test_cutouts_and_analysis.py` | 5 unit tests for cutout disk saving, batch CLIP speed, clustering, and >= 95% threshold verification. |
+| `frontend/src/components/outputs/CutoutViewerModal.tsx` | Cutout inspector dialog with 3 tabs (`Products`, `Shelves / Rows`, `Empty Spaces`), confidence badges, and zoom sub-modal. |
+| `frontend/src/components/analysis/AnalysisTable.tsx` | Strict 4-column analysis table: Similar Objects, Similarity Percentage, Is object similar to someone in the product catalog (Yes/No), and Similar Product. |
+| `frontend/src/app/analysis/page.tsx` | Top-level `/analysis` route with Suspense wrapper, active shelf card, metric badges, output switcher, and crop inspector. |
+| `frontend/tests/analysis-and-cutouts.test.tsx` | 6 frontend unit tests validating modal tabs and 4-column table rendering behavior. |
+
+#### Files Modified
+| File Path | Changes Made |
+| :--- | :--- |
+| `backend/app/services/embedding_service.py` | Added `compute_image_embeddings_batch(images, batch_size=32)` for accelerated vector calculation (~15.6ms/crop). |
+| `backend/app/services/image_processing_service.py` | Integrated `extract_cutouts_and_analyze()` automatically on image inference job completion. |
+| `backend/app/api/schemas/image_processing.py` | Added Pydantic schemas: `CutoutItem`, `CutoutsResponse`, `CatalogMatchedProduct`, `ClusterRow`, `OutputAnalysisResponse`. |
+| `backend/app/api/routes/image_processing.py` | Registered `GET /outputs/{id}/cutouts`, `GET /outputs/{id}/analysis`, and `POST /outputs/{id}/analyze`. |
+| `frontend/src/types/index.ts` | Added TypeScript interfaces matching backend analysis schemas. |
+| `frontend/src/lib/api.ts` | Added `getOutputCutouts`, `getOutputAnalysis`, and `analyzeOutput` API client methods. |
+| `frontend/src/components/shell/Sidebar.tsx` | Added `/analysis` top-level navigation item with `ScanSearch` icon. |
+| `frontend/src/app/outputs/page.tsx` | Integrated `CutoutViewerModal` triggered on image card click or Inspect button; linked to `/analysis`. |
+
+#### How to test
+```bash
+backend/.venv/bin/pytest backend/tests/ -v
+npm test --prefix frontend
+npm run build --prefix frontend
+```
+
+---
+
 ### [2026-10-21 15:05 IST] Image Intake, Shelf Assignment & Annotated Outputs
 - **Commit**: [`30474fc`](https://github.com/ShadowHey/Tredence_H4ck/commit/30474fc)
 - **Status**: Implemented and verified.

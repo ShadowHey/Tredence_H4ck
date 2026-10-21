@@ -2,6 +2,38 @@
 
 ---
 
+### [2026-10-21 22:45 IST] YOLO Cutout Extraction, Semantic Clustering & 4-Column Analysis Table
+- **Commit**: `Pending`
+- **Participants**: Dhruv & Antigravity (AI Assistant)
+
+#### 1. Initial Requirement
+Dhruv requested extracting all YOLO bounding box cutouts, a 3-category popup viewer in Outputs, semantic matching against the product catalog, and a dedicated 4-column Analysis view:
+> *"as we can see in the output image, there are boxes around each product. now the next thing that i want to do is basically take each of these boxes that yolo has made around each of the objects and then extract all of these box bounding box images through a background job make it such that when we click on the image in the output section, it opens up a small viewer where we can see all of the small cutouts that have been made from the yolo bounding boxes. there must be three sections: product, shelf, and empty spaces. in the product section all the images of the bounding boxes of products that we have taken must be shown. in the empty space box when we click on that, there must be all the empty space screenshots that have been taken. we need to match this product with the product in the product catalog so that we can check which product this one is that is captured in the photo and that is made with the bounding box. then once you are done with taking the cropped out photos from the image and next what we want is in the analysis section: make a 4-column table:
+> 1. Similar Objects
+> 2. Similarity Percentage
+> 3. Is object similar to someone in the product catalog? (strictly Yes or No)
+> 4. Similar Product (if yes display catalog product packshot image, name, SKU; if no display NO product image)
+> with strict >= 95% confidence threshold."*
+
+#### 2. Scope & Implementation Alignment
+- Antigravity designed the end-to-end architecture:
+  - Batched PyTorch CLIP embeddings (`torch.stack` with batch size 32) bringing per-crop inference from ~360ms to 15.6ms.
+  - Disk storage in `uploads/image_processing/outputs/{job_id}/cutouts/{products,shelves,empty_spaces}/`.
+  - Intra-shelf cluster algorithm ($\tau = 0.88$).
+  - Cosine matching against SQLite catalog with strict $\ge 95\%$ confidence cutoff.
+  - Frontend modal (`CutoutViewerModal.tsx`) with 3 tabs.
+  - New top-level navigation `/analysis` with the exact 4-column table, filter pills, and zoom modals.
+- Dhruv approved execution:
+  > *"yes i approve this, begin implementing this and don't make any mistakes"*
+
+#### 3. Verification Turning Points
+- 35 backend tests passed (`pytest backend/tests/ -v`).
+- 17 frontend unit tests passed (`vitest run`).
+- Production build succeeded (`next build`).
+- Endpoints verified with curl returning HTTP 200 and static images serving cleanly.
+
+---
+
 ### [2026-10-21 15:05 IST] Image Intake, Shelf Assignment & Annotated Outputs
 - **Requirement**: Add Input Images and Outputs navigation pages. Users may stage multiple shelf photos but must select and process one photo at a time after choosing one saved planogram and one shelf from it. Results must preserve the input, planogram, and shelf relationship, and support export/deletion.
 - **Outcome**: Added persistent image, job, and output records; a serial worker bridge to the existing image-parsing pipeline; both UI pages; and automated tests that generate deterministic annotated/JSON artifacts while verifying traceability, export, and deletion.

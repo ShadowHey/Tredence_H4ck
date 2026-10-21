@@ -8,6 +8,7 @@ import {
   Store,
   ImagePlus,
   Images,
+  ScanSearch,
 } from "lucide-react";
 
 export function Sidebar() {
@@ -37,6 +38,12 @@ export function Sidebar() {
       href: "/outputs",
       icon: Images,
       active: pathname.startsWith("/outputs"),
+    },
+    {
+      label: "Analysis",
+      href: "/analysis",
+      icon: ScanSearch,
+      active: pathname.startsWith("/analysis"),
     },
   ];
 

@@ -9,6 +9,8 @@ import {
   PlanogramExportJSON,
   InputImage,
   ProcessedOutput,
+  CutoutsResponse,
+  OutputAnalysisResponse,
 } from "@/types";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -261,6 +263,17 @@ export const api = {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ output_ids: outputIds }),
+    }),
+
+  getOutputCutouts: (outputId: number) =>
+    request<CutoutsResponse>(`/api/v1/outputs/${outputId}/cutouts`),
+
+  getOutputAnalysis: (outputId: number) =>
+    request<OutputAnalysisResponse>(`/api/v1/outputs/${outputId}/analysis`),
+
+  analyzeOutput: (outputId: number) =>
+    request<OutputAnalysisResponse>(`/api/v1/outputs/${outputId}/analyze`, {
+      method: "POST",
     }),
 };
 

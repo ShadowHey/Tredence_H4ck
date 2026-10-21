@@ -166,6 +166,13 @@ export interface ProcessedOutput {
     empty_region_count?: number;
     shelf_row_count?: number;
     empty_area_percentage?: number | null;
+    analysis_summary?: {
+      clusters_count?: number;
+      matched_clusters_count?: number;
+      products_cutouts?: number;
+      empty_cutouts?: number;
+      shelf_cutouts?: number;
+    };
   };
   created_at: string;
   source_filename: string;
@@ -174,3 +181,57 @@ export interface ProcessedOutput {
   shelf_id?: number | null;
   shelf_snapshot?: ShelfSnapshot | null;
 }
+
+export interface CutoutItem {
+  id: string;
+  category: "product" | "shelf" | "empty_space";
+  crop_path: string;
+  bbox_xyxy: number[];
+  confidence: number;
+  row_number?: number | null;
+  cluster_id?: number | null;
+  area_px?: number | null;
+}
+
+export interface CutoutsResponse {
+  output_id: number;
+  source_filename: string;
+  total_count: number;
+  products: CutoutItem[];
+  shelves: CutoutItem[];
+  empty_spaces: CutoutItem[];
+}
+
+export interface CatalogMatchedProduct {
+  id: number;
+  sku: string;
+  name: string;
+  category: string;
+  image_path: string;
+  price: number;
+  currency: string;
+}
+
+export interface ClusterRow {
+  cluster_id: number;
+  item_count: number;
+  similar_objects: CutoutItem[];
+  similarity_percentage: number;
+  is_catalog_match: boolean;
+  catalog_confidence: number;
+  catalog_product?: CatalogMatchedProduct | null;
+}
+
+export interface OutputAnalysisResponse {
+  output_id: number;
+  source_filename: string;
+  planogram_name?: string | null;
+  shelf_name?: string | null;
+  shelf_dimensions?: string | null;
+  total_detections: number;
+  total_clusters: number;
+  matched_clusters_count: number;
+  catalog_confidence_threshold: number;
+  clusters: ClusterRow[];
+}
+
