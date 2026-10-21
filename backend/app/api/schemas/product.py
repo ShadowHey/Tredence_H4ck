@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 class ProductBase(BaseModel):
@@ -40,6 +40,7 @@ class ProductResponse(ProductBase):
     id: int
     image_path: str
     is_sample: bool
+    embedding: Optional[List[float]] = None
     created_at: datetime
     updated_at: datetime
 

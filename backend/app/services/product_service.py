@@ -53,6 +53,18 @@ def create_product(db: Session, product_in: ProductCreate) -> Product:
     db.add(product)
     db.commit()
     db.refresh(product)
+
+    # Compute and persist vector embedding for the product
+    try:
+        from app.services.embedding_service import embedding_service
+        vec = embedding_service.compute_image_embedding(product.image_path)
+        product.embedding = vec
+        db.commit()
+        db.refresh(product)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Embedding generation deferred/skipped for product {product.id}: {e}")
+
     return product
 
 def update_product(db: Session, product_id: int, product_in: ProductUpdate) -> Product:
@@ -62,6 +74,17 @@ def update_product(db: Session, product_id: int, product_in: ProductUpdate) -> P
         setattr(product, field, value)
     db.commit()
     db.refresh(product)
+
+    if "image_path" in update_data:
+        try:
+            from app.services.embedding_service import embedding_service
+            vec = embedding_service.compute_image_embedding(product.image_path)
+            product.embedding = vec
+            db.commit()
+            db.refresh(product)
+        except Exception:
+            pass
+
     return product
 
 def delete_product(db: Session, product_id: int) -> dict:
