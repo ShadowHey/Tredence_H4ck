@@ -9,8 +9,10 @@ ShelfSense AI — Bounding Box Cutout Extraction, Semantic Clustering & Catalog 
 
 from __future__ import annotations
 
+import io
 import json
 import logging
+import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from PIL import Image
@@ -416,3 +418,59 @@ def get_output_analysis(db: Session, output_id: int) -> Dict[str, Any]:
 
     with open(analysis_file, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def get_cutout_download_path(db: Session, output_id: int, cutout_id: str) -> Path:
+    """Resolve one cutout from its persisted metadata without accepting a client file path."""
+    output = db.query(ProcessedOutput).filter(ProcessedOutput.id == output_id).first()
+    if not output:
+        raise HTTPException(status_code=404, detail=f"ProcessedOutput with ID {output_id} not found.")
+
+    payload = get_output_cutouts(db, output_id)
+    item = next(
+        (candidate for group in ("products", "shelves", "empty_spaces") for candidate in payload.get(group, []) if candidate.get("id") == cutout_id),
+        None,
+    )
+    if not item:
+        raise HTTPException(status_code=404, detail=f"Cutout {cutout_id} was not found for output {output_id}.")
+
+    crop_name = Path(item["crop_path"]).name
+    category_directory = {
+        "product": "products",
+        "shelf": "shelves",
+        "empty_space": "empty_spaces",
+    }.get(item["category"])
+    if not category_directory:
+        raise HTTPException(status_code=404, detail="The cutout category is invalid.")
+    crop_path = settings.UPLOADS_DIR / "image_processing" / "outputs" / str(output.job_id) / "cutouts" / category_directory / crop_name
+    if not crop_path.is_file():
+        raise HTTPException(status_code=404, detail="The cutout image file is unavailable.")
+    return crop_path
+
+
+def build_cutouts_zip(db: Session, output_id: int, category: Optional[str] = None) -> io.BytesIO:
+    """Build a zip archive containing cutouts for an output, optionally filtered by category."""
+    output = db.query(ProcessedOutput).filter(ProcessedOutput.id == output_id).first()
+    if not output:
+        raise HTTPException(status_code=404, detail=f"ProcessedOutput with ID {output_id} not found.")
+
+    output_dir = settings.UPLOADS_DIR / "image_processing" / "outputs" / str(output.job_id)
+    cutouts_dir = output_dir / "cutouts"
+
+    if not cutouts_dir.exists():
+        extract_cutouts_and_analyze(db, output_id)
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        if category and category in ("products", "shelves", "empty_spaces"):
+            cat_dir = cutouts_dir / category
+            if cat_dir.exists():
+                for file_path in sorted(cat_dir.glob("*.jpg")):
+                    zf.write(file_path, arcname=f"{category}/{file_path.name}")
+        else:
+            for file_path in sorted(cutouts_dir.rglob("*.jpg")):
+                rel_path = file_path.relative_to(cutouts_dir)
+                zf.write(file_path, arcname=str(rel_path))
+
+    buf.seek(0)
+    return buf

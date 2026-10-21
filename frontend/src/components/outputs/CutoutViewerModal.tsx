@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { X, Loader2, Sparkles, AlertCircle, Maximize2, Tag, Layers, CheckCircle2 } from "lucide-react";
-import { api, getImageUrl } from "@/lib/api";
+import { X, Loader2, Sparkles, AlertCircle, Maximize2, Tag, Layers, CheckCircle2, Download } from "lucide-react";
+import { API_BASE_URL, api, getImageUrl } from "@/lib/api";
 import { CutoutsResponse, CutoutItem } from "@/types";
 
 interface CutoutViewerModalProps {
@@ -17,6 +17,8 @@ export function CutoutViewerModal({ outputId, onClose }: CutoutViewerModalProps)
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCrop, setSelectedCrop] = useState<CutoutItem | null>(null);
+  const cutoutDownloadUrl = (item: CutoutItem) =>
+    `${API_BASE_URL}/api/v1/outputs/${outputId}/cutouts/${encodeURIComponent(item.id)}/download`;
 
   useEffect(() => {
     if (!outputId) return;
@@ -199,9 +201,19 @@ export function CutoutViewerModal({ outputId, onClose }: CutoutViewerModalProps)
 
                   <div className="w-full mt-2 flex items-center justify-between text-[11px]">
                     <span className="font-mono text-gray-300 font-semibold truncate">#{idx + 1}</span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-                      {(item.confidence * 100).toFixed(0)}%
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                        {(item.confidence * 100).toFixed(0)}%
+                      </span>
+                      <a
+                        aria-label={`Download cutout #${idx + 1}`}
+                        title="Download this cutout"
+                        href={cutoutDownloadUrl(item)}
+                        className="p-1 rounded text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
                   </div>
 
                   {item.row_number && (
@@ -273,6 +285,14 @@ export function CutoutViewerModal({ outputId, onClose }: CutoutViewerModalProps)
                 </span>
               </div>
             </div>
+
+            <a
+              href={cutoutDownloadUrl(selectedCrop)}
+              className="w-full py-2 rounded-lg border border-[#4a5262] hover:border-amber-500/60 text-gray-200 hover:text-amber-300 font-semibold text-xs transition-colors inline-flex items-center justify-center gap-2"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Download cutout
+            </a>
 
             <button
               onClick={() => setSelectedCrop(null)}

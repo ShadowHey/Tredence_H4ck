@@ -85,6 +85,7 @@ const { mockCutoutItemProduct, mockCutoutItemShelf, mockCutoutItemEmpty, mockClu
 });
 
 vi.mock("@/lib/api", () => ({
+  API_BASE_URL: "http://localhost:8000",
   api: {
     getOutputCutouts: vi.fn().mockResolvedValue({
       output_id: 1,
@@ -129,6 +130,12 @@ describe("CutoutViewerModal Component", () => {
 
     expect(screen.getByText(/Showing/)).toBeInTheDocument();
     expect(screen.getByText(/empty spaces/)).toBeInTheDocument();
+  });
+
+  it("provides an individual download control for each visible cutout", async () => {
+    render(<CutoutViewerModal outputId={1} onClose={vi.fn()} />);
+
+    expect(await screen.findByRole("link", { name: "Download cutout #1" })).toBeInTheDocument();
   });
 });
 
