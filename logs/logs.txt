@@ -1,0 +1,5 @@
+[2026-10-21 06:38:21.858] [SYSTEM  ] [INFO ] [LOGS_INITIALIZED] Log stream cleared and initialized at 2026-10-21 06:38:21.858
+[2026-10-21 06:38:26.654] [FRONTEND] [INFO ] [ACTION:SHELF_ADD] User added shelf "Central Gondola" (150x200cm, 5 rows)
+[2026-10-21 06:38:30.109] [JOB     ] [INFO ] [JOB-START:CLIP] Task: job_emb_12 | Product #12 ('Salted Almonds') | SKU: SNK-PREMIUM-01
+[2026-10-21 06:38:30.185] [JOB     ] [INFO ] [JOB-DONE:CLIP] Task: job_emb_12 | Product #12 512-dim vector stored in SQLite | Duration: 75.9ms
+[2026-10-21 06:38:30.186] [BACKEND ] [INFO ] [HTTP:POST] /api/v1/products -> 201 (84.1ms)
