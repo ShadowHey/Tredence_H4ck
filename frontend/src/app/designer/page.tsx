@@ -10,6 +10,8 @@ import {
   AlertCircle,
   CheckCircle,
   ArrowLeft,
+  Trash2,
+  Package,
 } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -35,6 +37,7 @@ function DesignerContent() {
   // Selection State
   const [selectedShelfId, setSelectedShelfId] = useState<number | null>(null);
   const [selectedPlacementId, setSelectedPlacementId] = useState<number | null>(null);
+  const [selectedRowIndex, setSelectedRowIndex] = useState<number>(0);
 
   // Save State (clear feedback: Saved / Unsaved changes / Saving / Save failed)
   const [saveStatus, setSaveStatus] = useState<"saved" | "unsaved" | "saving" | "error">("saved");
@@ -182,6 +185,18 @@ function DesignerContent() {
     const nextX = Math.round(usedWidth * 10) / 10;
 
     try {
+      // Ensure row height is at least product.height_cm + 3.0cm headroom clearance
+      const usableH = shelf.total_height_cm - (shelf.has_plinth ? shelf.plinth_height_cm : 0);
+      const defaultEqualH = Math.max(10, usableH / shelf.row_count);
+      const currentHeights = shelf.row_heights && shelf.row_heights.length === shelf.row_count
+        ? [...shelf.row_heights]
+        : Array(shelf.row_count).fill(defaultEqualH);
+
+      const requiredMinH = Number((product.height_cm + 3.0).toFixed(1));
+      if (currentHeights[rowIndex] < requiredMinH) {
+        currentHeights[rowIndex] = requiredMinH;
+        await api.updateShelf(shelfId, { row_heights: currentHeights });
+      }
       setCollisionWarning(null);
       setSaveStatus("saving");
       const newPlacement = await api.createPlacement(shelfId, {
@@ -243,10 +258,90 @@ function DesignerContent() {
     }
   };
 
-  // Delete Placement
+  // Delete Placement: deletes product and adjusts row height automatically
   const handleDeletePlacement = async (placementId: number) => {
     try {
+      // Find placement and shelf before deletion
+      let targetPlacement: Placement | null = null;
+      let targetShelf: Shelf | null = null;
+      for (const shelf of planogram?.shelves || []) {
+        const found = (shelf.placements || []).find((p) => p.id === placementId);
+        if (found) {
+          targetPlacement = found;
+          targetShelf = shelf;
+          break;
+        }
+      }
+
+      // Optimistic self-adjustment: immediately shift subsequent products left to close gap
+      if (targetShelf && targetPlacement) {
+        const shiftW = targetPlacement.product.width_cm * targetPlacement.facing_count;
+        const targetRow = targetPlacement.row_index;
+        const deletedX = targetPlacement.x_offset_cm;
+
+        setPlanogram((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            shelves: prev.shelves.map((s) => {
+              if (s.id !== targetShelf!.id) return s;
+              const remaining = (s.placements || []).filter((p) => p.id !== placementId);
+              const shifted = remaining.map((p) => {
+                if (p.row_index === targetRow && p.x_offset_cm > deletedX) {
+                  return {
+                    ...p,
+                    x_offset_cm: Math.max(0, Math.round((p.x_offset_cm - shiftW) * 10) / 10),
+                  };
+                }
+                return p;
+              });
+              return { ...s, placements: shifted };
+            }),
+          };
+        });
+      }
+
       await api.deletePlacement(placementId);
+
+      // Adjust the row height automatically when product is deleted
+      if (targetShelf && targetPlacement) {
+        const rowIndex = targetPlacement.row_index;
+        const remainingOnRow = (targetShelf.placements || []).filter(
+          (p) => p.id !== placementId && p.row_index === rowIndex
+        );
+        const newMaxHeight = remainingOnRow.length > 0
+          ? Math.max(...remainingOnRow.map((p) => p.product.height_cm))
+          : 0;
+
+        const usableH = targetShelf.total_height_cm - (targetShelf.has_plinth ? targetShelf.plinth_height_cm : 0);
+        const defaultEqualH = Math.max(10, usableH / targetShelf.row_count);
+
+        const currentHeights = targetShelf.row_heights && targetShelf.row_heights.length === targetShelf.row_count
+          ? [...targetShelf.row_heights]
+          : Array(targetShelf.row_count).fill(defaultEqualH);
+
+        // Adjust row height based on remaining products + 3.0cm headroom
+        const targetRowH = newMaxHeight > 0
+          ? Math.max(newMaxHeight + 3.0, Math.min(currentHeights[rowIndex], defaultEqualH))
+          : defaultEqualH;
+
+        if (currentHeights[rowIndex] > targetRowH + 0.2) {
+          const releasedSpace = currentHeights[rowIndex] - targetRowH;
+          currentHeights[rowIndex] = Number(targetRowH.toFixed(1));
+
+          // Redistribute released space to other rows
+          const otherIndices = Array.from({ length: targetShelf.row_count }, (_, i) => i).filter(i => i !== rowIndex);
+          if (otherIndices.length > 0) {
+            const addPer = releasedSpace / otherIndices.length;
+            for (const oIdx of otherIndices) {
+              currentHeights[oIdx] = Number((currentHeights[oIdx] + addPer).toFixed(1));
+            }
+          }
+
+          await api.updateShelf(targetShelf.id, { row_heights: currentHeights });
+        }
+      }
+
       await refreshPlanogram();
       if (selectedPlacementId === placementId) {
         setSelectedPlacementId(null);
@@ -255,6 +350,27 @@ function DesignerContent() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       alert(`Error deleting placement: ${msg}`);
+    }
+  };
+
+  // Delete Entire Planogram
+  const handleDeleteCurrentPlanogram = async () => {
+    if (!planogram) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete planogram "${planogram.name}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setSaveStatus("saving");
+      await api.deletePlanogram(planogram.id);
+      router.push("/");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Failed to delete planogram: ${msg}`);
+      setSaveStatus("error");
     }
   };
 
@@ -357,6 +473,16 @@ function DesignerContent() {
         {/* Right: Actions */}
         <div className="flex items-center gap-2.5">
           <button
+            onClick={() => setShowAddProductModal(true)}
+            data-testid="header-add-product-btn"
+            className="px-3 py-1.5 rounded-lg bg-[#1a1e26] hover:bg-[#222733] border border-[#262b36] text-amber-400 hover:text-amber-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            title="Create a new catalogue product manually"
+          >
+            <Package className="w-3.5 h-3.5" />
+            <span>Add Product</span>
+          </button>
+
+          <button
             onClick={() => setShowAddShelfModal(true)}
             data-testid="header-add-shelf-btn"
             className="px-3 py-1.5 rounded-lg bg-[#1a1e26] hover:bg-[#222733] border border-[#262b36] text-gray-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
@@ -382,6 +508,16 @@ function DesignerContent() {
             <Save className="w-3.5 h-3.5" />
             <span>Save</span>
           </button>
+
+          <button
+            onClick={handleDeleteCurrentPlanogram}
+            data-testid="delete-planogram-btn"
+            className="px-2.5 py-1.5 rounded-lg bg-[#1a1e26] hover:bg-red-950/50 border border-[#262b36] hover:border-red-700 text-gray-400 hover:text-red-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            title="Delete this planogram"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+            <span className="hidden md:inline">Delete</span>
+          </button>
         </div>
       </header>
 
@@ -392,11 +528,13 @@ function DesignerContent() {
           planogram={planogram}
           selectedShelfId={selectedShelfId}
           selectedPlacementId={selectedPlacementId}
+          selectedRowIndex={selectedRowIndex}
           onSelectShelf={(id) => {
             setSelectedShelfId(id);
             setSelectedPlacementId(null);
           }}
           onSelectPlacement={(id) => setSelectedPlacementId(id)}
+          onSelectRow={setSelectedRowIndex}
           onDeleteShelf={handleDeleteShelf}
           onDeletePlacement={handleDeletePlacement}
           onOpenAddShelf={() => setShowAddShelfModal(true)}
@@ -407,16 +545,19 @@ function DesignerContent() {
           shelves={planogram.shelves}
           selectedShelfId={selectedShelfId}
           selectedPlacementId={selectedPlacementId}
+          selectedRowIndex={selectedRowIndex}
           onSelectShelf={(id) => {
             setSelectedShelfId(id);
             setSelectedPlacementId(null);
           }}
           onSelectPlacement={(id) => setSelectedPlacementId(id)}
+          onSelectRow={setSelectedRowIndex}
           onOpenAddShelf={() => setShowAddShelfModal(true)}
           onDropProductOnRow={handleDropProductOnRow}
           onMovePlacement={handleMovePlacement}
           onDeletePlacement={handleDeletePlacement}
           collisionWarning={collisionWarning}
+          onUpdateShelf={handleUpdateShelf}
         />
 
         {/* Right: Context Panel (Properties & Product Library) */}
@@ -425,6 +566,8 @@ function DesignerContent() {
           selectedShelf={activeShelf}
           selectedPlacement={activePlacement}
           products={products}
+          selectedRowIndex={selectedRowIndex}
+          onSelectRow={setSelectedRowIndex}
           onUpdateShelf={handleUpdateShelf}
           onDeleteShelf={handleDeleteShelf}
           onUpdatePlacement={handleUpdatePlacement}

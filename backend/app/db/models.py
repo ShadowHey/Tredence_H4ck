@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from sqlalchemy import (
+    JSON,
     Column,
     Integer,
     String,
@@ -32,8 +33,9 @@ class Product(Base):
     depth_cm = Column(Float, nullable=False)
     image_path = Column(String(500), nullable=False)
     is_sample = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=utc_now, nullable=False)
-    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+    embedding = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     placements = relationship("Placement", back_populates="product", passive_deletes="all")
 
@@ -69,6 +71,7 @@ class Shelf(Base):
     row_count = Column(Integer, nullable=False, default=4)
     has_plinth = Column(Boolean, default=False, nullable=False)
     plinth_height_cm = Column(Float, default=0.0, nullable=False)
+    row_heights = Column(JSON, nullable=True, default=None)
     order_index = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime, default=utc_now, nullable=False)
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)

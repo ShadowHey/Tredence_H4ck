@@ -33,6 +33,7 @@ class ExportShelf(BaseModel):
     row_count: int
     has_plinth: bool
     plinth_height_cm: float
+    row_heights: Optional[List[float]] = None
     placements: List[ExportPlacement] = []
 
 class PlanogramExportJSON(BaseModel):

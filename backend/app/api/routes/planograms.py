@@ -177,7 +177,30 @@ def delete_placement(placement_id: int, db: Session = Depends(get_db)):
     placement = db.query(Placement).filter(Placement.id == placement_id).first()
     if not placement:
         raise HTTPException(status_code=404, detail=f"Placement with ID {placement_id} not found.")
+    
+    shelf_id = placement.shelf_id
+    row_index = placement.row_index
+    deleted_x = placement.x_offset_cm
+    deleted_width = (placement.product.width_cm * placement.facing_count) if placement.product else 0.0
+
     db.delete(placement)
+    db.flush()
+
+    # Self-adjustment: shift subsequent products on the same row left to fill the gap
+    if deleted_width > 0:
+        subsequent = (
+            db.query(Placement)
+            .filter(
+                Placement.shelf_id == shelf_id,
+                Placement.row_index == row_index,
+                Placement.x_offset_cm > deleted_x,
+            )
+            .order_by(Placement.x_offset_cm.asc())
+            .all()
+        )
+        for p in subsequent:
+            p.x_offset_cm = max(0.0, round(p.x_offset_cm - deleted_width, 1))
+
     db.commit()
     return {"message": "Placement deleted successfully."}
 

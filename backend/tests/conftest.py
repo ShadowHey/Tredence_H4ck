@@ -25,7 +25,7 @@ def db_session(temp_uploads_dir):
     Creates a fresh temporary in-memory/file SQLite database for each test.
     Never mutates developer's local persistent database.
     """
-    temp_db_file = temp_uploads_dir / f"test_{tempfile.mktemp().split('/')[-1]}.db"
+    temp_db_file = temp_uploads_dir / f"test_{Path(tempfile.mktemp()).name}.db"
     test_db_url = f"sqlite:///{temp_db_file}"
     engine = create_engine(test_db_url, connect_args={"check_same_thread": False})
     enable_sqlite_foreign_keys(engine)
@@ -38,6 +38,7 @@ def db_session(temp_uploads_dir):
     finally:
         db.close()
         Base.metadata.drop_all(bind=engine)
+        engine.dispose()
         if temp_db_file.exists():
             temp_db_file.unlink(missing_ok=True)
 

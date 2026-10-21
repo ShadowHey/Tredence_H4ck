@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Plus,
   Trash2,
@@ -11,16 +11,21 @@ import {
 import { Shelf, Placement, Product } from "@/types";
 import { getImageUrl } from "@/lib/api";
 
+export const ROW_HEADROOM_PADDING_CM = 3.0;
+
 interface ShelfCanvasProps {
   shelves: Shelf[];
   selectedShelfId: number | null;
   selectedPlacementId: number | null;
+  selectedRowIndex?: number;
   onSelectShelf: (shelfId: number) => void;
   onSelectPlacement: (placementId: number | null) => void;
+  onSelectRow?: (rowIndex: number) => void;
   onOpenAddShelf: () => void;
   onDropProductOnRow: (shelfId: number, rowIndex: number, product: Product, clientX?: number) => void;
   onMovePlacement: (placementId: number, newRowIndex: number, newXOffsetCm: number) => void;
   onDeletePlacement: (placementId: number) => void;
+  onUpdateShelf?: (shelfId: number, data: Partial<Shelf>) => void;
   collisionWarning: string | null;
 }
 
@@ -28,17 +33,20 @@ export function ShelfCanvas({
   shelves,
   selectedShelfId,
   selectedPlacementId,
+  selectedRowIndex = 0,
   onSelectShelf,
   onSelectPlacement,
+  onSelectRow,
   onOpenAddShelf,
   onDropProductOnRow,
   onMovePlacement,
   onDeletePlacement,
+  onUpdateShelf,
   collisionWarning,
 }: ShelfCanvasProps) {
   const [hoveredRow, setHoveredRow] = useState<{ shelfId: number; rowIndex: number } | null>(null);
 
-  // Active shelf to display (or multiple)
+  // Active shelf to display
   const activeShelf = shelves.find((s) => s.id === selectedShelfId) || shelves[0];
 
   // Drag over handler
@@ -66,9 +74,7 @@ export function ShelfCanvas({
       if (parsed.type === "new_product") {
         onDropProductOnRow(shelfId, rowIndex, parsed.product, e.clientX);
       } else if (parsed.type === "existing_placement") {
-        // Move existing placement
         const placement = parsed.placement as Placement;
-        // Keep current x or compute new x relative to row container
         onMovePlacement(placement.id, rowIndex, placement.x_offset_cm);
       }
     } catch (err) {
@@ -103,49 +109,190 @@ export function ShelfCanvas({
     );
   }
 
-  // Calculate row height in cm: (total_height - plinth_height) / row_count
+  // Calculate usable height and effective heights per row
   const usableHeightCm = activeShelf.total_height_cm - (activeShelf.has_plinth ? activeShelf.plinth_height_cm : 0);
-  const rowHeightCm = Math.max(10, usableHeightCm / activeShelf.row_count);
+  const defaultEqualHeight = Math.max(10, usableHeightCm / activeShelf.row_count);
+
+  // Maximum product height per row (each row must be at least this height)
+  const maxProductHeights: number[] = Array.from({ length: activeShelf.row_count }).map((_, rIdx) => {
+    const rowPlacements = (activeShelf.placements || []).filter((p) => p.row_index === rIdx);
+    if (rowPlacements.length === 0) return 0;
+    return Math.max(...rowPlacements.map((p) => p.product.height_cm));
+  });
+
+  // Minimum allowed height for each row: tallest product + headroom clearance padding, and at least 10cm physical minimum
+  const minRowHeights: number[] = Array.from({ length: activeShelf.row_count }).map((_, rIdx) => {
+    const maxH = maxProductHeights[rIdx];
+    if (maxH <= 0) return 10;
+    return Math.max(10, Number((maxH + ROW_HEADROOM_PADDING_CM).toFixed(1)));
+  });
+
+  // Effective row heights array (index 0 is top row, index row_count - 1 is bottom row)
+  // RULE: The height of each row must be AT LEAST the maximum of all products in that row
+  const effectiveRowHeights: number[] = Array.from({ length: activeShelf.row_count }).map((_, idx) => {
+    let h = defaultEqualHeight;
+    if (activeShelf.row_heights && activeShelf.row_heights.length === activeShelf.row_count) {
+      const val = activeShelf.row_heights[idx];
+      if (typeof val === "number" && val > 0) h = val;
+    }
+    return Math.max(minRowHeights[idx], h);
+  });
+
+  // Base elevation above floor / plinth for each row index (0 is top row, row_count-1 is bottom row)
+  const plinthCm = activeShelf.has_plinth ? activeShelf.plinth_height_cm : 0;
+  const rowElevations: number[] = Array.from({ length: activeShelf.row_count }).map((_, rIdx) => {
+    let elev = plinthCm;
+    for (let j = rIdx + 1; j < activeShelf.row_count; j++) {
+      elev += effectiveRowHeights[j];
+    }
+    return elev;
+  });
+
+  // Adjust row height by deltaCm
+  // RULE: when adjusting, row height cannot reduce below minRowHeights[rIdx]
+  const changeRowHeight = (rIdx: number, deltaCm: number) => {
+    const minCurrent = minRowHeights[rIdx];
+    const newHeights = [...effectiveRowHeights];
+
+    if (rIdx < activeShelf.row_count - 1) {
+      const minNext = minRowHeights[rIdx + 1];
+      const available = newHeights[rIdx] + newHeights[rIdx + 1];
+      const maxAllowed = available - minNext;
+      if (minCurrent > maxAllowed) return;
+      const target = Math.max(minCurrent, Math.min(maxAllowed, newHeights[rIdx] + deltaCm));
+      newHeights[rIdx] = Number(target.toFixed(1));
+      newHeights[rIdx + 1] = Number((available - target).toFixed(1));
+    } else if (rIdx > 0) {
+      const minPrev = minRowHeights[rIdx - 1];
+      const available = newHeights[rIdx - 1] + newHeights[rIdx];
+      const maxAllowed = available - minPrev;
+      if (minCurrent > maxAllowed) return;
+      const target = Math.max(minCurrent, Math.min(maxAllowed, newHeights[rIdx] + deltaCm));
+      newHeights[rIdx] = Number(target.toFixed(1));
+      newHeights[rIdx - 1] = Number((available - target).toFixed(1));
+    } else {
+      newHeights[rIdx] = Math.max(minCurrent, Number((newHeights[rIdx] + deltaCm).toFixed(1)));
+    }
+    onUpdateShelf?.(activeShelf.id, { row_heights: newHeights });
+  };
+
+  // Set specific row height
+  // RULE: when adjusting, row height cannot reduce below minRowHeights[rIdx]
+  const setSpecificRowHeight = (rIdx: number, targetHeight: number) => {
+    const minCurrent = minRowHeights[rIdx];
+    const newHeights = [...effectiveRowHeights];
+
+    if (rIdx < activeShelf.row_count - 1) {
+      const minNext = minRowHeights[rIdx + 1];
+      const available = newHeights[rIdx] + newHeights[rIdx + 1];
+      const maxAllowed = available - minNext;
+      const target = Math.max(minCurrent, Math.min(maxAllowed, targetHeight));
+      newHeights[rIdx] = Number(target.toFixed(1));
+      newHeights[rIdx + 1] = Number((available - target).toFixed(1));
+    } else if (rIdx > 0) {
+      const minPrev = minRowHeights[rIdx - 1];
+      const available = newHeights[rIdx - 1] + newHeights[rIdx];
+      const maxAllowed = available - minPrev;
+      const target = Math.max(minCurrent, Math.min(maxAllowed, targetHeight));
+      newHeights[rIdx] = Number(target.toFixed(1));
+      newHeights[rIdx - 1] = Number((available - target).toFixed(1));
+    } else {
+      newHeights[rIdx] = Math.max(minCurrent, Number(targetHeight.toFixed(1)));
+    }
+    onUpdateShelf?.(activeShelf.id, { row_heights: newHeights });
+  };
+
+  // Equalize all row heights
+  const handleEqualizeRows = () => {
+    onUpdateShelf?.(activeShelf.id, { row_heights: null });
+  };
+
+  // Draggable divider handle between adjacent rows
+  const handleStartDragDivider = (topRowIdx: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startTopHeight = effectiveRowHeights[topRowIdx];
+    const startBottomHeight = effectiveRowHeights[topRowIdx + 1];
+    const startY = e.clientY;
+    const availableTotal = startTopHeight + startBottomHeight;
+    const pxPerCm = 3.2;
+
+    const minTop = minRowHeights[topRowIdx];
+    const minBottom = minRowHeights[topRowIdx + 1];
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const deltaPx = moveEvent.clientY - startY;
+      const deltaCm = deltaPx / pxPerCm;
+      let newTop = startTopHeight + deltaCm;
+      newTop = Math.max(minTop, Math.min(availableTotal - minBottom, newTop));
+      const newBottom = availableTotal - newTop;
+
+      const newHeights = [...effectiveRowHeights];
+      newHeights[topRowIdx] = Number(newTop.toFixed(1));
+      newHeights[topRowIdx + 1] = Number(newBottom.toFixed(1));
+
+      onUpdateShelf?.(activeShelf.id, { row_heights: newHeights });
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
 
   return (
     <div
       className="flex-1 min-w-[500px] flex flex-col bg-[#0d0f12] overflow-hidden p-3 md:p-4 select-none relative"
       data-testid="shelf-canvas"
     >
-      {/* Shelf Bay Selector Bar (when multiple shelves exist) */}
-      <div className="flex items-center justify-between mb-3 px-1">
-        <div className="flex items-center gap-2 overflow-x-auto">
-          {shelves.map((shelf, idx) => (
-            <button
-              key={shelf.id}
-              onClick={() => {
-                onSelectShelf(shelf.id);
+      {/* Selected Shelf Header Bar: shows ONLY the selected shelf */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3 px-1">
+        <div className="flex items-center gap-2">
+          {/* Active Shelf Indicator */}
+          <div
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 bg-amber-500 text-gray-950 shadow-sm"
+            data-testid="selected-shelf-badge"
+          >
+            <Box className="w-3.5 h-3.5" />
+            <span>
+              Shelf: <strong className="font-bold">{activeShelf.name}</strong>
+            </span>
+            <span className="text-[10px] font-mono opacity-80">({activeShelf.width_cm}cm)</span>
+          </div>
+
+          {/* Quick switcher dropdown when multiple shelves exist */}
+          {shelves.length > 1 && (
+            <select
+              value={activeShelf.id}
+              onChange={(e) => {
+                onSelectShelf(Number(e.target.value));
                 onSelectPlacement(null);
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
-                activeShelf.id === shelf.id
-                  ? "bg-amber-500 text-gray-950 shadow-sm"
-                  : "bg-[#1a1e26] text-gray-300 hover:bg-[#222733] border border-[#262b36]"
-              }`}
+              className="bg-[#1a1e26] border border-[#262b36] hover:border-amber-500 text-gray-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer transition-colors"
+              title="Switch selected shelf"
             >
-              <Box className="w-3.5 h-3.5" />
-              <span>
-                Bay #{idx + 1}: {shelf.name}
-              </span>
-              <span className="text-[10px] font-mono opacity-80">({shelf.width_cm}cm)</span>
-            </button>
-          ))}
+              {shelves.map((s, idx) => (
+                <option key={s.id} value={s.id} className="bg-[#1a1e26] text-gray-200">
+                  Bay #{idx + 1}: {s.name} ({s.width_cm}cm)
+                </option>
+              ))}
+            </select>
+          )}
+
           <button
             onClick={onOpenAddShelf}
-            className="px-2.5 py-1.5 rounded-lg bg-[#1a1e26] hover:bg-[#222733] text-amber-400 hover:text-amber-300 border border-[#262b36] text-xs font-semibold flex items-center gap-1"
+            className="px-2.5 py-1.5 rounded-lg bg-[#1a1e26] hover:bg-[#222733] text-amber-400 hover:text-amber-300 border border-[#262b36] text-xs font-semibold flex items-center gap-1 transition-colors"
             title="Add another shelf bay"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Add Bay</span>
+            <span className="hidden sm:inline">Add Shelf</span>
           </button>
         </div>
 
-        <div className="text-[11px] font-mono text-gray-400 flex items-center gap-3">
+        <div className="text-[11px] font-mono text-gray-400 flex items-center gap-3 shrink-0">
           <span>Width: {activeShelf.width_cm}cm</span>
           <span>Height: {activeShelf.total_height_cm}cm</span>
           <span>Depth: {activeShelf.depth_cm}cm</span>
@@ -172,7 +319,7 @@ export function ShelfCanvas({
               Bay Reference Elevation: {activeShelf.name}
             </span>
             <div className="text-[11px] text-gray-500 font-mono">
-              Physical Dimensions: {activeShelf.width_cm} cm (W) × {activeShelf.total_height_cm} cm (H) × {activeShelf.depth_cm} cm (D) · {activeShelf.row_count} Rows
+              Physical Dimensions: {activeShelf.width_cm} cm (W) x {activeShelf.total_height_cm} cm (H) x {activeShelf.depth_cm} cm (D) â€¢ {activeShelf.row_count} Rows
             </div>
           </div>
           <div className="text-right">
@@ -184,11 +331,21 @@ export function ShelfCanvas({
 
         {/* Shelf Elevation Drawing with Formal Dimension Brackets */}
         <div className="flex flex-col border-2 border-gray-400 bg-gray-50 rounded-lg p-3 shadow-sm relative min-h-fit">
-          {/* Top Measurement Headers (Elevation Dimension Header on left + Usable Width Ruler on right) */}
+          {/* Top Measurement Headers */}
           <div className="flex items-center gap-3 mb-2">
-            {/* Left Elevation Header */}
-            <div className="w-36 shrink-0 h-6 border border-blue-200 bg-blue-100/70 rounded flex items-center justify-between px-2.5 text-[10px] font-mono font-bold text-blue-900 shadow-2xs whitespace-nowrap">
-              <span>Elevation</span>
+            {/* Left Elevation Header with Equalize button */}
+            <div className="w-36 shrink-0 h-6 border border-blue-200 bg-blue-100/70 rounded flex items-center justify-between px-2 text-[10px] font-mono font-bold text-blue-900 shadow-2xs whitespace-nowrap">
+              <div className="flex items-center gap-1">
+                <span>Elevation</span>
+                <button
+                  type="button"
+                  onClick={handleEqualizeRows}
+                  className="px-1 py-0.5 rounded bg-white/90 hover:bg-white text-[8px] font-semibold text-blue-800 border border-blue-200 shadow-2xs transition-all"
+                  title="Reset all rows to equal heights"
+                >
+                  Equalize
+                </button>
+              </div>
               <span>Total {activeShelf.total_height_cm}cm</span>
             </div>
 
@@ -203,9 +360,15 @@ export function ShelfCanvas({
           </div>
 
           {/* Synchronized Rows Container (Rendered Top Row down to Bottom Row) */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             {Array.from({ length: activeShelf.row_count }).map((_, rIdx) => {
+              const rowHeightCm = effectiveRowHeights[rIdx];
+              const minRowH = minRowHeights[rIdx];
+              const maxProdH = maxProductHeights[rIdx];
+              const baseElevationCm = rowElevations[rIdx];
+              const isAtMin = rowHeightCm <= minRowH + 0.1;
               const isHovered = hoveredRow?.shelfId === activeShelf.id && hoveredRow?.rowIndex === rIdx;
+              const isSelectedRow = selectedRowIndex === rIdx;
               const rowPlacements = (activeShelf.placements || []).filter(
                 (p) => p.row_index === rIdx
               );
@@ -218,175 +381,257 @@ export function ShelfCanvas({
                 (usedWidth / activeShelf.width_cm) * 100
               );
 
-              // Cumulative base elevation above floor / plinth
-              const baseElevationCm =
-                (activeShelf.has_plinth ? activeShelf.plinth_height_cm : 0) +
-                (activeShelf.row_count - 1 - rIdx) * rowHeightCm;
-
               return (
-                <div
-                  key={`shelf-${activeShelf.id}-row-pair-${rIdx}`}
-                  className="flex items-stretch gap-3 min-h-[90px]"
-                >
-                  {/* Left Elevation Dimension Bracket (1:1 lockstep with this row) */}
+                <React.Fragment key={`shelf-${activeShelf.id}-row-pair-${rIdx}`}>
                   <div
-                    className={`w-36 shrink-0 rounded-lg border-2 flex flex-col justify-between p-2 select-none font-mono text-[10px] transition-all ${
-                      isHovered
-                        ? "border-amber-500 bg-amber-50/90 text-amber-950 shadow-xs"
-                        : "border-blue-200 bg-blue-50/50 text-blue-900 hover:border-blue-300"
-                    }`}
+                    className="flex items-stretch gap-3 transition-all"
+                    style={{ minHeight: `${Math.max(75, rowHeightCm * 3.2)}px` }}
                   >
-                    {/* Row Tag */}
-                    <div className="flex items-center justify-between font-bold">
-                      <span className="px-1.5 py-0.5 rounded bg-blue-200/80 text-blue-950 text-[10px]">
-                        R{rIdx + 1}
-                      </span>
-                      <span className="text-gray-500 text-[9px] font-semibold">
-                        Row {rIdx + 1}
-                      </span>
-                    </div>
+                    {/* Left Elevation Dimension Bracket (Adjustable Row Height) */}
+                    <div
+                      onClick={() => onSelectRow?.(rIdx)}
+                      className={`w-36 shrink-0 rounded-lg border-2 flex flex-col justify-between p-2 select-none font-mono text-[10px] transition-all cursor-pointer ${
+                        isSelectedRow
+                          ? "border-amber-500 bg-amber-50/90 text-amber-950 shadow-sm ring-2 ring-amber-400"
+                          : isHovered
+                          ? "border-amber-400 bg-amber-50/60 text-amber-950"
+                          : "border-blue-200 bg-blue-50/50 text-blue-900 hover:border-blue-300"
+                      }`}
+                      title={`Click to select Row ${rIdx + 1}`}
+                    >
+                      {/* Row Tag & Min Badge */}
+                      <div className="flex items-center justify-between font-bold">
+                        <span className="px-1.5 py-0.5 rounded bg-blue-200/80 text-blue-950 text-[10px]">
+                          R{rIdx + 1}
+                        </span>
+                        {maxProdH > 0 ? (
+                          <span
+                            className="text-[9px] font-semibold text-amber-700 bg-amber-100/90 px-1 rounded"
+                            title={`Minimum allowed height: tallest product (${maxProdH}cm) + ${ROW_HEADROOM_PADDING_CM}cm headroom padding`}
+                          >
+                            Min {minRowH}cm
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 text-[9px] font-semibold">
+                            Row {rIdx + 1}
+                          </span>
+                        )}
+                      </div>
 
-                    {/* Height Clearance Bracket with Dimension Indicator */}
-                    <div className="my-auto py-1 flex items-center justify-center gap-1 text-blue-800 font-bold">
-                      <span className="text-blue-500 text-xs">↕</span>
-                      <span className="text-[11px]">{rowHeightCm.toFixed(1)} cm</span>
-                    </div>
-
-                    {/* Base Elevation from Floor */}
-                    <div className="flex items-center justify-between text-[9px] text-gray-500 border-t border-blue-200/70 pt-1 font-mono">
-                      <span>Elev:</span>
-                      <span className="font-bold text-gray-700">
-                        {baseElevationCm.toFixed(1)} cm
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Center Shelf Bay Row Drop Zone */}
-                  <div
-                    onDragOver={(e) => handleDragOver(e, activeShelf.id, rIdx)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, activeShelf.id, rIdx)}
-                    className={`flex-1 border-2 rounded-lg flex flex-col justify-between transition-colors relative ${
-                      isHovered
-                        ? "border-amber-500 bg-amber-50/70"
-                        : "border-gray-300 bg-white hover:border-gray-400"
-                    }`}
-                    data-testid={`shelf-row-${rIdx}`}
-                  >
-                    {/* Row Capacity & Index Header Bar */}
-                    <div className="h-5 px-2 bg-gray-100 border-b border-gray-200 flex items-center justify-between text-[10px] text-gray-700 select-none">
-                      <span className="font-bold text-gray-800 font-mono">Row {rIdx + 1}</span>
-                      
-                      {/* Capacity Indicator (used cm / total cm) */}
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 bg-gray-300 h-2 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all ${
-                              percentUsed > 100
-                                ? "bg-red-600"
-                                : percentUsed > 80
-                                ? "bg-amber-500"
-                                : "bg-emerald-500"
-                            }`}
-                            style={{ width: `${percentUsed}%` }}
+                      {/* Height Clearance Bracket with Interactive Controls */}
+                      <div className="my-auto py-1 flex items-center justify-center gap-1 font-bold text-blue-900">
+                        <button
+                          type="button"
+                          disabled={isAtMin}
+                          onClick={() => changeRowHeight(rIdx, -1)}
+                          className={`w-4 h-4 rounded font-bold flex items-center justify-center text-[10px] transition-colors ${
+                            isAtMin
+                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                              : "bg-blue-100 hover:bg-blue-300 text-blue-900 cursor-pointer"
+                          }`}
+                          title={isAtMin ? `Cannot reduce below max product height (${minRowH}cm)` : "Decrease height (-1cm)"}
+                        >
+                          -
+                        </button>
+                        <div className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-white border border-blue-200 shadow-2xs">
+                          <span className="text-blue-500 text-[10px]">â†•</span>
+                          <input
+                            type="number"
+                            step="0.5"
+                            min={minRowH}
+                            max="300"
+                            value={Number(rowHeightCm.toFixed(1))}
+                            onChange={(e) => setSpecificRowHeight(rIdx, parseFloat(e.target.value) || minRowH)}
+                            className="w-10 text-center font-mono font-bold text-[10px] text-blue-950 focus:outline-none"
+                            title={`Row height in cm (min: ${minRowH}cm)`}
                           />
+                          <span className="text-[9px] text-blue-700">cm</span>
                         </div>
-                        <span className="font-mono text-[9px] font-semibold">
-                          {usedWidth.toFixed(1)} / {activeShelf.width_cm} cm ({percentUsed.toFixed(0)}%)
+                        <button
+                          type="button"
+                          onClick={() => changeRowHeight(rIdx, 1)}
+                          className="w-4 h-4 rounded bg-blue-100 hover:bg-blue-300 text-blue-900 font-bold flex items-center justify-center text-[10px] transition-colors"
+                          title="Increase height (+1cm)"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      {/* Base Elevation from Floor */}
+                      <div className="flex items-center justify-between text-[9px] text-gray-500 border-t border-blue-200/70 pt-1 font-mono">
+                        <span>Elev:</span>
+                        <span className="font-bold text-gray-700">
+                          {baseElevationCm.toFixed(1)} cm
                         </span>
                       </div>
                     </div>
 
-                    {/* Placed Products Area */}
-                    <div className="flex-1 relative w-full h-full flex items-end px-1 pb-1 overflow-hidden">
-                      {rowPlacements.map((placement) => {
-                        const isSelected = selectedPlacementId === placement.id;
-                        const product = placement.product;
-                        const itemWidthPct = (product.width_cm * placement.facing_count / activeShelf.width_cm) * 100;
-                        const leftOffsetPct = (placement.x_offset_cm / activeShelf.width_cm) * 100;
+                    {/* Center Shelf Bay Row Drop Zone */}
+                    <div
+                      onClick={() => onSelectRow?.(rIdx)}
+                      onDragOver={(e) => handleDragOver(e, activeShelf.id, rIdx)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, activeShelf.id, rIdx)}
+                      className={`flex-1 border-2 rounded-lg flex flex-col justify-between transition-colors relative cursor-pointer ${
+                        isSelectedRow
+                          ? "border-amber-500 bg-white ring-1 ring-amber-400 shadow-xs"
+                          : isHovered
+                          ? "border-amber-400 bg-amber-50/70"
+                          : "border-gray-300 bg-white hover:border-gray-400"
+                      }`}
+                      data-testid={`shelf-row-${rIdx}`}
+                    >
+                      {/* Row Capacity & Index Header Bar */}
+                      <div className={`h-5 px-2 border-b flex items-center justify-between text-[10px] select-none transition-colors ${
+                        isSelectedRow
+                          ? "bg-amber-100 border-amber-300 text-amber-950 font-bold"
+                          : "bg-gray-100 border-gray-200 text-gray-700 font-mono"
+                      }`}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold">Row {rIdx + 1}</span>
+                          {isSelectedRow && (
+                            <span className="px-1 py-0.2 rounded bg-amber-500 text-gray-950 text-[8px] font-extrabold uppercase tracking-wider">
+                              Selected
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Capacity Indicator (used cm / total cm) */}
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 bg-gray-300 h-2 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all ${
+                                percentUsed > 100
+                                  ? "bg-red-600"
+                                  : percentUsed > 80
+                                  ? "bg-amber-500"
+                                  : "bg-emerald-500"
+                              }`}
+                              style={{ width: `${percentUsed}%` }}
+                            />
+                          </div>
+                          <span className="font-mono text-[9px] font-semibold">
+                            {usedWidth.toFixed(1)} / {activeShelf.width_cm} cm ({percentUsed.toFixed(0)}%)
+                          </span>
+                        </div>
+                      </div>
 
-                        return (
-                          <div
-                            key={placement.id}
-                            draggable
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData(
-                                "application/json",
-                                JSON.stringify({
-                                  type: "existing_placement",
-                                  placement,
-                                })
-                              );
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectShelf(activeShelf.id);
-                              onSelectPlacement(placement.id);
-                            }}
-                            style={{
-                              left: `${leftOffsetPct}%`,
-                              width: `${itemWidthPct}%`,
-                              maxHeight: "100%",
-                            }}
-                            className={`absolute bottom-1 flex flex-col items-center justify-end group cursor-pointer transition-all ${
-                              isSelected
-                                ? "z-20 ring-2 ring-amber-500 shadow-md"
-                                : "z-10 hover:z-20 hover:ring-1 hover:ring-blue-400"
-                            }`}
-                            data-testid={`placement-${placement.id}`}
-                            title={`${product.name} (${product.width_cm}cm × ${product.height_cm}cm) - At ${placement.x_offset_cm}cm`}
-                          >
-                            {/* Facings row */}
-                            <div className="w-full flex items-end justify-center h-full">
-                              {Array.from({ length: placement.facing_count }).map((_, fIdx) => (
-                                <div
-                                  key={`facing-${fIdx}`}
-                                  className="flex-1 flex flex-col items-center justify-end h-full px-0.5"
-                                >
-                                  {/* Packshot Image preserving aspect ratio */}
-                                  <div className="w-full h-16 sm:h-20 flex items-end justify-center overflow-hidden">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={getImageUrl(product.image_path)}
-                                      alt={product.name}
-                                      className="max-h-full max-w-full object-contain drop-shadow-sm filter transition-transform group-hover:scale-105"
-                                    />
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                      {/* Placed Products Area */}
+                      <div className="flex-1 relative w-full h-full flex items-end px-1 pt-2 pb-1">
+                        {rowPlacements.map((placement) => {
+                          const isSelected = selectedPlacementId === placement.id;
+                          const product = placement.product;
+                          const itemWidthPct = (product.width_cm * placement.facing_count / activeShelf.width_cm) * 100;
+                          const leftOffsetPct = (placement.x_offset_cm / activeShelf.width_cm) * 100;
 
-                            {/* SKU / Width Label Badge */}
-                            <div className="w-full text-center bg-gray-900/80 text-white rounded text-[8px] font-mono py-0.5 px-1 truncate shadow-xs">
-                              {product.sku} · {placement.x_offset_cm}cm
-                            </div>
+                          // Height proportional to row height so outline hugs product physical height
+                          const itemHeightPct = Math.min(100, Math.max(15, (product.height_cm / rowHeightCm) * 100));
 
-                            {/* Delete placement button on hover */}
-                            <button
+                          return (
+                            <div
+                              key={placement.id}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData(
+                                  "application/json",
+                                  JSON.stringify({
+                                    type: "existing_placement",
+                                    placement,
+                                  })
+                                );
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onDeletePlacement(placement.id);
+                                onSelectShelf(activeShelf.id);
+                                onSelectRow?.(rIdx);
+                                onSelectPlacement(placement.id);
                               }}
-                              className="absolute -top-2 -right-1 p-0.5 rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 shadow"
-                              title="Delete placement"
+                              style={{
+                                left: `${leftOffsetPct}%`,
+                                width: `${itemWidthPct}%`,
+                                height: `${itemHeightPct}%`,
+                              }}
+                              className={`absolute bottom-0 flex flex-col items-center justify-end group cursor-pointer transition-all ${
+                                isSelected
+                                  ? "z-20 ring-2 ring-amber-500 bg-amber-500/10 rounded-t shadow-md"
+                                  : "z-10 hover:z-20 hover:ring-1 hover:ring-blue-400 rounded-t"
+                              }`}
+                              data-testid={`placement-${placement.id}`}
+                              title={`${product.name} (${product.width_cm}cm x ${product.height_cm}cm) - At ${placement.x_offset_cm}cm`}
                             >
-                              <Trash2 className="w-2.5 h-2.5" />
-                            </button>
+                              {/* Facings row: flex-1 so packshot scales within proportional product height */}
+                              <div className="w-full flex-1 min-h-0 flex items-end justify-center">
+                                {Array.from({ length: placement.facing_count }).map((_, fIdx) => (
+                                  <div
+                                    key={`facing-${fIdx}`}
+                                    className="flex-1 flex flex-col items-center justify-end h-full px-0.5"
+                                  >
+                                    {/* Packshot Image preserving aspect ratio */}
+                                    <div className="w-full h-full flex items-end justify-center overflow-hidden">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={getImageUrl(product.image_path)}
+                                        alt={product.name}
+                                        className="max-h-full max-w-full object-contain drop-shadow-sm filter transition-transform group-hover:scale-105"
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* SKU / Width Label Badge */}
+                              <div className="w-full text-center bg-gray-900/80 text-white rounded text-[8px] font-mono py-0.5 px-1 truncate shadow-xs">
+                                {product.sku} â€¢ {placement.x_offset_cm}cm
+                              </div>
+
+                              {/* Delete placement button on hover */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeletePlacement(placement.id);
+                                }}
+                                className="absolute -top-2 right-0 p-0.5 rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 shadow-sm z-30"
+                                title="Delete placement"
+                              >
+                                <Trash2 className="w-2.5 h-2.5" />
+                              </button>
+                            </div>
+                          );
+                        })}
+
+                        {rowPlacements.length === 0 && (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs italic font-mono pointer-events-none">
+                            Drop products here
                           </div>
-                        );
-                      })}
+                        )}
+                      </div>
 
-                      {rowPlacements.length === 0 && (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs italic font-mono pointer-events-none">
-                          Drop products here
-                        </div>
-                      )}
+                      {/* Shelf Horizontal Slat (Visual Shelf Bar) */}
+                      <div className="h-2.5 bg-gradient-to-r from-gray-300 via-gray-400 to-gray-300 border-t border-gray-400 shadow-inner rounded-b" />
                     </div>
-
-                    {/* Shelf Horizontal Slat (Visual Shelf Bar) */}
-                    <div className="h-2.5 bg-gradient-to-r from-gray-300 via-gray-400 to-gray-300 border-t border-gray-400 shadow-inner rounded-b" />
                   </div>
-                </div>
+
+                  {/* Interactive Draggable Splitter Divider between adjacent rows */}
+                  {rIdx < activeShelf.row_count - 1 && (
+                    <div
+                      onMouseDown={(e) => handleStartDragDivider(rIdx, e)}
+                      className="group flex items-center gap-3 cursor-ns-resize select-none py-1 -my-0.5 z-30"
+                      title={`Drag up or down to adjust height between Row ${rIdx + 1} and Row ${rIdx + 2}`}
+                    >
+                      {/* Left elevation divider handle */}
+                      <div className="w-36 shrink-0 flex items-center justify-center">
+                        <div className="w-full h-1 bg-blue-200 group-hover:bg-amber-400 rounded-full flex items-center justify-center transition-all group-hover:h-2 shadow-xs">
+                          <span className="text-[8px] text-amber-950 font-bold opacity-0 group-hover:opacity-100 font-mono tracking-tighter">
+                            â†• RESIZE R{rIdx + 1}/R{rIdx + 2}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right divider line across shelf */}
+                      <div className="flex-1 h-1 bg-gray-300 group-hover:bg-amber-400 rounded-full transition-all group-hover:h-1.5" />
+                    </div>
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
@@ -407,21 +652,15 @@ export function ShelfCanvas({
 
             {/* Right Plinth Fixture or Floor Base */}
             {activeShelf.has_plinth ? (
-              <div className="flex-1 h-8 bg-gradient-to-b from-gray-700 to-gray-900 rounded border border-gray-600 flex items-center justify-center text-gray-300 text-[10px] font-mono font-bold tracking-wider uppercase shadow-inner">
+              <div
+                className="flex-1 h-8 rounded border border-gray-400 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 flex items-center justify-center text-[10px] font-mono text-gray-600 font-bold shadow-inner"
+              >
                 Base Plinth Fixture ({activeShelf.plinth_height_cm} cm)
               </div>
             ) : (
-              <div className="flex-1 h-8 rounded border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[10px] font-mono">
-                Floor Level (0 cm Base Clearance)
-              </div>
+              <div className="flex-1 h-2 border-b-2 border-dashed border-gray-300" />
             )}
           </div>
-        </div>
-
-        {/* Footer info bar */}
-        <div className="mt-4 pt-2 border-t border-gray-200 flex items-center justify-between text-[10px] text-gray-500 font-mono shrink-0">
-          <span>* Coordinates strictly measured from left edge in physical centimetres.</span>
-          <span>ShelfSense AI Planogram Engine</span>
         </div>
       </div>
     </div>

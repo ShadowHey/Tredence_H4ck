@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Grid, AlertCircle } from "lucide-react";
 import { Shelf } from "@/types";
+import { logFrontendAction } from "@/lib/logger";
 
 interface AddShelfModalProps {
   isOpen: boolean;
@@ -60,6 +61,10 @@ export function AddShelfModal({
         has_plinth: hasPlinth,
         plinth_height_cm: hasPlinth ? Number(plinthHeightCm) : 0.0,
       });
+      logFrontendAction(
+        "ACTION:SHELF_ADD",
+        `Created shelf "${name.trim()}" (${widthCm}x${totalHeightCm}cm, ${rowCount} rows)`
+      );
       onClose();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
