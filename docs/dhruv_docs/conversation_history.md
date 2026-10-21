@@ -2,6 +2,10 @@
 
 ---
 
+### [2026-10-21 15:05 IST] Image Intake, Shelf Assignment & Annotated Outputs
+- **Requirement**: Add Input Images and Outputs navigation pages. Users may stage multiple shelf photos but must select and process one photo at a time after choosing one saved planogram and one shelf from it. Results must preserve the input, planogram, and shelf relationship, and support export/deletion.
+- **Outcome**: Added persistent image, job, and output records; a serial worker bridge to the existing image-parsing pipeline; both UI pages; and automated tests that generate deterministic annotated/JSON artifacts while verifying traceability, export, and deletion.
+
 ### [2026-10-21 07:00 IST] Unified Root Logging & Real-Time Job Streamer
 - **Commit**: [`19710ad`](https://github.com/ShadowHey/Tredence_H4ck/commit/19710ad)
 - **Participants**: Dhruv & Antigravity (AI Assistant)

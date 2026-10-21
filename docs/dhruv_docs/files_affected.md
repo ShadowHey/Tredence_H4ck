@@ -2,6 +2,18 @@
 
 ---
 
+### [2026-10-21 15:05 IST] Image Intake, Shelf Assignment & Annotated Outputs
+- **Commit**: [`30474fc`](https://github.com/ShadowHey/Tredence_H4ck/commit/30474fc)
+- **Status**: Implemented and verified.
+- **Created**: `backend/app/api/routes/image_processing.py`, `backend/app/api/schemas/image_processing.py`, `backend/app/services/image_processing_service.py`, `backend/tests/integration/test_image_processing_api.py`, `frontend/src/app/input-images/page.tsx`, `frontend/src/app/outputs/page.tsx`, `frontend/tests/image-processing-page.test.tsx`, and `e2e/tests/image_processing_journey.spec.ts`.
+- **Modified**: database models/configuration, FastAPI startup/router registration, upload storage, sidebar navigation, frontend API client, and shared TypeScript types.
+- **Schema impact**: Adds `input_images`, `processing_jobs`, and `processed_outputs` SQLite tables.
+- **How to test**:
+  ```bash
+  backend/.venv/bin/pytest backend/tests -v
+  cd frontend && npx tsc --noEmit && npm test && npm run build
+  ```
+
 ### [2026-10-21 07:00 IST] Unified Root Logging & Real-Time Job Streamer
 - **Commit**: [`19710ad`](https://github.com/ShadowHey/Tredence_H4ck/commit/19710ad)
 - **Author**: Dhruv

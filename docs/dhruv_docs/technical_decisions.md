@@ -2,6 +2,13 @@
 
 ---
 
+### [2026-10-21 15:05 IST] Image Intake, Shelf Assignment & Annotated Outputs
+- **Commit**: [`30474fc`](https://github.com/ShadowHey/Tredence_H4ck/commit/30474fc)
+- **Status**: Implemented and verified.
+- **Decision**: Persist each uploaded shelf photo with one explicitly selected planogram and shelf before queueing it. The selected shelf dimensions are snapshotted at queue time, and a single-concurrency worker calls the isolated `image-parsing` environment to create an annotated image and detection JSON.
+- **Rationale**: This keeps every output auditable even if the source shelf is later changed, prevents parallel heavyweight model runs, and preserves queued work across restarts through SQLite job records.
+- **Trade-off**: Users process one image at a time by design; batch upload remains available for staging photographs.
+
 ### [2026-10-21 07:00 IST] Unified Root Logging & Real-Time Job Streamer
 - **Commit**: [`19710ad`](https://github.com/ShadowHey/Tredence_H4ck/commit/19710ad)
 - **Status**: Implemented & Verified in Production

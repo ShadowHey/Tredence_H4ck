@@ -9,6 +9,8 @@ This document is automatically updated upon every feature or fix commit. It info
 
 | Date & Time | Contributor | Feature / Fix | Commit | How to Run / Test | Summary of What Was Done | Files Affected |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-10-21 15:05 IST` | **Dhruv** | Shelf-Linked Image Intake & Annotated Outputs | `30474fc` | `backend/.venv/bin/pytest backend/tests -v` | Added persistent one-image-at-a-time shelf-photo intake, serial CV processing, annotated outputs, ZIP export, and UI/E2E coverage | 15 files (`backend/*`, `frontend/*`, `e2e/*`) |
+| `2026-10-21 14:55 IST` | **Dhruv** | Canonical Demo Asset Cleanup | `c104bb2` | `diff -qr sample_assets shelfsense_antigravity_handoff/sample_assets` | Removed the duplicate handoff catalogue and made root `sample_assets/` the only canonical demo asset source | 16 files (`shelfsense_antigravity_handoff/*`) |
 | `2026-10-21 07:00 IST` | **Dhruv** | Unified Root Logging & Real-Time Job Streamer | `19710ad` | `python logs/log_collector.py --follow` | Root `logs/logs.txt`, background job timing, HTTP middleware & frontend log ingestion | 10 files (`logs/*`, `backend/*`, `frontend/src/lib/logger.ts`, modals) |
 | `2026-10-21 06:18 IST` | **Dhruv** | CLIP ViT-B/32 Vector Embeddings & Inspection CLI | `38b2583` | `backend/.venv/bin/python backend/scripts/inspect_embeddings.py --list` | Automated 512-dim normalized CLIP vector generation on product creation, backfill, & CLI | 8 files (`models.py`, `database.py`, `embedding_service.py`, `inspect_embeddings.py`, unit tests) |
 | `2026-10-21 03:45 IST` | **Kumar Saurav** | Manual Product Addition Modal with Full Database Fields | `9c3118a` | Open UI $\rightarrow$ Products Library $\rightarrow$ Click **"+ Add Product"** | Full physical dimension form (cm), SVG auto-generation fallback, instant shelf placement availability | `frontend/src/components/designer/AddProductModal.tsx`, `ContextPanel.tsx`, `ShelfCanvas.tsx` |
@@ -17,6 +19,30 @@ This document is automatically updated upon every feature or fix commit. It info
 ---
 
 ## 2. Detailed Contribution Records
+
+### [2026-10-21 15:05 IST] Shelf-Linked Image Intake & Annotated Outputs
+- **Contributor**: Dhruv
+- **Commit**: [`30474fc`](https://github.com/ShadowHey/Tredence_H4ck/commit/30474fc)
+- **Summary of What Was Done**:
+  - Added Input Images and Outputs navigation pages, with a user required to select one planogram and one shelf before queuing each image.
+  - Added SQLite input, job, and output records; a serial/recoverable worker that invokes the isolated image-parsing pipeline; source/shelf snapshots; annotation/JSON storage; ZIP export; and safe deletion.
+- **How to Run / Test**:
+  ```bash
+  backend/.venv/bin/pytest backend/tests -v
+  cd frontend && npx tsc --noEmit && npm test && npm run build
+  cd e2e && npx playwright test --list
+  ```
+- **Files Affected**: New image-processing backend route/schema/service/test, Input Images and Outputs pages, frontend types/API/sidebar, and Playwright journey test.
+
+### [2026-10-21 14:55 IST] Canonical Demo Asset Cleanup
+- **Contributor**: Dhruv
+- **Commit**: [`c104bb2`](https://github.com/ShadowHey/Tredence_H4ck/commit/c104bb2)
+- **Summary of What Was Done**: Removed the byte-identical `shelfsense_antigravity_handoff/sample_assets/` copy and clarified that the repository-root `sample_assets/` directory is canonical.
+- **How to Run / Test**:
+  ```bash
+  diff -qr sample_assets shelfsense_antigravity_handoff/sample_assets
+  ```
+- **Files Affected**: Handoff prompt and the 15 deleted duplicate sample-asset files.
 
 ### [2026-10-21 07:00 IST] Unified Root Logging & Real-Time Job Streamer
 - **Contributor**: Dhruv
