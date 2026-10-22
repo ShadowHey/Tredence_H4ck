@@ -8,7 +8,9 @@ from typing import Any, Optional
 from app.services.spatial_matching import build_layout_comparison
 
 AUDIT_SCHEMA_VERSION = 1
-AUDIT_VERSION = 4
+AUDIT_VERSION = 8
+LOW_STOCK_OCCUPANCY_THRESHOLD = 0.50
+SAME_ROW_COUNT_VARIATION_TOLERANCE = 2
 
 
 def _finite_number(value: Any) -> Optional[float]:
@@ -88,12 +90,30 @@ def build_compliance_audit(
     for slot in valid_slots:
         row_seen[slot["row_index"]] = row_seen.get(slot["row_index"], 0) + 1
         slot_ordinals[slot["slot_id"]] = (row_seen[slot["row_index"]], row_counts[slot["row_index"]] - row_seen[slot["row_index"]] + 1)
-    available = {slot["slot_id"]: slot for slot in valid_slots}
+    available_by_row: dict[int, dict[str, dict[str, Any]]] = {}
+    expected_product_by_row: dict[int, set[str]] = {}
+    expected_sku_by_product: dict[str, str] = {}
+    expected_row_by_product: dict[str, int] = {}
+    expected_name_by_product: dict[str, str] = {}
+    if isinstance(snapshot, dict):
+        for placement in snapshot.get("expected_placements", []):
+            if isinstance(placement, dict) and placement.get("product_id") is not None:
+                expected_name_by_product[str(placement["product_id"])] = str(placement.get("product_name", ""))
+    for slot in valid_slots:
+        available_by_row.setdefault(slot["row_index"], {})[slot["slot_id"]] = slot
+        product_id = str(slot.get("product_id"))
+        expected_product_by_row.setdefault(slot["row_index"], set()).add(product_id)
+        expected_sku_by_product[product_id] = slot.get("sku", "")
+        expected_row_by_product.setdefault(product_id, slot["row_index"])
+    row_expected_product = {
+        row: next(iter(product_ids)) for row, product_ids in expected_product_by_row.items()
+        if len(product_ids) == 1
+    }
     expected_ids = {str(slot["product_id"]) for slot in valid_slots if slot.get("product_id") is not None}
     assignments: list[dict[str, Any]] = []
     issues: list[dict[str, Any]] = []
     correctly_occupied: set[str] = set()
-    observed_by_product: dict[str, int] = {}
+    observed_by_product_row: dict[tuple[str, int], int] = {}
     assigned_cutout_by_slot: dict[str, str] = {}
     assigned_item_by_slot: dict[str, dict[str, Any]] = {}
 
@@ -109,6 +129,20 @@ def build_compliance_audit(
     for row_items in products_by_row.values():
         for index, item in enumerate(row_items):
             product_ordinals[str(item.get("id", "unknown"))] = (index + 1, len(row_items) - index)
+    expected_quantity_by_product_row: dict[tuple[str, int], int] = {}
+    for slot in valid_slots:
+        key = (str(slot.get("product_id")), slot["row_index"])
+        expected_quantity_by_product_row[key] = expected_quantity_by_product_row.get(key, 0) + 1
+    observed_quantity_by_product_row: dict[tuple[str, int], int] = {}
+    for item in ordered_products:
+        match = item.get("catalog_match") if isinstance(item.get("catalog_match"), dict) else {}
+        candidate = match.get("top_candidate") if isinstance(match.get("top_candidate"), dict) else None
+        position = _position(item)
+        if (match.get("status") in {"matched", "needs_review"} and candidate
+                and candidate.get("id") is not None and position
+                and str(candidate["id"]) == row_expected_product.get(position["row_index"])):
+            key = (str(candidate["id"]), position["row_index"])
+            observed_quantity_by_product_row[key] = observed_quantity_by_product_row.get(key, 0) + 1
     for item in ordered_products:
         cutout_id = str(item.get("id", "unknown"))
         match = item.get("catalog_match") if isinstance(item.get("catalog_match"), dict) else {}
@@ -117,26 +151,58 @@ def build_compliance_audit(
         sku = str(candidate.get("sku", "")) if candidate else None
         position = _position(item)
         slot = None
-        if position and available:
-            slot = min(available.values(), key=lambda candidate_slot: (
+        row_available = available_by_row.get(position["row_index"], {}) if position else {}
+        if position and row_available:
+            slot = min(row_available.values(), key=lambda candidate_slot: (
                 *_slot_distance(position, candidate_slot), candidate_slot["row_index"],
                 candidate_slot["x_start_cm"], candidate_slot["slot_id"]))
-            del available[slot["slot_id"]]
+            del row_available[slot["slot_id"]]
             assigned_item_by_slot[slot["slot_id"]] = item
             assigned_cutout_by_slot[slot["slot_id"]] = cutout_id
+        elif position:
+            row_slots = [candidate_slot for candidate_slot in valid_slots
+                         if candidate_slot["row_index"] == position["row_index"]]
+            if row_slots:
+                slot = min(row_slots, key=lambda candidate_slot: (
+                    *_slot_distance(position, candidate_slot), candidate_slot["x_start_cm"], candidate_slot["slot_id"]))
 
         status = "needs_review"
         reason = "position_unavailable" if position is None else "catalogue_identity_unavailable"
+        expected_for_row = row_expected_product.get(position["row_index"]) if position else None
+        row_consensus_match = bool(product_id and expected_for_row and product_id == expected_for_row
+                                   and match.get("status") in {"matched", "needs_review"})
         if match.get("status") == "unmatched":
             status, reason = "unrecognised_product", str(match.get("reason", "catalogue_match_unresolved"))
+        elif row_consensus_match:
+            observed_key = (product_id, position["row_index"])
+            observed_by_product_row[observed_key] = observed_by_product_row.get(observed_key, 0) + 1
+            if slot is not None and slot["slot_id"] in assigned_item_by_slot and assigned_item_by_slot[slot["slot_id"]] is item:
+                status, reason = "correct", "row_catalogue_consensus_matches_expected_product"
+                correctly_occupied.add(slot["slot_id"])
+            else:
+                # Same-row expected-SKU surplus is not a compliance violation; it can
+                # be caused by real facings beyond the planogram count or detector crops.
+                status, reason = "count_variation_tolerated", "expected_product_present_on_correct_row"
         elif match.get("status") == "needs_review":
             status, reason = "needs_review", str(match.get("reason", "catalogue_match_ambiguous"))
         elif match.get("status") == "matched" and candidate:
-            observed_by_product[product_id] = observed_by_product.get(product_id, 0) + 1
+            observed_key = (product_id, position["row_index"]) if position else None
+            if observed_key:
+                observed_by_product_row[observed_key] = observed_by_product_row.get(observed_key, 0) + 1
             if product_id not in expected_ids:
                 status, reason = "unexpected_product", "product_not_expected_on_selected_shelf"
+            elif (position and expected_for_row is not None and product_id != expected_for_row
+                  and product_id in expected_row_by_product):
+                status, reason = "misplaced_product", "recognized_product_on_wrong_planogram_row"
             elif slot is None:
-                status, reason = "unexpected_product", "no_remaining_expected_facing_slot"
+                count_key = (product_id, position["row_index"])
+                expected_count = expected_quantity_by_product_row.get(count_key, 0)
+                observed_count = observed_quantity_by_product_row.get(count_key, 0)
+                if (expected_count > 0
+                        and observed_count <= expected_count + SAME_ROW_COUNT_VARIATION_TOLERANCE):
+                    status, reason = "count_variation_tolerated", "same_row_same_sku_count_delta_within_tolerance"
+                else:
+                    status, reason = "unexpected_product", "no_remaining_expected_facing_slot"
             else:
                 same_product = str(slot.get("product_id")) == product_id
                 same_row = position["row_index"] == slot["row_index"]
@@ -144,6 +210,11 @@ def build_compliance_audit(
                 center_in_slot = slot["x_start_cm"] - tolerance <= position["center_x_cm"] <= slot["x_end_cm"] + tolerance
                 if same_product and same_row and center_in_slot:
                     status, reason = "correct", "identity_and_position_match"
+                    correctly_occupied.add(slot["slot_id"])
+                elif (position and expected_for_row is None and same_product and same_row):
+                    # A heterogeneous row still uses exact local facing geometry;
+                    # only homogeneous rows can use row-level identity consensus.
+                    status, reason = "correct", "identity_matches_nearest_row_facing"
                     correctly_occupied.add(slot["slot_id"])
                 else:
                     status, reason = "misplaced_product", "identity_or_position_does_not_match_expected_slot"
@@ -166,12 +237,17 @@ def build_compliance_audit(
         if slot:
             assignment["expected_ordinal_from_left"], assignment["expected_ordinal_from_right"] = slot_ordinals[slot["slot_id"]]
         assignments.append(assignment)
-        if status != "correct":
-            issues.append({"type": status, "severity": "warning" if status == "needs_review" else "error",
+        if status in {"misplaced_product", "unexpected_product", "unrecognised_product"}:
+            issue = {"type": status, "severity": "error",
                            "cutout_id": cutout_id, "slot_id": assignment["slot_id"],
                            "product_id": product_id, "sku": sku, "expected_sku": assignment["expected_sku"],
+                           "product_name": candidate.get("name") if candidate else None,
+                           "expected_product_name": expected_name_by_product.get(str(slot.get("product_id"))) if slot else None,
                            "row_index": assignment["row_index"], "x_start_cm": assignment["x_start_cm"],
-                           "x_end_cm": assignment["x_end_cm"], "reason": reason})
+                           "x_end_cm": assignment["x_end_cm"], "reason": reason}
+            if status == "misplaced_product" and product_id in expected_row_by_product:
+                issue["target_row_number"] = expected_row_by_product[product_id] + 1
+            issues.append(issue)
             issues[-1]["normalized_start"] = assignment.get("normalized_start")
             issues[-1]["normalized_end"] = assignment.get("normalized_end")
             issues[-1]["ordinal_from_left"] = assignment.get("ordinal_from_left")
@@ -182,10 +258,21 @@ def build_compliance_audit(
     # Without a valid position mapping, absence cannot safely be asserted from image detections.
     positions_available = bool(isinstance(position_calibration, dict) and position_calibration.get("status") == "calibrated")
     slot_results = []
-    expected_quantity: dict[str, int] = {}
+    # Inventory thresholds are evaluated per planogram placement, not per facing
+    # and not across every occurrence of a SKU on the entire shelf.
+    placement_groups: dict[tuple[str, str, int], list[dict[str, Any]]] = {}
     for slot in valid_slots:
-        product_id = str(slot.get("product_id"))
-        expected_quantity[product_id] = expected_quantity.get(product_id, 0) + 1
+        placement_key = (str(slot.get("placement_id") or slot["slot_id"]),
+                         str(slot.get("product_id")), slot["row_index"])
+        placement_groups.setdefault(placement_key, []).append(slot)
+    placement_occupancy: dict[tuple[str, str, int], tuple[int, int]] = {}
+    for key, group_slots in placement_groups.items():
+        _placement_id, product_id, row_index = key
+        # Count recognized units in this row even when misplaced within it; a
+        # position error is not itself evidence of a stock shortage.
+        occupied = min(len(group_slots), observed_by_product_row.get((product_id, row_index), 0))
+        placement_occupancy[key] = (occupied, len(group_slots))
+
     for slot in valid_slots:
         is_correct = slot["slot_id"] in correctly_occupied
         occupant = assigned_item_by_slot.get(slot["slot_id"])
@@ -193,18 +280,19 @@ def build_compliance_audit(
         occupant_candidate = occupant_match.get("top_candidate") if isinstance(occupant_match, dict) else None
         if is_correct:
             status = "correct"
+        elif occupant and occupant.get("id") and any(
+                assignment["cutout_id"] == occupant.get("id") and assignment["status"] == "misplaced_product"
+                for assignment in assignments):
+            status = "misplaced_product"
         elif not positions_available:
             status = "needs_review"
-        elif occupant and isinstance(occupant_match, dict) and occupant_match.get("status") == "matched":
-            status = "misplaced_product"
         elif occupant:
             status = "needs_review"
         else:
-            product_id = str(slot.get("product_id"))
-            observed = observed_by_product.get(product_id, 0)
-            expected = expected_quantity.get(product_id, 0)
-            status = "missing_product" if observed == 0 else (
-                "insufficient_quantity" if observed < expected else "misplaced_product")
+            placement_key = (str(slot.get("placement_id") or slot["slot_id"]),
+                             str(slot.get("product_id")), slot["row_index"])
+            occupied, _expected = placement_occupancy[placement_key]
+            status = "missing_product" if occupied == 0 else "insufficient_quantity"
         evidence = [empty_id for empty_id, pos in empty_positions if pos and
                     pos["row_index"] == slot["row_index"] and
                     max(0.0, min(pos["x_end_cm"], slot["x_end_cm"]) - max(pos["x_start_cm"], slot["x_start_cm"])) > 0]
@@ -222,16 +310,69 @@ def build_compliance_audit(
                  "actual_sku": occupant_candidate.get("sku") if isinstance(occupant_candidate, dict) else None,
                  "evidence": {"empty_space_cutout_ids": evidence, "product_cutout_ids": cutout_evidence}}
         slot_results.append(entry)
-        if status != "correct":
-            issues.append({"type": status, "severity": "warning" if status == "needs_review" else "error",
-                           "slot_id": entry["slot_id"], "placement_id": entry["placement_id"],
-                           "product_id": entry["product_id"], "sku": entry["sku"],
-                           "row_index": entry["row_index"], "x_start_cm": entry["x_start_cm"],
-                           "x_end_cm": entry["x_end_cm"], "evidence": entry["evidence"],
-                           "reason": "expected_slot_not_confirmed"})
-            issues[-1]["normalized_start"] = entry["normalized_start"]
-            issues[-1]["normalized_end"] = entry["normalized_end"]
-            issues[-1]["ordinal_from_left"] = entry["ordinal_from_left"]
+
+    # Empty detector regions are operator-visible findings even when the SKU still
+    # exceeds the low-stock threshold. Emit at most one finding per empty expected slot.
+    empty_reported_slots: set[str] = set()
+    if positions_available:
+        for empty_id, empty_position in empty_positions:
+            if empty_position is None:
+                continue
+            row_slots = [slot for slot in valid_slots if slot["row_index"] == empty_position["row_index"]]
+            overlaps = [(max(0.0, min(empty_position["x_end_cm"], slot["x_end_cm"])
+                             - max(empty_position["x_start_cm"], slot["x_start_cm"])), slot)
+                        for slot in row_slots]
+            overlap, empty_slot = max(overlaps, key=lambda item: (item[0], -abs(
+                (item[1]["x_start_cm"] + item[1]["x_end_cm"]) / 2 - empty_position["center_x_cm"])),
+                default=(0.0, None))
+            if empty_slot is None or overlap <= 0 or empty_slot["slot_id"] in assigned_item_by_slot:
+                continue
+            if empty_slot["slot_id"] in empty_reported_slots:
+                continue
+            empty_reported_slots.add(empty_slot["slot_id"])
+            slot_result = next((item for item in slot_results if item["slot_id"] == empty_slot["slot_id"]), None)
+            if slot_result:
+                slot_result["status"] = "empty_space"
+                slot_result["evidence"]["empty_space_cutout_ids"] = [empty_id]
+            issues.append({"type": "empty_space", "severity": "warning", "row_index": empty_position["row_index"],
+                           "x_start_cm": empty_position["x_start_cm"], "x_end_cm": empty_position["x_end_cm"],
+                           "slot_id": empty_slot["slot_id"], "placement_id": empty_slot.get("placement_id"),
+                           "product_id": empty_slot.get("product_id"), "sku": empty_slot.get("sku"),
+                           "expected_sku": empty_slot.get("sku"), "cutout_id": empty_id,
+                           "expected_product_name": expected_name_by_product.get(str(empty_slot.get("product_id"))),
+                           "evidence": {"empty_space_cutout_ids": [empty_id], "product_cutout_ids": []},
+                           "reason": "empty_detected_inside_expected_facing"})
+
+    # Emit one actionable availability alert per placement only when half or less
+    # of its expected facings are correctly present. Slot-level gaps above remain
+    # available as detailed report evidence even when below the alert threshold.
+    for (placement_id, product_id, row_index), group_slots in placement_groups.items():
+        occupied, expected = placement_occupancy[(placement_id, product_id, row_index)]
+        occupancy_ratio = occupied / expected if expected else 1.0
+        if not positions_available or occupied == expected or occupancy_ratio > LOW_STOCK_OCCUPANCY_THRESHOLD:
+            continue
+        status = "missing_product" if occupied == 0 else "insufficient_quantity"
+        evidence = [empty_id for empty_id, pos in empty_positions if pos and pos["row_index"] == row_index
+                    and any(max(0.0, min(pos["x_end_cm"], slot["x_end_cm"])
+                                - max(pos["x_start_cm"], slot["x_start_cm"])) > 0
+                            for slot in group_slots)]
+        issues.append({
+            "type": status,
+            "severity": "error" if occupied == 0 else "warning",
+            "placement_id": group_slots[0].get("placement_id"),
+            "product_id": group_slots[0].get("product_id"),
+            "sku": group_slots[0].get("sku"),
+            "row_index": row_index,
+            "x_start_cm": min(slot["x_start_cm"] for slot in group_slots),
+            "x_end_cm": max(slot["x_end_cm"] for slot in group_slots),
+            "expected_quantity": expected,
+            "observed_quantity": occupied,
+            "occupancy_ratio": round(occupancy_ratio, 4),
+            "evidence": {"empty_space_cutout_ids": sorted(set(evidence)),
+                         "product_cutout_ids": [assigned_cutout_by_slot[slot["slot_id"]]
+                                                for slot in group_slots if slot["slot_id"] in assigned_cutout_by_slot]},
+            "reason": "placement_occupancy_at_or_below_half" if occupied else "no_attributable_facing_in_row",
+        })
 
     if not isinstance(snapshot, dict):
         issues.append({"type": "needs_review", "severity": "warning", "reason": "missing_audit_snapshot",
@@ -239,22 +380,22 @@ def build_compliance_audit(
 
     label_audit = label_audit if isinstance(label_audit, dict) else {"status": "unavailable", "zones": [], "issues": []}
     label_issues = label_audit.get("issues", [])
-    if isinstance(label_issues, list):
-        issues.extend(label_issues)
+    actionable_label_issues = [issue for issue in label_issues if isinstance(issue, dict)
+                               and issue.get("type") != "ocr_engine_unavailable"
+                               and issue.get("reason") != "ocr_engine_unavailable"] if isinstance(label_issues, list) else []
+    issues.extend(actionable_label_issues)
 
-    summary: dict[str, int] = {key: 0 for key in ("correct", "misplaced_product", "missing_product",
-        "insufficient_quantity", "unexpected_product", "unrecognised_product", "needs_review", "label_issue_count")}
+    summary: dict[str, int] = {key: 0 for key in ("correct", "count_variation_tolerated", "misplaced_product", "missing_product",
+        "insufficient_quantity", "unexpected_product", "unrecognised_product", "empty_space", "needs_review", "label_issue_count")}
     for assignment in assignments:
         summary[assignment["status"]] = summary.get(assignment["status"], 0) + 1
-    for slot in slot_results:
-        if slot["status"] in ("missing_product", "insufficient_quantity", "needs_review"):
-            summary[slot["status"]] = summary.get(slot["status"], 0) + 1
-    summary["label_issue_count"] = len(label_issues) if isinstance(label_issues, list) else 0
-    if isinstance(label_issues, list):
-        summary["needs_review"] += sum(1 for issue in label_issues
-                                       if isinstance(issue, dict) and issue.get("type") == "needs_review")
+    summary["missing_product"] = sum(1 for issue in issues if issue["type"] == "missing_product")
+    summary["insufficient_quantity"] = sum(1 for issue in issues if issue["type"] == "insufficient_quantity")
+    summary["empty_space"] = sum(1 for issue in issues if issue["type"] == "empty_space")
+    summary["needs_review"] = sum(1 for issue in issues if issue["type"] == "needs_review")
+    summary["label_issue_count"] = len(actionable_label_issues)
     status = "needs_review" if (any(issue["type"] == "needs_review" for issue in issues)
-                                  or label_audit.get("status") in ("unavailable", "needs_review")) else "complete"
+                                  or not positions_available or not isinstance(snapshot, dict)) else "complete"
     layout_comparison = build_layout_comparison(snapshot=snapshot if isinstance(snapshot, dict) else None,
         products=products, empty_spaces=empty_spaces, assignments=assignments, calibration=position_calibration)
     return {"schema_version": AUDIT_SCHEMA_VERSION, "audit_version": AUDIT_VERSION,

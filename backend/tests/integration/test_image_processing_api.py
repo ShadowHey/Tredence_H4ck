@@ -78,7 +78,7 @@ def test_one_image_generates_traceable_output_and_zip(client, db_session, monkey
     assert audit["job_id"] == output["job_id"]
     assert audit["audit_snapshot_sha256"] == output["audit_snapshot"]["snapshot_sha256"]
     assert audit["schema_version"] == 1
-    assert audit["audit_version"] == 4
+    assert audit["audit_version"] == 8
     assert audit["label_audit"]["status"] == "no_expected_label_zones"
 
     # Exercise a report issue and its durable operator workflow without depending on CV model output.
@@ -99,7 +99,13 @@ def test_one_image_generates_traceable_output_and_zip(client, db_session, monkey
     assert client.get(f"/api/v1/compliance/summary").json()["summary"]["resolved"] == 1
     compliance_export = client.get(f"/api/v1/outputs/{output['id']}/compliance/export.json")
     assert compliance_export.status_code == 200
-    assert compliance_export.json()["report"]["issues"][0]["resolution_note"] == "Restocked during audit."
+    exported_report = compliance_export.json()
+    assert exported_report["export_schema_version"] == 2
+    assert exported_report["report"]["issues"][0]["resolution_note"] == "Restocked during audit."
+    assert exported_report["source"]["source_image_path"]
+    assert exported_report["source"]["annotated_image_path"] == output["annotated_image_path"]
+    assert exported_report["source"]["detection_json_path"] == output["result_json_path"]
+    assert isinstance(exported_report["evidence_assets"], list)
     invalid_issue = client.patch(f"/api/v1/outputs/{output['id']}/compliance/issues/{'f' * 64}",
                                  json={"status": "resolved"})
     assert invalid_issue.status_code == 404

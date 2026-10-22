@@ -51,6 +51,7 @@ image-parsing/
 │       ├── schemas.py      # Pydantic data schemas
 │       ├── geometry.py     # Box math, clipping, IoU, and NMS
 │       ├── detector.py     # YOLO product & empty-space detector
+│       ├── detection_refinement.py # Conservative nested-duplicate suppression and geometry warnings
 │       ├── row_segmenter.py# YOLO-seg shelf-row segmenter
 │       ├── empty_space.py  # Empty-space refiner & row-band assignment
 │       ├── visualization.py# Multi-layer OpenCV drawing engine

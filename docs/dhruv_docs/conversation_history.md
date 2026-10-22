@@ -1,5 +1,12 @@
 # Dhruv's Conversation History & Requirement Discussions
 
+### [2026-10-22 16:57 IST] Backend Restart and Saved Analysis Refresh
+- **Request**: Restart the backend and run the saved analyses again to inspect whether suggestions and warnings updated after the compliance work.
+- **Actions**: Restarted Uvicorn on port 8000 without restarting Next.js. Fixed cluster consensus when a row has no usable catalogue votes, and made forced analysis also regenerate its compliance audit rather than reuse a same-version audit. Re-ran saved Outputs #1–#8.
+- **Outcome**: All eight now complete with HTTP 200. The selected planogram fixture (Outputs #7/#8) remains at 24 misplaced, 15 missing, 101 review-needed and 60 label issues; it reports 16 correct and 9 tolerated count variations. This is evidence that current changes did not materially reduce the visible warning totals; they should not be presented as reduced.
+- **Validation**: `backend/.venv/bin/pytest backend/tests -q` passed (82 tests); checked refreshed `/api/v1/outputs/{id}/analyze` responses and `/api/v1/outputs/8/compliance` audit version 6.
+- **Next**: Reload `http://localhost:3000/analysis?outputId=8` or choose another output. Investigate actual localization/identity and OCR evidence—this rerun did not rerun YOLO inference, and older outputs with absent/weak audit snapshots should remain review-only.
+
 ### [2026-10-22 06:19 IST] Normalized Row/Position Layout Comparison
 
 - **Request**: Implement the agreed planogram/photo comparison using normalized row-wise positions, ordered products, and explicit empty/free intervals; preserve modularity for future work.
@@ -193,3 +200,43 @@ Dhruv reported that the cutout inspector showed “Failed to fetch” and asked 
 - **Request**: Fix the analysis page error shown in the screenshot.
 - **Diagnosis**: The backend had already extracted detections, but crashed while counting calibrated detections because some valid uncalibrated detections contain `planogram_position: null`.
 - **Fix and verification**: Guarded both position-count expressions through one helper and added a regression test. All 54 backend tests passed. Live Output #4 analysis/cutouts/compliance endpoints returned 200; Chromium loaded the report with 11 findings and no “Cutout analysis failed” alert or browser errors.
+# [2026-10-22 14:18 IST] Shelf Fixture Ground Truth & Detection Quality Safeguards — Phases A–B
+
+- **Request**: Implement phases A and B from the detection/compliance improvement plan, tick off tasks for handoff, and avoid unrelated changes.
+- **Phase A delivered**: Added the original Output #7 source image with SHA-256 and dimensions, a four-row planogram/SKU manifest, user-described expected findings and alert policy, provenance limitations, fixture README, and integrity/policy tests.
+- **Phase B delivered**: Added strict nested duplicate suppression after YOLO NMS; added row-relative narrow/short geometry flags that do not modify coordinates; carried flags into cutout metadata and typed API/frontend contracts; added a separate Product Match geometry warning; bumped analysis cache version.
+- **Verification**: Image parser 38 passed; backend 65 passed; frontend type-check passed and Vitest 21 passed. Model inference completed on the fixture with 70 products, 1 empty-space region, 4 rows, and 2 narrow-box flags.
+- **Not claimed / next agent**: Scenario truth is not a pixel-labeled box dataset. No YOLO accuracy improvement is claimed; manually annotate boxes before calibration/training. See `image-parsing/TASK_CHECKLIST.md` and `docs/shared/COMPLIANCE_ROADMAP.md`.
+# [2026-10-22 14:54 IST] Row-Scoped Catalogue Consensus & Cluster Identity — Phase C
+
+- **Request**: Implement Phase C after the already-completed fixture/detection phases, maintain a handoff checklist, and avoid mistakes.
+- **Delivered**: Added row-isolated clustering and catalogue majority consensus. Fragmented same-row visual groups can consolidate when the same shelf-catalogue candidate clearly dominates; cross-row clusters split; low-quality crops abstain; singleton/weak evidence stays review-needed. The analysis response and cluster table expose candidate vote support without changing individual crop results.
+- **Verification**: `backend/.venv/bin/pytest backend/tests -q` passed (71 tests); frontend TypeScript check passed and Vitest passed (22 tests); production build passed; `git diff --check` passed.
+- **Remaining / next agent**: Manually label per-crop product identities for the pinned shelf and held-out examples before calibration of the provisional 60%/two-crop consensus rule. Phase D (comparison/alert policy) remains subsequent work; no YOLO box correction or per-item CLIP accuracy improvement is claimed.
+# [2026-10-22 15:27 IST] Placement-Level Stock Alert Policy — Phase D
+
+- **Request**: Implement Phase D of the end-to-end accuracy plan with a ticked handoff checklist and no unrelated changes.
+- **Delivered**: Stock evaluation now aggregates by planogram placement and row, preserves slot-level gap evidence, suppresses stock issues above 50% occupancy (so one missing unit in 15 produces no stock alert), emits one low-stock issue at/below 50% and one missing issue for zero units, and keeps misplacement distinct from stock quantity. Uncalibrated geometry fails safely to review. Audit version advanced to 5.
+- **Verification**: Compliance unit tests cover 14/15, exactly 5/10, zero stock, placement isolation, swaps, and uncalibrated mapping. Full backend suite passed; `git diff --check` passed.
+- **Remaining / next agent**: Validate the provisional threshold on manually reviewed shelf photos. Phase E reporting/evidence improvements remain; existing slot-level results retain granular gaps even when no stock alert is surfaced.
+
+### [2026-10-22 16:06 IST] Evidence-Complete Compliance Reporting — Phase E
+
+- **Request**: Implement the reporting/evidence phase after A–D, with a reliable report and traceable evidence for each finding.
+- **Outcome**: Export schema v2 now indexes source image, annotated image, detector JSON, immutable audit snapshot, and all product/empty-space/shelf crops with their metadata. The report displays complete/review-required state, expected/observed quantity, selected issue crop overlays (including empty areas), and direct per-crop downloads.
+- **Verification**: `backend/.venv/bin/pytest backend/tests -q` passed (75 tests); frontend `npx tsc --noEmit`, all Vitest tests (22), and `npm run build` passed. `git diff --check` is included in final validation.
+- **Remaining / next agent**: Check paths and issue-to-crop matching on manually reviewed physical shelf photos. The JSON is path-based, not a self-contained ZIP; no alert or detection thresholds changed.
+
+### [2026-10-22 16:41 IST] Compliance Verification and Handoff — Phase F
+
+- **Request**: Add unit coverage for duplicate/fragmented detections and uncertain CLIP/consensus; add compliance boundary cases; verify the labeled fixture with its selected planogram; run the full test/build/browser checks and record handoff details.
+- **Delivered**: Existing duplicate, adjacency, fragmentation, majority-consensus, swapped-product, 14/15, and calibration tests were confirmed. Added an explicit ambiguous-CLIP regression, 7/15 stock alert, isolated empty-space evidence, neighboring same-SKU placements, ±2 same-row count variation, and a fixture-photo upload/selected-planogram/report integration. Chromium now verifies the saved labeled output's four-row planogram report.
+- **Policy adjustment**: A test exposed that up to two extra correctly recognized same-row units were reported as unexpected, contrary to the reviewed fixture expectation. Added a narrowly scoped tolerance of ±2 for same-row/same-SKU count variation and bumped audit version to 6. Larger overages remain unexpected; under-count gaps remain visible in slot evidence.
+- **Verification**: `backend/.venv/bin/pytest backend/tests -q` (81 passed); `cd image-parsing && PYTHONPATH=src .venv/bin/pytest tests -q` (38 passed); frontend TypeScript check, Vitest (22 passed), and production build; `cd e2e && npx playwright test tests/analysis_product_match.spec.ts --reporter=list` (2 passed); `git diff --check`.
+- **Limitations / next**: Fixture integration injects deterministic reviewed detections after exercising image upload, selected planogram, queue processing, frozen snapshot, and report retrieval. It does not assert live YOLO/CLIP accuracy. Add pixel-level annotations and run a model-backed evaluation; calibrate the ±2 tolerance on more fixtures before broad use.
+### [2026-10-22 17:48 IST] Focused Shelf Findings for Reviewed Four-Row Fixture
+
+- **Request**: On the uploaded four-row shelf photo, highlight only two issues: a Yellow Lays packet incorrectly in Row 1 (move it to Row 2 and replace its Row 1 spot with Amul Milk Chocolate) and one empty space in Row 2. Treat the remaining shelves as proper.
+- **Delivered**: Updated compliance interpretation and report recommendations. Regenerated saved Output #8; it now reports exactly those two findings, with no repeated per-product review warnings or unavailable-OCR placeholders.
+- **Verification**: Backend suite 83 passed; Chromium Playwright analysis flow 2 passed; `git diff --check` passed.
+- **Caveat**: This is a policy/reporting correction on saved detections, not a fresh YOLO run. OCR remains unavailable. Same-row expected-product count differences are tolerated for this fixture, so future overstock requirements should be explicitly defined.

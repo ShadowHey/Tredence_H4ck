@@ -1,0 +1,70 @@
+{
+  "fixture_id": "pipeline-verification-shelf-2026-10",
+  "schema_version": 1,
+  "source_image": {
+    "file": "shelf_photo.png",
+    "sha256": "0c450c21dc84ca4b649729859635b7d8c0f4cb2243a830f111520d83d590bf55",
+    "width_px": 1024,
+    "height_px": 1536,
+    "origin": "Original uploaded shelf photo associated with Output #7; copied from runtime storage for reproducible tests."
+  },
+  "ground_truth_provenance": {
+    "type": "operator_visual_review",
+    "basis": "User-provided product identities, planogram rows, and desired alert outcomes, cross-checked against the original photo and frozen Output #7 snapshot.",
+    "limits": [
+      "This is scenario-level audit truth, not a pixel-accurate bounding-box annotation set.",
+      "Per-item counts in the description are operator estimates; use row identity and the stated acceptance policies as the stable assertions until boxes are manually annotated.",
+      "Do not use this fixture to claim detector precision/recall or calibrated physical-position accuracy."
+    ]
+  },
+  "planogram": {
+    "source_output_id": 7,
+    "source_snapshot_sha256": "95ddc9220ade58b71fd0aac10348b55b15d05e82b5b2b26e93cf3d65d3e52e11",
+    "name": "Pipeline Verification Planogram",
+    "shelf_name": "Shelf 03",
+    "width_cm": 120.0,
+    "height_cm": 180.0,
+    "row_order": "top_to_bottom",
+    "expected_facings_per_row": 15,
+    "facings_per_row": 1,
+    "rows": [
+      {"row": 1, "sku": "BEV-200", "product": "Amul Milk Chocolate", "facing_count": 15},
+      {"row": 2, "sku": "BEV-201", "product": "Yellow Lays", "facing_count": 15},
+      {"row": 3, "sku": "BEV-202", "product": "Orange Juice", "facing_count": 15},
+      {"row": 4, "sku": "BEV-203", "product": "Fresh Laundry Liquid", "facing_count": 15}
+    ]
+  },
+  "observations": [
+    {
+      "row": 1,
+      "observed_products": [
+        {"sku": "BEV-200", "product": "Amul Milk Chocolate", "count_reported": 17},
+        {"sku": "BEV-201", "product": "Yellow Lays", "count_reported": 1, "placement": "interleaved among chocolates; approximately after ten chocolates when counted from the right"}
+      ],
+      "expected_findings": ["misplaced_product:BEV-201"],
+      "must_not_report": ["missing_product:BEV-200", "insufficient_quantity:BEV-200"]
+    },
+    {
+      "row": 2,
+      "observed_products": [{"sku": "BEV-201", "product": "Yellow Lays", "count_reported": 14}],
+      "reported_empty_facings": 1,
+      "expected_findings": [],
+      "must_not_report": ["low_stock", "insufficient_quantity", "misplaced_product"],
+      "policy": "A low-stock alert is permitted only when observed/expected quantity is at most 0.50; 14/15 is above the threshold."
+    },
+    {
+      "row": 3,
+      "observed_products": [{"sku": "BEV-202", "product": "Orange Juice", "count_status": "full; approximately one or two facings may differ from planogram"}],
+      "expected_findings": [],
+      "must_not_report": ["misplaced_product", "low_stock"],
+      "policy": "Treat a full same-SKU row with a count delta of at most two as compliant for this initial fixture."
+    },
+    {
+      "row": 4,
+      "observed_products": [{"sku": "BEV-203", "product": "Fresh Laundry Liquid", "count_status": "full and correctly arranged"}],
+      "expected_findings": [],
+      "must_not_report": ["misplaced_product", "low_stock"]
+    }
+  ],
+  "acceptance_scope": "Scenario and policy regression only; object-box truth and physical measurements are not fully annotated."
+}

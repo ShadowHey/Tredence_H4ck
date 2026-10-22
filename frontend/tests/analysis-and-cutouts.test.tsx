@@ -16,6 +16,8 @@ const { mockCutoutItemProduct, mockCutoutItemShelf, mockCutoutItemEmpty, mockClu
     row_number: 1,
     cluster_id: 1,
     area_px: 5000,
+    quality_status: "review",
+    quality_flags: ["narrow_vs_row_median"],
     catalog_match: {
       status: "matched",
       reason: "above_threshold_and_unambiguous",
@@ -90,6 +92,8 @@ const { mockCutoutItemProduct, mockCutoutItemShelf, mockCutoutItemEmpty, mockClu
           id: "prod_002",
           crop_path: "uploads/cutouts/crop_2.jpg",
           cluster_id: 2,
+          quality_status: "usable",
+          quality_flags: [],
           catalog_match: {
             status: "needs_review",
             reason: "below_similarity_threshold",
@@ -114,6 +118,8 @@ const { mockCutoutItemProduct, mockCutoutItemShelf, mockCutoutItemEmpty, mockClu
           id: "prod_003",
           crop_path: "uploads/cutouts/crop_3.jpg",
           cluster_id: 2,
+          quality_status: "usable",
+          quality_flags: [],
           catalog_match: null,
         },
       ],
@@ -221,6 +227,39 @@ describe("AnalysisTable Component (4-Column Specification)", () => {
     );
   });
 
+  it("shows the leading catalogue identity and vote support for a review-needed consensus", () => {
+    const [cluster] = mockClusters;
+    render(
+      <AnalysisTable
+        clusters={[{
+          ...cluster,
+          is_catalog_match: false,
+          catalog_product: {
+            id: 43,
+            sku: "SKU-AMUL-CHOCO",
+            name: "Amul Milk Chocolate",
+            category: "Chocolate",
+            image_path: "uploads/products/amul.jpg",
+            price: 50,
+            currency: "INR",
+          },
+          catalog_consensus: {
+            status: "needs_review",
+            reason: "insufficient_confirmed_consensus",
+            support_count: 2,
+            considered_count: 3,
+            support_ratio: 2 / 3,
+          },
+        }]}
+        threshold={0.9}
+      />
+    );
+
+    expect(screen.getByText("Amul Milk Chocolate")).toBeInTheDocument();
+    expect(screen.getByText(/2\/3 usable crop votes/)).toBeInTheDocument();
+    expect(screen.getByTestId("catalog-match-no")).toBeInTheDocument();
+  });
+
   it("filters table rows by Matched and Unmatched pills", () => {
     render(<AnalysisTable clusters={mockClusters} threshold={0.9} />);
 
@@ -245,6 +284,7 @@ describe("AnalysisTable Component (4-Column Specification)", () => {
     expect(screen.getByText("Colgate Total 150g")).toBeInTheDocument();
     expect(screen.getByText("Amul Milk Chocolate")).toBeInTheDocument();
     expect(screen.getByText("96.5%")).toBeInTheDocument();
+    expect(screen.getByTestId("cutout-geometry-warning")).toHaveTextContent("Box geometry needs review");
     expect(screen.getAllByText("Raw CLIP similarity")).toHaveLength(3);
     expect(screen.getByText("Color gate kept 2/4 candidates · candidate color match 81%")).toBeInTheDocument();
     expect(screen.getByText("72.0%")).toBeInTheDocument();

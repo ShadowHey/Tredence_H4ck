@@ -98,12 +98,17 @@ export interface ComplianceIssue {
   expected_ordinal_from_left?: number | null;
   sku?: string | null;
   expected_sku?: string | null;
+  expected_quantity?: number | null;
+  observed_quantity?: number | null;
+  occupancy_ratio?: number | null;
+  placement_id?: number | null;
+  product_id?: number | null;
   cutout_id?: string | null;
   slot_id?: string | null;
   bbox_xyxy?: [number, number, number, number] | null;
   label_zone_id?: string | null;
   evidence_crop_path?: string | null;
-  evidence?: { empty_space_cutout_ids?: string[]; product_cutout_ids?: string[] };
+  evidence?: { empty_space_cutout_ids?: string[]; product_cutout_ids?: string[]; placement_id?: number | null; row_index?: number | null; x_start_cm?: number | null; x_end_cm?: number | null };
   resolution_note?: string | null;
 }
 
@@ -321,6 +326,8 @@ export interface CutoutItem {
   row_number?: number | null;
   cluster_id?: number | null;
   area_px?: number | null;
+  quality_status?: "unchecked" | "usable" | "review";
+  quality_flags?: string[];
   catalog_match?: CutoutCatalogMatch | null;
   planogram_position?: PlanogramPosition | null;
 }
@@ -399,6 +406,13 @@ export interface ClusterRow {
   is_catalog_match: boolean;
   catalog_confidence: number;
   catalog_product?: CatalogMatchedProduct | null;
+  catalog_consensus?: {
+    status: "matched" | "needs_review";
+    reason: string;
+    support_count: number;
+    considered_count: number;
+    support_ratio: number;
+  };
 }
 
 export interface OutputAnalysisResponse {

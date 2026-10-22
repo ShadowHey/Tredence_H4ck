@@ -13,6 +13,8 @@ class DetectionItem(BaseModel):
     bbox_normalized: List[float] = Field(description="Normalized coordinates [x1_norm, y1_norm, x2_norm, y2_norm]")
     row_number: Optional[int] = Field(default=None, description="1-indexed shelf row number from top to bottom")
     area_px: Optional[int] = Field(default=None, description="Area in square pixels")
+    quality_status: str = Field(default="unchecked", description="Detection geometry quality: unchecked, usable, or review")
+    quality_flags: List[str] = Field(default_factory=list, description="Non-destructive warnings about suspicious detection geometry")
 
 
 class ShelfRowItem(BaseModel):

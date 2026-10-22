@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, HelpCircle, Search, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, HelpCircle, Search, XCircle } from "lucide-react";
 import { getImageUrl } from "@/lib/api";
 import { CutoutItem } from "@/types";
 
@@ -87,6 +87,17 @@ export function ProductMatchView({ products, search, threshold, onInspectItem }:
                     {confirmed ? "Confirmed" : "Needs review"}
                   </span>
                 </div>
+
+                {item.quality_status === "review" && item.quality_flags?.length ? (
+                  <p
+                    className="mb-3 inline-flex items-center gap-1 rounded-md border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-200"
+                    data-testid="cutout-geometry-warning"
+                    title={item.quality_flags.join(", ")}
+                  >
+                    <AlertTriangle className="h-3 w-3 shrink-0" />
+                    Box geometry needs review: {item.quality_flags.join(", ").replaceAll("_", " ")}
+                  </p>
+                ) : null}
 
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                   <button

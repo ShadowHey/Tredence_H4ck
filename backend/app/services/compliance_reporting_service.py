@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.models import ComplianceIssueResolution, ProcessedOutput
-from app.services.cutout_service import get_output_compliance_audit
+from app.services.cutout_service import get_output_compliance_audit, get_output_cutouts
 
 
 def _stable_issue_id(issue: dict[str, Any], occurrence: int) -> str:
@@ -21,6 +21,14 @@ def _stable_issue_id(issue: dict[str, Any], occurrence: int) -> str:
 
 def _recommended_action(issue: dict[str, Any]) -> str:
     kind = issue.get("type")
+    if kind == "misplaced_product" and issue.get("target_row_number"):
+        actual = issue.get("product_name") or issue.get("sku") or "the detected product"
+        expected = issue.get("expected_product_name") or issue.get("expected_sku") or "the expected product"
+        return (f"Move {actual} from Row {int(issue.get('row_index', 0)) + 1} to its designated "
+                f"Row {issue['target_row_number']} location, then put {expected} in the vacated facing.")
+    if kind == "empty_space":
+        expected = issue.get("expected_product_name") or issue.get("expected_sku") or "the expected product"
+        return f"Fill the empty facing in Row {int(issue.get('row_index', 0)) + 1} with {expected}."
     actions = {
         "misplaced_product": "Move the detected product to its expected planogram slot, then capture a new shelf photo.",
         "missing_product": "Restock the expected product in this slot and capture a new shelf photo.",
@@ -119,8 +127,30 @@ def get_dashboard_compliance_summary(db: Session) -> dict[str, Any]:
 def export_compliance_report(db: Session, output_id: int) -> dict[str, Any]:
     report = get_compliance_report(db, output_id)
     output = db.query(ProcessedOutput).filter_by(id=output_id).one()
-    return {"export_schema_version": 1, "report": report,
+    cutouts = get_output_cutouts(db, output_id)
+    evidence_assets = []
+    for category in ("products", "empty_spaces", "shelves"):
+        entries = cutouts.get(category, [])
+        if not isinstance(entries, list):
+            continue
+        for item in entries:
+            if not isinstance(item, dict):
+                continue
+            evidence_assets.append({
+                "cutout_id": item.get("id"),
+                "category": item.get("category"),
+                "image_path": item.get("crop_path"),
+                "bbox_xyxy": item.get("bbox_xyxy"),
+                "confidence": item.get("confidence"),
+                "quality_status": item.get("quality_status"),
+                "quality_flags": item.get("quality_flags", []),
+                "planogram_position": item.get("planogram_position"),
+            })
+    return {"export_schema_version": 2, "report": report,
             "source": {"input_image_id": output.input_image_id, "output_id": output.id,
                        "source_filename": output.input_image.original_filename if output.input_image else report.get("source_filename"),
+                       "source_image_path": output.input_image.storage_path if output.input_image else None,
                        "annotated_image_path": output.annotated_image_path,
-                       "audit_snapshot": output.job.audit_snapshot if output.job else None}}
+                       "detection_json_path": output.result_json_path,
+                       "audit_snapshot": output.job.audit_snapshot if output.job else None},
+            "evidence_assets": evidence_assets}
