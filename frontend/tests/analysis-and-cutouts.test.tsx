@@ -16,6 +16,29 @@ const { mockCutoutItemProduct, mockCutoutItemShelf, mockCutoutItemEmpty, mockClu
     row_number: 1,
     cluster_id: 1,
     area_px: 5000,
+    catalog_match: {
+      status: "matched",
+      reason: "above_threshold_and_unambiguous",
+      top_candidate: {
+        id: 42,
+        sku: "SKU-COLGATE-150G",
+        name: "Colgate Total 150g",
+        category: "Oral Care",
+        image_path: "uploads/products/colgate.jpg",
+        price: 130,
+        currency: "INR",
+      },
+      similarity: 0.965,
+      runner_up_similarity: 0.71,
+      confidence_margin: 0.255,
+      similarity_threshold: 0.9,
+      margin_threshold: 0.03,
+      color_similarity: 0.81,
+      color_filter_candidate_count_before: 4,
+      color_filter_candidate_count_after: 2,
+      color_filter_threshold: 0.3,
+      matching_method: "color_filter_then_clip",
+    },
   };
 
   const shelf: CutoutItem = {
@@ -60,13 +83,38 @@ const { mockCutoutItemProduct, mockCutoutItemShelf, mockCutoutItemEmpty, mockClu
     },
     {
       cluster_id: 2,
-      item_count: 1,
+      item_count: 2,
       similar_objects: [
         {
           ...prod,
           id: "prod_002",
           crop_path: "uploads/cutouts/crop_2.jpg",
           cluster_id: 2,
+          catalog_match: {
+            status: "needs_review",
+            reason: "below_similarity_threshold",
+            top_candidate: {
+              id: 43,
+              sku: "SKU-AMUL-CHOCO",
+              name: "Amul Milk Chocolate",
+              category: "Chocolate",
+              image_path: "uploads/products/amul.jpg",
+              price: 50,
+              currency: "INR",
+            },
+            similarity: 0.72,
+            runner_up_similarity: 0.58,
+            confidence_margin: 0.14,
+            similarity_threshold: 0.9,
+            margin_threshold: 0.03,
+          },
+        },
+        {
+          ...prod,
+          id: "prod_003",
+          crop_path: "uploads/cutouts/crop_3.jpg",
+          cluster_id: 2,
+          catalog_match: null,
         },
       ],
       similarity_percentage: 84.0,
@@ -104,7 +152,7 @@ vi.mock("@/lib/api", () => ({
       total_detections: 3,
       total_clusters: 2,
       matched_clusters_count: 1,
-      catalog_confidence_threshold: 0.95,
+      catalog_confidence_threshold: 0.9,
       clusters: mockClusters,
     }),
     analyzeOutput: vi.fn(),
@@ -141,18 +189,18 @@ describe("CutoutViewerModal Component", () => {
 
 describe("AnalysisTable Component (4-Column Specification)", () => {
   it("renders exact 4 column headers", () => {
-    render(<AnalysisTable clusters={mockClusters} threshold={0.95} />);
+    render(<AnalysisTable clusters={mockClusters} threshold={0.9} />);
 
     expect(screen.getByText("Similar Objects")).toBeInTheDocument();
-    expect(screen.getByText("Similarity Percentage")).toBeInTheDocument();
+    expect(screen.getByText("Cluster Cohesion")).toBeInTheDocument();
     expect(
       screen.getByText("Is object similar to someone in the product catalog?")
     ).toBeInTheDocument();
     expect(screen.getByText("Similar Product")).toBeInTheDocument();
   });
 
-  it("displays 'Yes' and product packshot image when match is >= 95%", () => {
-    render(<AnalysisTable clusters={mockClusters} threshold={0.95} />);
+  it("displays 'Yes' and product packshot image when match is >= 90%", () => {
+    render(<AnalysisTable clusters={mockClusters} threshold={0.9} />);
 
     // Row 1 is a match
     const yesBadge = screen.getByTestId("catalog-match-yes");
@@ -162,19 +210,19 @@ describe("AnalysisTable Component (4-Column Specification)", () => {
     expect(screen.getByTestId("catalog-product-matched")).toBeInTheDocument();
   });
 
-  it("displays 'No' and NO product image when match is < 95%", () => {
-    render(<AnalysisTable clusters={mockClusters} threshold={0.95} />);
+  it("shows review state and no product image when a cluster is below 90%", () => {
+    render(<AnalysisTable clusters={mockClusters} threshold={0.9} />);
 
     // Row 2 is not a match
     const noBadge = screen.getByTestId("catalog-match-no");
     expect(noBadge).toHaveTextContent("No");
     expect(screen.getByTestId("catalog-product-none")).toHaveTextContent(
-      "No catalog product matched"
+      "No confirmed catalog product"
     );
   });
 
   it("filters table rows by Matched and Unmatched pills", () => {
-    render(<AnalysisTable clusters={mockClusters} threshold={0.95} />);
+    render(<AnalysisTable clusters={mockClusters} threshold={0.9} />);
 
     // Click Matched Catalog button
     fireEvent.click(screen.getByTestId("filter-matched-btn"));
@@ -184,6 +232,43 @@ describe("AnalysisTable Component (4-Column Specification)", () => {
     // Click Unmatched button
     fireEvent.click(screen.getByTestId("filter-unmatched-btn"));
     expect(screen.queryByTestId("cluster-row-1")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cluster-row-2")).toBeInTheDocument();
+  });
+
+  it("shows every individual crop's nearest catalogue candidate in Product Match", () => {
+    render(<AnalysisTable clusters={mockClusters} threshold={0.9} />);
+
+    fireEvent.click(screen.getByTestId("filter-product-match-btn"));
+
+    expect(screen.getByTestId("product-match-view")).toBeInTheDocument();
+    expect(screen.getAllByTestId("product-match-item")).toHaveLength(3);
+    expect(screen.getByText("Colgate Total 150g")).toBeInTheDocument();
+    expect(screen.getByText("Amul Milk Chocolate")).toBeInTheDocument();
+    expect(screen.getByText("96.5%")).toBeInTheDocument();
+    expect(screen.getAllByText("Raw CLIP similarity")).toHaveLength(3);
+    expect(screen.getByText("Color gate kept 2/4 candidates · candidate color match 81%")).toBeInTheDocument();
+    expect(screen.getByText("72.0%")).toBeInTheDocument();
+    expect(screen.getByText("No catalogue candidate")).toBeInTheDocument();
+    expect(screen.getAllByTestId("product-match-status").map((badge) => badge.textContent)).toEqual([
+      expect.stringContaining("Confirmed"),
+      expect.stringContaining("Needs review"),
+      expect.stringContaining("Needs review"),
+    ]);
+  });
+
+  it("searches Product Match items by candidate SKU and returns to the unchanged cluster view", () => {
+    render(<AnalysisTable clusters={mockClusters} threshold={0.9} />);
+
+    fireEvent.click(screen.getByTestId("filter-product-match-btn"));
+    fireEvent.change(screen.getByPlaceholderText("Search crop, product, SKU..."), {
+      target: { value: "SKU-AMUL-CHOCO" },
+    });
+    expect(screen.getAllByTestId("product-match-item")).toHaveLength(1);
+    expect(screen.getByText("Amul Milk Chocolate")).toBeInTheDocument();
+    expect(screen.queryByText("Colgate Total 150g")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("filter-all-btn"));
+    expect(screen.getByTestId("cluster-row-1")).toBeInTheDocument();
     expect(screen.getByTestId("cluster-row-2")).toBeInTheDocument();
   });
 });

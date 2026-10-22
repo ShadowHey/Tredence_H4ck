@@ -10,6 +10,7 @@ from sqlalchemy import (
     ForeignKey,
     Text,
     CheckConstraint,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 from app.db.database import Base
@@ -143,6 +144,7 @@ class ProcessingJob(Base):
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    audit_snapshot = Column(JSON, nullable=True)
 
     input_image = relationship("InputImage", back_populates="job")
     output = relationship("ProcessedOutput", back_populates="job", cascade="all, delete-orphan", uselist=False)
@@ -158,7 +160,29 @@ class ProcessedOutput(Base):
     annotated_image_path = Column(String(500), nullable=False)
     result_json_path = Column(String(500), nullable=False)
     metrics = Column(JSON, nullable=False, default=dict)
+    compliance_audit = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     input_image = relationship("InputImage", back_populates="output")
     job = relationship("ProcessingJob", back_populates="output")
+    issue_resolutions = relationship("ComplianceIssueResolution", back_populates="output", cascade="all, delete-orphan")
+
+
+class ComplianceIssueResolution(Base):
+    """Operator disposition for one stable finding in an immutable output audit."""
+    __tablename__ = "compliance_issue_resolutions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    output_id = Column(Integer, ForeignKey("processed_outputs.id", ondelete="CASCADE"), nullable=False, index=True)
+    issue_id = Column(String(64), nullable=False)
+    status = Column(String(20), nullable=False, default="open")
+    note = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+    output = relationship("ProcessedOutput", back_populates="issue_resolutions")
+
+    __table_args__ = (
+        UniqueConstraint("output_id", "issue_id", name="uq_compliance_resolution_output_issue"),
+        CheckConstraint("status IN ('open', 'acknowledged', 'resolved')", name="check_compliance_issue_status"),
+        CheckConstraint("length(issue_id) = 64", name="check_compliance_issue_id_length"),
+    )

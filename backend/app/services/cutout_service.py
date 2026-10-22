@@ -1,17 +1,12 @@
-"""
-ShelfSense AI — Bounding Box Cutout Extraction, Semantic Clustering & Catalog Matching Engine
-=============================================================================================
-1. Crops product, shelf-row, and empty-space bounding boxes from YOLO detection output.
-2. Computes normalized 512-dim CLIP vectors for product cutouts in fast batches.
-3. Performs intra-shelf clustering to group identical/similar visual faces.
-4. Matches visual clusters against SQLite product catalog with strict >= 95% confidence threshold.
-"""
+"""Crop, map, embed, cluster, and shelf-catalogue-match CV detections."""
 
 from __future__ import annotations
 
 import io
+import hashlib
 import json
 import logging
+import math
 import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -23,12 +18,18 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.logging_config import log_backend, log_job_start, log_job_done, log_job_error
-from app.db.models import ProcessedOutput, Product
+from app.db.models import ProcessedOutput
 from app.services.embedding_service import embedding_service
+from app.services.position_calibration import map_detections_to_planogram
+from app.services.compliance_service import AUDIT_VERSION, build_compliance_audit
+from app.services.label_ocr_service import analyze_shelf_labels
+from app.services.product_matching import filter_candidates_by_color
 
 logger = logging.getLogger(__name__)
 
-CATALOG_MATCH_THRESHOLD = 0.95
+ANALYSIS_VERSION = 6
+CATALOG_MATCH_THRESHOLD = 0.90  # Calibrated against the four-product Pipeline Verification shelf.
+CATALOG_MATCH_MARGIN_THRESHOLD = 0.03  # Provisional ambiguity margin.
 INTRA_CLUSTER_SIMILARITY_THRESHOLD = 0.88
 
 
@@ -44,12 +45,165 @@ def _safe_clamp(val: float, max_val: int) -> int:
     return max(0, min(int(round(val)), max_val))
 
 
+def _count_calibrated_positions(detections: List[Dict[str, Any]]) -> int:
+    """Count mapped detections while treating an explicit null position as uncalibrated."""
+    return sum(
+        1 for item in detections
+        if isinstance(item, dict)
+        and isinstance(item.get("planogram_position"), dict)
+        and item["planogram_position"].get("status") == "calibrated"
+    )
+
+
 def _normalize_vector(vec: List[float]) -> List[float]:
     t = torch.tensor(vec, dtype=torch.float32)
     norm = torch.norm(t)
     if norm > 1e-6:
         t = t / norm
     return t.tolist()
+
+
+def _snapshot_fingerprint(snapshot: Optional[Dict[str, Any]]) -> Optional[str]:
+    if not isinstance(snapshot, dict):
+        return None
+    existing = snapshot.get("snapshot_sha256")
+    if isinstance(existing, str) and existing:
+        return existing
+    canonical = json.dumps(snapshot, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _catalogue_match(
+    vector: Optional[List[float]], catalogue: List[Dict[str, Any]], snapshot_available: bool,
+    source_crop: Optional[Image.Image] = None,
+) -> Dict[str, Any]:
+    """Rank only the immutable shelf catalogue; never fall back to the live product table."""
+    result: Dict[str, Any] = {
+        "status": "needs_review",
+        "reason": "missing_audit_snapshot" if not snapshot_available else "no_shelf_catalogue",
+        "top_candidate": None,
+        "runner_up": None,
+        "similarity": None,
+        "runner_up_similarity": None,
+        "confidence_margin": None,
+        "similarity_threshold": CATALOG_MATCH_THRESHOLD,
+        "margin_threshold": CATALOG_MATCH_MARGIN_THRESHOLD,
+        "color_similarity": None,
+        "color_filter_candidate_count_before": 0,
+        "color_filter_candidate_count_after": 0,
+        "color_filter_threshold": 0.30,
+        "color_filter_fallback": False,
+        "color_filter_fallback_reason": None,
+        "matching_method": "clip_only",
+    }
+    if not snapshot_available or not catalogue:
+        return result
+    if not vector or len(vector) != 512 or not all(math.isfinite(float(value)) for value in vector):
+        result["reason"] = "missing_or_invalid_cutout_embedding"
+        return result
+
+    valid_products: List[Dict[str, Any]] = []
+    for product in catalogue:
+        candidate_vector = product.get("embedding")
+        if not isinstance(candidate_vector, list) or len(candidate_vector) != 512:
+            continue
+        try:
+            if not all(math.isfinite(float(value)) for value in candidate_vector):
+                continue
+            if not all(math.isfinite(float(value)) for value in candidate_vector):
+                continue
+        except (TypeError, ValueError, RuntimeError):
+            continue
+        valid_products.append(product)
+
+    image_cache: Dict[str, Optional[Image.Image]] = {}
+
+    def load_packshot(image_path: str) -> Optional[Image.Image]:
+        if image_path not in image_cache:
+            try:
+                path = embedding_service.resolve_image_path(image_path)
+                if path is None:
+                    image_cache[image_path] = None
+                else:
+                    with Image.open(path) as image:
+                        image_cache[image_path] = image.convert("RGB").copy()
+            except (OSError, ValueError):
+                image_cache[image_path] = None
+        return image_cache[image_path]
+
+    if source_crop is not None and valid_products:
+        color_filter = filter_candidates_by_color(source_crop, valid_products, load_packshot)
+        matching_products = color_filter["candidates"]
+        result.update({
+            "color_filter_candidate_count_before": color_filter["candidate_count_before"],
+            "color_filter_candidate_count_after": color_filter["candidate_count_after"],
+            "color_filter_threshold": color_filter["threshold"],
+            "color_filter_fallback": color_filter["fallback"],
+            "color_filter_fallback_reason": color_filter["fallback_reason"],
+            "matching_method": "color_filter_then_clip",
+        })
+    else:
+        matching_products = valid_products
+        result["color_filter_candidate_count_before"] = len(valid_products)
+        result["color_filter_candidate_count_after"] = len(valid_products)
+        result["color_filter_fallback"] = source_crop is not None
+        result["color_filter_fallback_reason"] = "no_valid_catalogue_embeddings" if source_crop is not None else None
+        result["matching_method"] = "clip_only_fallback" if source_crop is not None else "clip_only"
+
+    # Stage 2: compute candidate cosine scores only after color has filtered the list.
+    ranked: List[Tuple[float, Dict[str, Any]]] = []
+    clip_scores: Dict[int, float] = {}
+    for product in matching_products:
+        candidate_vector = product["embedding"]
+        try:
+            score = float(embedding_service.cosine_similarity(vector, candidate_vector))
+        except (TypeError, ValueError, RuntimeError):
+            continue
+        if math.isfinite(score):
+            product_id = int(product.get("id", 0))
+            clip_scores[product_id] = score
+            ranked.append((score, product))
+    ranked.sort(key=lambda entry: (-entry[0], str(entry[1].get("sku", "")), int(entry[1].get("id", 0))))
+    if not ranked:
+        result["reason"] = "no_catalogue_embeddings"
+        return result
+
+    top_score, top_product = ranked[0]
+    runner_score, runner_product = ranked[1] if len(ranked) > 1 else (None, None)
+    margin = top_score - runner_score if runner_score is not None else top_score
+
+    def public_candidate(product: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "id": int(product["id"]),
+            "sku": str(product.get("sku", "")),
+            "name": str(product.get("name", "")),
+            "category": str(product.get("category") or "General"),
+            "image_path": str(product.get("image_path", "")),
+            "price": float(product.get("price") or 0),
+            "currency": str(product.get("currency") or "INR"),
+        }
+
+    result.update({
+        "top_candidate": public_candidate(top_product),
+        "runner_up": public_candidate(runner_product) if runner_product else None,
+        "similarity": round(top_score, 6),
+        "runner_up_similarity": round(runner_score, 6) if runner_score is not None else None,
+        "confidence_margin": round(margin, 6),
+        "color_similarity": round(color_filter["scores"].get(int(top_product["id"])), 6)
+        if source_crop is not None and not color_filter["fallback"] and color_filter["scores"].get(int(top_product["id"])) is not None
+        else None,
+    })
+    if result["color_filter_fallback"]:
+        result.update(status="needs_review", reason="color_filter_fallback")
+    elif top_score < CATALOG_MATCH_THRESHOLD:
+        # A low CLIP score is insufficient evidence of identity, not proof that the
+        # item is absent from the shelf catalogue. Keep it reviewable, not an error.
+        result.update(status="needs_review", reason="below_similarity_threshold")
+    elif runner_score is not None and margin < CATALOG_MATCH_MARGIN_THRESHOLD:
+        result.update(status="needs_review", reason="ambiguous_candidates")
+    else:
+        result.update(status="matched", reason="above_threshold_and_unambiguous")
+    return result
 
 
 def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bool = False) -> Dict[str, Any]:
@@ -65,11 +219,25 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
     analysis_file = output_dir / "analysis.json"
     cutouts_file = output_dir / "cutouts.json"
 
-    # If already computed and not forced, return cached analysis
+    snapshot = output.job.audit_snapshot if output.job else None
+    snapshot_hash = _snapshot_fingerprint(snapshot)
+    # Cached results are valid only for this matching version and frozen shelf snapshot.
     if not force_recompute and analysis_file.is_file() and cutouts_file.is_file():
         try:
             with open(analysis_file, "r", encoding="utf-8") as f:
                 cached_data = json.load(f)
+            with open(cutouts_file, "r", encoding="utf-8") as f:
+                cached_cutouts = json.load(f)
+            if (
+                cached_data.get("analysis_version") == ANALYSIS_VERSION
+                and cached_cutouts.get("analysis_version") == ANALYSIS_VERSION
+                and cached_data.get("audit_snapshot_sha256") == snapshot_hash
+                and cached_cutouts.get("audit_snapshot_sha256") == snapshot_hash
+            ):
+                audit = _persist_compliance_audit(db, output, cached_cutouts, snapshot_hash)
+                cached_data["compliance_summary"] = audit["summary"]
+                with analysis_file.open("w", encoding="utf-8") as f:
+                    json.dump(cached_data, f, indent=2)
                 return cached_data
         except Exception:
             logger.warning(f"Failed to read cached analysis for output {output_id}, recomputing...")
@@ -135,6 +303,7 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
                     "confidence": round(float(prod.get("confidence", 0.0)), 4),
                     "row_number": prod.get("row_number"),
                     "area_px": prod.get("area_px"),
+                    "catalog_match": None,
                 })
 
             # 2. Extract Empty Spaces Cutouts
@@ -194,6 +363,25 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
                     "confidence": round(float(row.get("confidence", 0.0)), 4),
                     "row_number": row.get("row_number", idx + 1),
                 })
+
+        calibration_data = detections_data.get("calibration") or {}
+        shelf_geometry = snapshot.get("shelf") if isinstance(snapshot, dict) else None
+        product_cutouts_meta, position_calibration = map_detections_to_planogram(
+            product_cutouts_meta,
+            shelf_cutouts_meta,
+            shelf_geometry,
+            img_w,
+            img_h,
+            calibration_data.get("shelf_corners_xy") if isinstance(calibration_data, dict) else None,
+        )
+        empty_cutouts_meta, _ = map_detections_to_planogram(
+            empty_cutouts_meta,
+            shelf_cutouts_meta,
+            shelf_geometry,
+            img_w,
+            img_h,
+            calibration_data.get("shelf_corners_xy") if isinstance(calibration_data, dict) else None,
+        )
 
         # 4. Compute CLIP Embeddings in Batch for all Product Cutouts
         product_vectors: List[List[float]] = []
@@ -261,12 +449,17 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
                 })
                 cluster_id_counter += 1
 
-        # 6. Catalog Matching against SQLite Products (Threshold >= 0.95)
-        catalog_products = (
-            db.query(Product)
-            .filter(Product.embedding.isnot(None))
-            .all()
-        )
+        # 6. Match every individual crop against the job's frozen shelf catalogue.
+        catalogue = snapshot.get("shelf_catalogue", []) if isinstance(snapshot, dict) else []
+        if not isinstance(catalogue, list):
+            catalogue = []
+        vector_by_member = {index: product_vectors[index] for index in range(min(len(product_vectors), len(product_cutouts_meta)))}
+        snapshot_available = isinstance(snapshot, dict)
+        for index, item in enumerate(product_cutouts_meta):
+            item["catalog_match"] = _catalogue_match(
+                vector_by_member.get(index), catalogue, snapshot_available,
+                source_crop=product_crops_pil[index] if index < len(product_crops_pil) else None,
+            )
 
         cluster_rows: List[Dict[str, Any]] = []
         matched_count = 0
@@ -277,32 +470,15 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
             cohesion_pct = cl["similarity_percentage"]
             members = [product_cutouts_meta[m] for m in cl["member_indices"]]
 
-            best_match_prod: Optional[Product] = None
-            best_sim = 0.0
-
-            for prod in catalog_products:
-                if prod.embedding and isinstance(prod.embedding, list):
-                    sim = embedding_service.cosine_similarity(centroid, prod.embedding)
-                    if sim > best_sim:
-                        best_sim = sim
-                        best_match_prod = prod
-
-            is_match = best_sim >= CATALOG_MATCH_THRESHOLD
-            catalog_confidence = round(best_sim * 100.0, 1)
-
-            if is_match and best_match_prod:
+            member_matches = [member.get("catalog_match", {}) for member in members]
+            matched_candidates = [match.get("top_candidate") for match in member_matches if match.get("status") == "matched"]
+            same_candidate = bool(matched_candidates) and len(matched_candidates) == len(members) and len({candidate.get("id") for candidate in matched_candidates}) == 1
+            is_match = same_candidate
+            scores = [match["similarity"] for match in member_matches if isinstance(match.get("similarity"), (int, float))]
+            catalog_confidence = round((sum(scores) / len(scores)) if scores else 0.0, 6)
+            matched_prod_dict = matched_candidates[0] if is_match else None
+            if is_match and matched_prod_dict:
                 matched_count += 1
-                matched_prod_dict = {
-                    "id": best_match_prod.id,
-                    "sku": best_match_prod.sku,
-                    "name": best_match_prod.name,
-                    "category": best_match_prod.category or "General",
-                    "image_path": best_match_prod.image_path,
-                    "price": float(best_match_prod.price),
-                    "currency": best_match_prod.currency or "INR",
-                }
-            else:
-                matched_prod_dict = None
 
             cluster_rows.append({
                 "cluster_id": cl_id,
@@ -337,6 +513,13 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
             "total_clusters": len(cluster_rows),
             "matched_clusters_count": matched_count,
             "catalog_confidence_threshold": CATALOG_MATCH_THRESHOLD,
+            "catalog_match_margin_threshold": CATALOG_MATCH_MARGIN_THRESHOLD,
+            "analysis_version": ANALYSIS_VERSION,
+            "catalog_scope": "job_audit_snapshot.shelf_catalogue",
+            "audit_snapshot_sha256": snapshot_hash,
+            "products_needing_review": sum(1 for item in product_cutouts_meta if item["catalog_match"]["status"] == "needs_review"),
+            "position_calibration": position_calibration,
+            "detections_with_calibrated_positions": _count_calibrated_positions(product_cutouts_meta + empty_cutouts_meta),
             "clusters": cluster_rows,
         }
 
@@ -344,6 +527,10 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
             "output_id": output.id,
             "source_filename": output.input_image.original_filename,
             "total_count": len(product_cutouts_meta) + len(shelf_cutouts_meta) + len(empty_cutouts_meta),
+            "analysis_version": ANALYSIS_VERSION,
+            "audit_snapshot_sha256": snapshot_hash,
+            "position_calibration": position_calibration,
+            "calibration_corners_xy": calibration_data.get("shelf_corners_xy") if isinstance(calibration_data, dict) else None,
             "products": product_cutouts_meta,
             "shelves": shelf_cutouts_meta,
             "empty_spaces": empty_cutouts_meta,
@@ -356,6 +543,11 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
         with open(cutouts_file, "w", encoding="utf-8") as f:
             json.dump(cutouts_payload, f, indent=2)
 
+        compliance_audit = _persist_compliance_audit(db, output, cutouts_payload, snapshot_hash)
+        analysis_payload["compliance_summary"] = compliance_audit["summary"]
+        with analysis_file.open("w", encoding="utf-8") as f:
+            json.dump(analysis_payload, f, indent=2)
+
         # Update metrics summary on output record
         if isinstance(output.metrics, dict):
             output.metrics["analysis_summary"] = {
@@ -364,6 +556,7 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
                 "products_cutouts": len(product_cutouts_meta),
                 "empty_cutouts": len(empty_cutouts_meta),
                 "shelf_cutouts": len(shelf_cutouts_meta),
+                "position_calibrated_count": _count_calibrated_positions(product_cutouts_meta + empty_cutouts_meta),
             }
             db.commit()
 
@@ -371,7 +564,7 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
             "ANALYSIS",
             task_id,
             0.0,
-            f"Extracted {len(product_cutouts_meta)} products, {len(cluster_rows)} clusters ({matched_count} catalog matches >= 95%)",
+            f"Extracted {len(product_cutouts_meta)} products, {len(cluster_rows)} clusters ({matched_count} shelf-catalogue matches)",
         )
         return analysis_payload
 
@@ -381,6 +574,72 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
         raise HTTPException(status_code=500, detail=f"Cutout analysis failed: {exc}") from exc
 
 
+def _persist_compliance_audit(db: Session, output: ProcessedOutput, cutouts: Dict[str, Any], snapshot_hash: Optional[str]) -> Dict[str, Any]:
+    """Persist the current audit in SQLite and beside its immutable CV artifacts."""
+    output_dir = settings.UPLOADS_DIR / "image_processing" / "outputs" / str(output.job_id)
+    audit_path = output_dir / "compliance_audit.json"
+    snapshot = output.job.audit_snapshot if output.job else None
+    current = output.compliance_audit if isinstance(output.compliance_audit, dict) else None
+    if (current and current.get("audit_version") == AUDIT_VERSION
+            and current.get("audit_snapshot_sha256") == snapshot_hash
+            and current.get("output_id") == output.id and audit_path.is_file()):
+        return current
+    input_path = _disk_path(output.input_image.storage_path)
+    try:
+        with Image.open(input_path) as source_image:
+            image_size = source_image.size
+    except (OSError, ValueError):
+        image_size = (0, 0)
+    label_audit = analyze_shelf_labels(
+        image_path=input_path,
+        output_dir=output_dir / "label_zones",
+        snapshot=snapshot,
+        shelf_rows=cutouts.get("shelves", []),
+        image_size=image_size,
+        position_calibration=cutouts.get("position_calibration"),
+        shelf_corners_xy=cutouts.get("calibration_corners_xy"),
+    )
+    audit = build_compliance_audit(
+        output_id=output.id,
+        job_id=output.job_id,
+        source_filename=output.input_image.original_filename,
+        snapshot=snapshot,
+        snapshot_sha256=snapshot_hash,
+        products=cutouts.get("products", []),
+        empty_spaces=cutouts.get("empty_spaces", []),
+        position_calibration=cutouts.get("position_calibration"),
+        label_audit=label_audit,
+    )
+    output.compliance_audit = audit
+    output.metrics = {**(output.metrics or {}), "compliance_summary": audit["summary"],
+                      "compliance_audit_version": AUDIT_VERSION}
+    output_dir.mkdir(parents=True, exist_ok=True)
+    with audit_path.open("w", encoding="utf-8") as f:
+        json.dump(audit, f, indent=2)
+    db.commit()
+    return audit
+
+
+def get_output_compliance_audit(db: Session, output_id: int) -> Dict[str, Any]:
+    """Return a persisted audit, rebuilding stale/missing artifacts from saved cutouts."""
+    output = db.query(ProcessedOutput).filter(ProcessedOutput.id == output_id).first()
+    if not output:
+        raise HTTPException(status_code=404, detail=f"ProcessedOutput with ID {output_id} not found.")
+    cutouts = get_output_cutouts(db, output_id)
+    snapshot = output.job.audit_snapshot if output.job else None
+    snapshot_hash = _snapshot_fingerprint(snapshot)
+    audit_path = settings.UPLOADS_DIR / "image_processing" / "outputs" / str(output.job_id) / "compliance_audit.json"
+    audit = output.compliance_audit if isinstance(output.compliance_audit, dict) else None
+    if (not audit or audit.get("audit_version") != AUDIT_VERSION
+            or audit.get("audit_snapshot_sha256") != snapshot_hash
+            or audit.get("output_id") != output.id):
+        return _persist_compliance_audit(db, output, cutouts, snapshot_hash)
+    if not audit_path.is_file():
+        with audit_path.open("w", encoding="utf-8") as f:
+            json.dump(audit, f, indent=2)
+    return audit
+
+
 def get_output_cutouts(db: Session, output_id: int) -> Dict[str, Any]:
     """Retrieve categorized cutouts (products, shelves, empty spaces) for an output."""
     output = db.query(ProcessedOutput).filter(ProcessedOutput.id == output_id).first()
@@ -388,8 +647,17 @@ def get_output_cutouts(db: Session, output_id: int) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail=f"ProcessedOutput with ID {output_id} not found.")
 
     cutouts_file = settings.UPLOADS_DIR / "image_processing" / "outputs" / str(output.job_id) / "cutouts.json"
-    if not cutouts_file.is_file():
-        # Compute on the fly if missing
+    snapshot = output.job.audit_snapshot if output.job else None
+    snapshot_hash = _snapshot_fingerprint(snapshot)
+    cached_is_current = False
+    if cutouts_file.is_file():
+        try:
+            with open(cutouts_file, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            cached_is_current = payload.get("analysis_version") == ANALYSIS_VERSION and payload.get("audit_snapshot_sha256") == snapshot_hash
+        except (OSError, json.JSONDecodeError):
+            cached_is_current = False
+    if not cached_is_current:
         extract_cutouts_and_analyze(db, output_id)
 
     if cutouts_file.is_file():
@@ -413,11 +681,17 @@ def get_output_analysis(db: Session, output_id: int) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail=f"ProcessedOutput with ID {output_id} not found.")
 
     analysis_file = settings.UPLOADS_DIR / "image_processing" / "outputs" / str(output.job_id) / "analysis.json"
-    if not analysis_file.is_file():
+    snapshot = output.job.audit_snapshot if output.job else None
+    snapshot_hash = _snapshot_fingerprint(snapshot)
+    try:
+        with open(analysis_file, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        cache_is_current = payload.get("analysis_version") == ANALYSIS_VERSION and payload.get("audit_snapshot_sha256") == snapshot_hash
+    except (OSError, json.JSONDecodeError):
+        cache_is_current = False
+    if not cache_is_current:
         return extract_cutouts_and_analyze(db, output_id)
-
-    with open(analysis_file, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return payload
 
 
 def get_cutout_download_path(db: Session, output_id: int, cutout_id: str) -> Path:

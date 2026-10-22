@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import subprocess
 import threading
 import zipfile
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -50,6 +51,7 @@ def _public(item: InputImage) -> dict[str, Any]:
         "job_id": item.job.id if item.job else None,
         "error_message": item.job.error_message if item.job else None,
         "output_id": item.output.id if item.output else None,
+        "audit_snapshot": item.job.audit_snapshot if item.job else None,
     }
 
 
@@ -133,21 +135,153 @@ def _get_target(db: Session, planogram_id: int, shelf_id: int) -> tuple[Planogra
     return planogram, shelf, snapshot
 
 
+def _product_snapshot(product: Any) -> dict[str, Any]:
+    return {
+        "id": int(product.id),
+        "sku": product.sku,
+        "name": product.name,
+        "category": product.category or "General",
+        "description": product.description,
+        "image_path": product.image_path,
+        "price": float(product.price),
+        "currency": product.currency or "INR",
+        "width_cm": float(product.width_cm),
+        "height_cm": float(product.height_cm),
+        "depth_cm": float(product.depth_cm),
+        "embedding": list(product.embedding) if isinstance(product.embedding, list) else None,
+    }
+
+
+def _build_audit_snapshot(planogram: Planogram, shelf: Shelf) -> dict[str, Any]:
+    """Freeze all shelf ground truth required to reproduce a later compliance audit."""
+    placements = sorted(
+        shelf.placements,
+        key=lambda placement: (int(placement.row_index), float(placement.x_offset_cm), int(placement.id)),
+    )
+    products_by_id: dict[int, dict[str, Any]] = {}
+    placement_snapshots: list[dict[str, Any]] = []
+    expected_facing_slots: list[dict[str, Any]] = []
+    expected_label_zones: list[dict[str, Any]] = []
+
+    for placement in placements:
+        product = placement.product
+        product_id = int(product.id)
+        product_data = products_by_id.setdefault(product_id, _product_snapshot(product))
+        x_start = float(placement.x_offset_cm)
+        facing_width = float(product.width_cm)
+        x_end = x_start + facing_width * int(placement.facing_count)
+        placement_snapshots.append({
+            "placement_id": int(placement.id),
+            "product_id": product_id,
+            "row_index": int(placement.row_index),
+            "x_offset_cm": x_start,
+            "x_end_cm": x_end,
+            "facing_count": int(placement.facing_count),
+            "sku": product_data["sku"],
+            "product_name": product_data["name"],
+        })
+
+        for facing_index in range(1, int(placement.facing_count) + 1):
+            slot_start = x_start + facing_width * (facing_index - 1)
+            expected_facing_slots.append({
+                "slot_id": f"placement-{placement.id}-facing-{facing_index}",
+                "placement_id": int(placement.id),
+                "facing_index": facing_index,
+                "product_id": product_id,
+                "sku": product.sku,
+                "row_index": int(placement.row_index),
+                "x_start_cm": slot_start,
+                "x_end_cm": slot_start + facing_width,
+            })
+
+        expected_label_zones.append({
+            "label_zone_id": f"placement-{placement.id}-label",
+            "placement_id": int(placement.id),
+            "product_id": product_id,
+            "sku": product.sku,
+            "row_index": int(placement.row_index),
+            "x_start_cm": x_start,
+            "x_end_cm": x_end,
+            "anchor": "below_placement",
+            "expected_price": float(product.price),
+            "expected_currency": product.currency or "INR",
+            "geometry_status": "provisional_requires_image_calibration",
+        })
+
+    usable_height = max(0.0, float(shelf.total_height_cm) - (float(shelf.plinth_height_cm) if shelf.has_plinth else 0.0))
+    default_row_height = max(10.0, usable_height / int(shelf.row_count))
+    configured_heights = shelf.row_heights if isinstance(shelf.row_heights, list) and len(shelf.row_heights) == int(shelf.row_count) else None
+    resolved_row_heights = []
+    for row_index in range(int(shelf.row_count)):
+        tallest_product = max(
+            (float(p.product.height_cm) for p in placements if p.row_index == row_index),
+            default=0.0,
+        )
+        min_row_height = max(10.0, tallest_product + 3.0)
+        configured_height = configured_heights[row_index] if configured_heights and configured_heights[row_index] > 0 else default_row_height
+        resolved_row_heights.append(max(min_row_height, float(configured_height)))
+    plinth_cm = float(shelf.plinth_height_cm) if shelf.has_plinth else 0.0
+    row_elevations_from_floor = [
+        plinth_cm + sum(resolved_row_heights[row_index + 1 :])
+        for row_index in range(int(shelf.row_count))
+    ]
+
+    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    snapshot: dict[str, Any] = {
+        "schema_version": 1,
+        "captured_at": now,
+        "planogram": {
+            "id": int(planogram.id),
+            "name": planogram.name,
+            "description": planogram.description,
+            "updated_at": planogram.updated_at.isoformat() if planogram.updated_at else None,
+        },
+        "shelf": {
+            "id": int(shelf.id),
+            "name": shelf.name,
+            "width_cm": float(shelf.width_cm),
+            "total_height_cm": float(shelf.total_height_cm),
+            "depth_cm": float(shelf.depth_cm),
+            "row_count": int(shelf.row_count),
+            "row_heights_cm": list(shelf.row_heights) if isinstance(shelf.row_heights, list) else None,
+            "resolved_row_heights_cm": resolved_row_heights,
+            "row_elevations_from_floor_cm": row_elevations_from_floor,
+            "row_index_origin": 0,
+            "row_order": "top_to_bottom",
+            "has_plinth": bool(shelf.has_plinth),
+            "plinth_height_cm": float(shelf.plinth_height_cm),
+        },
+        "expected_placements": placement_snapshots,
+        "expected_facing_slots": expected_facing_slots,
+        "shelf_catalogue": sorted(products_by_id.values(), key=lambda product: product["id"]),
+        "expected_label_zones": expected_label_zones,
+        "limitations": [
+            "Label zones are provisional horizontal spans derived from placements; image-space label geometry requires later calibration.",
+        ],
+    }
+    canonical = json.dumps(snapshot, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    snapshot["snapshot_sha256"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return snapshot
+
+
 def queue_input_image(db: Session, input_image_id: int, planogram_id: int, shelf_id: int) -> dict[str, Any]:
     item = db.query(InputImage).options(joinedload(InputImage.job), joinedload(InputImage.output)).filter(InputImage.id == input_image_id).first()
     if not item:
         raise HTTPException(status_code=404, detail=f"Input image with ID {input_image_id} was not found.")
     if item.status not in {"ready", "failed"}:
         raise HTTPException(status_code=409, detail=f"This image is already {item.status} and cannot be queued again.")
-    _, _, snapshot = _get_target(db, planogram_id, shelf_id)
+    planogram, shelf, snapshot = _get_target(db, planogram_id, shelf_id)
+    audit_snapshot = _build_audit_snapshot(planogram, shelf)
     if item.job:
         db.delete(item.job)
         db.flush()
+        item.job = None
     item.planogram_id = planogram_id
     item.shelf_id = shelf_id
     item.shelf_snapshot = snapshot
     item.status = "queued"
-    job = ProcessingJob(input_image_id=item.id, status="queued")
+    job = ProcessingJob(input_image_id=item.id, status="queued", audit_snapshot=audit_snapshot)
+    item.job = job
     db.add(job)
     db.commit()
     db.refresh(item)
@@ -278,7 +412,10 @@ def recover_interrupted_jobs() -> None:
 def list_outputs(db: Session) -> list[dict[str, Any]]:
     outputs = (
         db.query(ProcessedOutput)
-        .options(joinedload(ProcessedOutput.input_image).joinedload(InputImage.planogram))
+        .options(
+            joinedload(ProcessedOutput.input_image).joinedload(InputImage.planogram),
+            joinedload(ProcessedOutput.job),
+        )
         .order_by(ProcessedOutput.created_at.desc())
         .all()
     )
@@ -296,6 +433,8 @@ def list_outputs(db: Session) -> list[dict[str, Any]]:
             "planogram_name": output.input_image.planogram.name if output.input_image.planogram else None,
             "shelf_id": output.input_image.shelf_id,
             "shelf_snapshot": output.input_image.shelf_snapshot,
+            "audit_snapshot": output.job.audit_snapshot if output.job else None,
+            "compliance_audit": output.compliance_audit,
         }
         for output in outputs
     ]
@@ -351,7 +490,28 @@ def build_export_zip(db: Session, output_ids: list[int]) -> BytesIO:
             prefix = f"output-{output.id}"
             zf.write(annotated, f"{prefix}/{annotated.name}")
             zf.write(result, f"{prefix}/{result.name}")
-            manifest.append({"output_id": output.id, "source_filename": output.input_image.original_filename, "planogram_id": output.input_image.planogram_id, "shelf_id": output.input_image.shelf_id, "metrics": output.metrics})
+            audit_snapshot = output.job.audit_snapshot if output.job else None
+            if audit_snapshot is not None:
+                zf.writestr(f"{prefix}/audit_snapshot.json", json.dumps(audit_snapshot, indent=2))
+            compliance_audit = output.compliance_audit
+            compliance_path = None
+            if isinstance(compliance_audit, dict):
+                compliance_path = f"{prefix}/compliance_audit.json"
+                zf.writestr(compliance_path, json.dumps(compliance_audit, indent=2))
+                label_zones = compliance_audit.get("label_audit", {}).get("zones", [])
+                output_dir = settings.UPLOADS_DIR / "image_processing" / "outputs" / str(output.job_id)
+                for zone in label_zones if isinstance(label_zones, list) else []:
+                    evidence_path = zone.get("evidence_image_path") if isinstance(zone, dict) else None
+                    if not isinstance(evidence_path, str) or not evidence_path.startswith("uploads/"):
+                        continue
+                    disk_path = _disk_path(evidence_path)
+                    try:
+                        disk_path.resolve().relative_to(output_dir.resolve())
+                    except ValueError:
+                        continue
+                    if disk_path.is_file():
+                        zf.write(disk_path, f"{prefix}/label_evidence/{disk_path.name}")
+            manifest.append({"output_id": output.id, "source_filename": output.input_image.original_filename, "planogram_id": output.input_image.planogram_id, "shelf_id": output.input_image.shelf_id, "metrics": output.metrics, "audit_snapshot_path": f"{prefix}/audit_snapshot.json" if audit_snapshot is not None else None, "compliance_audit_path": compliance_path})
         zf.writestr("manifest.json", json.dumps(manifest, indent=2))
     archive.seek(0)
     return archive

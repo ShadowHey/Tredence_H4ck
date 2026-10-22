@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 
 from .config import PipelineConfig, load_config
+from .calibration import detect_shelf_corner_markers
 from .detector import ProductEmptySpaceDetector
 from .empty_space import EmptySpaceRefiner
 from .row_segmenter import ShelfRowSegmenter
@@ -128,6 +129,10 @@ class ShelfImageParsingPipeline:
                 errors=["Image has zero width or height."],
             )
 
+        # Calibration markers are optional. Their centres provide projective
+        # anchors for a rectified usable-shelf coordinate frame.
+        calibration = detect_shelf_corner_markers(original_image)
+
         # ----------------------------------------------------
         # Stage 2: Detect products and empty spaces
         # ----------------------------------------------------
@@ -182,6 +187,7 @@ class ShelfImageParsingPipeline:
             products=assigned_products,
             empty_regions=assigned_empty,
             shelf_rows=updated_rows,
+            calibration=calibration,
             annotated_image=annotated_filename,
         )
 

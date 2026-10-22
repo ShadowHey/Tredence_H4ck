@@ -10,12 +10,20 @@ from app.api.schemas.image_processing import (
     ProcessedOutputResponse,
     CutoutsResponse,
     OutputAnalysisResponse,
+    ComplianceAuditResponse,
+    ComplianceIssueResolutionRequest,
 )
 from app.db.database import get_db
 from app.services import image_processing_service as service
 from app.services import cutout_service
+from app.services import compliance_reporting_service
 
 router = APIRouter(tags=["Image Processing"])
+
+
+@router.get("/compliance/summary")
+def get_compliance_summary(db: Session = Depends(get_db)):
+    return compliance_reporting_service.get_dashboard_compliance_summary(db)
 
 
 @router.post("/input-images", response_model=list[InputImageResponse], status_code=201)
@@ -72,6 +80,21 @@ def download_cutout(output_id: int, cutout_id: str, db: Session = Depends(get_db
 @router.get("/outputs/{output_id}/analysis", response_model=OutputAnalysisResponse)
 def get_output_analysis(output_id: int, db: Session = Depends(get_db)):
     return cutout_service.get_output_analysis(db, output_id)
+
+
+@router.get("/outputs/{output_id}/compliance", response_model=ComplianceAuditResponse)
+def get_output_compliance(output_id: int, db: Session = Depends(get_db)):
+    return compliance_reporting_service.get_compliance_report(db, output_id)
+
+
+@router.patch("/outputs/{output_id}/compliance/issues/{issue_id}")
+def update_compliance_issue(output_id: int, issue_id: str, request: ComplianceIssueResolutionRequest, db: Session = Depends(get_db)):
+    return compliance_reporting_service.update_issue_resolution(db, output_id, issue_id, request.status, request.note)
+
+
+@router.get("/outputs/{output_id}/compliance/export.json")
+def export_output_compliance(output_id: int, db: Session = Depends(get_db)):
+    return compliance_reporting_service.export_compliance_report(db, output_id)
 
 
 @router.post("/outputs/{output_id}/analyze", response_model=OutputAnalysisResponse)

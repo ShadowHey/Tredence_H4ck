@@ -293,3 +293,40 @@ Returns machine-readable, versioned JSON with physical measurements in cm.
 ### `POST /api/v1/seed`
 Loads the 6 unbranded sample products from `sample_assets/catalogue.sample.json` and copies SVG/PNG packshots into `uploads/sample_products/`.
 - `200 OK`: `{"status": "success", "seeded_count": 6, ...}`
+
+---
+
+## 8. Shelf Image Processing Ground Truth
+
+When `POST /api/v1/input-images/{input_image_id}/process` accepts a valid planogram and shelf, it freezes audit ground truth on that processing job. The `audit_snapshot` field is returned by `GET /api/v1/input-images` and `GET /api/v1/outputs`.
+
+Version 1 includes planogram identity, selected shelf dimensions, configured and resolved row heights/elevations, the row convention (`row_index` 0 is the top row and indices increase top-to-bottom), each expected placement and physical x-range in centimetres, an individually addressable record for every facing, and the deduplicated shelf-specific catalogue with prices, packshot paths, dimensions, and available CLIP embeddings. It also captures provisional per-placement label zones with expected price/currency; image-space x spans are projected through detected row bounds, while the vertical label band remains provisional and requires fixture calibration. The snapshot contains a UTC capture time, schema version, and SHA-256 checksum.
+
+The snapshot belongs to the processing job attempt. Retrying a failed image creates a new job and snapshot. Completed outputs retain their original job snapshot if the planogram or catalogue later changes. Output ZIPs contain `audit_snapshot.json` per output, and `manifest.json` references its path. Legacy jobs may not have a snapshot.
+
+### Shelf-scoped cutout matching
+
+`GET /api/v1/outputs/{output_id}/cutouts` returns each product cutout with a `catalog_match` object. Its `status` is `matched`, `unmatched`, or `needs_review`; it includes the top candidate, runner-up, cosine similarities, confidence margin, provisional thresholds, and an explicit reason. Candidates are drawn exclusively from the job's `audit_snapshot.shelf_catalogue`. Jobs without a snapshot or usable catalogue embeddings do not fall back to the current global product catalogue and are marked for review.
+
+`GET /api/v1/outputs/{output_id}/analysis` keeps the visual-cluster summary and adds `analysis_version`, `catalog_scope`, `audit_snapshot_sha256`, the provisional score/margin thresholds, and `products_needing_review`. A cluster is considered matched only when all its individual cutouts match the same catalogue product. Results are cached per analysis version and snapshot fingerprint. Thresholds are provisional pending calibration against controlled fixtures.
+
+### Planogram compliance audit
+
+`GET /api/v1/outputs/{output_id}/compliance` returns a versioned audit bound to the processed output, its processing job, and `audit_snapshot_sha256`. `assignments` records each product cutout's selected facing slot and state; `slot_results` records each expected facing's state and empty-space/product evidence; `issues` contains non-correct findings with type, reason, and row/centimetre location where available. Finding types are `misplaced_product`, `missing_product`, `insufficient_quantity`, `unexpected_product`, `unrecognised_product`, and `needs_review`. Correct placements are recorded in assignments and slot results, not duplicated as alerts.
+
+The result is persisted in `processed_outputs.compliance_audit` and beside the CV artifacts as `compliance_audit.json`; output ZIPs include the audit when present. An audit status of `complete` means the comparison ran, not that the shelf passed. If position calibration is unavailable, expected slots are marked `needs_review` rather than producing definitive empty-stock claims.
+
+The same audit includes `label_audit`: EasyOCR tokens/confidences, parsed price/currency, per-zone OCR state, evidence crop paths, and provisional label findings (`wrong_product_label`, `price_mismatch`, `missing_label`, `unreadable_label`, or `needs_review`). The local engine is optional and can be installed with `backend/.venv/bin/pip install -r backend/requirements-ocr.txt`; see `backend/OCR_SETUP.md`. Every OCR finding carries `provisional: true` and `confidence_status: needs_fixture_validation`; no definitive price/label alerts should be exposed until the labelled fixture evaluation is completed.
+
+### Phase 6 operator reporting
+
+- `GET /api/v1/outputs/{output_id}/compliance` augments each computed finding with a stable `issue_id`, `status` (`open`, `acknowledged`, `resolved`), optional `resolution_note`, and a recommended action. Finding location/evidence remains sourced from the output's immutable audit; cutout-backed findings can be highlighted on the annotated image.
+- `PATCH /api/v1/outputs/{output_id}/compliance/issues/{issue_id}` accepts `{ "status": "open|acknowledged|resolved", "note": "optional operator note" }`. Resolutions are stored in `compliance_issue_resolutions`, independently of the computed audit, and cascade-delete with their output.
+- `GET /api/v1/compliance/summary` returns persisted audit counts and the 20 most recent audit entries by planogram/shelf, including issue disposition counts. It does not trigger CV/OCR processing for outputs which have not yet had an audit generated.
+- `GET /api/v1/outputs/{output_id}/compliance/export.json` exports the complete report, disposition state, source linkage, annotated artifact path, and originating audit snapshot as JSON.
+
+### Photo-to-planogram positions
+
+Each product/empty-space cutout may include `planogram_position`: the zero-based top-to-bottom `row_index`, `x_start_cm`, `x_end_cm`, and centre measured from the usable shelf's left edge. `position_calibration` reports the method, detected/expected row counts, and provisional tolerance `max(1 cm, 1% of shelf width)`. Row-based scaling assumes a straight-on view and uses detected row extents plus the immutable snapshot shelf width; incomplete row coverage is reported as `needs_review`.
+
+The image parser optionally detects OpenCV `DICT_4X4_50` ArUco IDs 0–3. Place marker centres at usable-shelf TL, TR, BR, BL corners in that order; their image-coordinate homography rectifies detection coordinates for mapping. It does not alter the original photo or saved crops. Missing, duplicated, degenerate, or out-of-image markers fall back to row-based mapping. This option is intended for controlled fixtures, not as a substitute for validating camera and marker placement.
