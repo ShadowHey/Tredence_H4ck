@@ -62,5 +62,9 @@ class ImageParsingResult(BaseModel):
     products: List[DetectionItem] = Field(default_factory=list)
     empty_regions: List[DetectionItem] = Field(default_factory=list)
     shelf_rows: List[ShelfRowItem] = Field(default_factory=list)
+    calibration: Optional[dict] = Field(
+        default=None,
+        description="Optional four-corner ArUco calibration anchors in source-image pixel coordinates.",
+    )
     annotated_image: Optional[str] = Field(default=None, description="Filename of combined annotated image")
     errors: Optional[List[str]] = Field(default=None, description="Any warnings or error details encountered")

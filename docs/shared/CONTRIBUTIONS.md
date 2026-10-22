@@ -3,12 +3,29 @@
 **Single Source of Truth for Team Work & Feature Execution**  
 This document is automatically updated upon every feature or fix commit. It informs all team members and AI agents **who made what**, **when it was made**, **what files were affected**, and **exact commands to run/test the feature**.
 
+| `2026-10-22 04:48 IST` | **Dhruv** | Color-First Catalogue Candidate Gate | Working tree (not committed) | `backend/.venv/bin/pytest backend/tests -q`; `cd frontend && npx tsc --noEmit && npm test -- --run && npm run build`; `cd e2e && npm test -- --grep "Individual product catalogue matching"`; `git diff --check` | Replaces weighted appearance fusion with a color compatibility gate followed by highest raw CLIP cosine ranking; reports candidate counts/fallback and requires review when color filtering is inconclusive. Verified live Output #7 now selects Amul Milk Chocolate for the affected crops | `backend/app/services/product_matching/{color_handling.py,candidate_filtering.py,__init__.py}`, `backend/app/services/cutout_service.py`, `backend/app/api/schemas/image_processing.py`, backend matching tests, Product Match UI/types/tests, `e2e/tests/analysis_product_match.spec.ts`, `docs/shared/CONTRIBUTIONS.md`, `docs/dhruv_docs/*` |
+
+| `2026-10-22 06:19 IST` | **Dhruv** | Normalized Row/Position Layout Comparison | Working tree (not committed) | `backend/.venv/bin/pytest backend/tests -q`; `cd frontend && npx tsc --noEmit && npm test -- --run && npm run build`; `git diff --check` | Adds normalized [0,1] planogram/photo row sequences, monotonic expected-vs-observed sequence alignment, left/right ordinals, explicit gaps/free intervals and an operator-facing row summary; missing/uncalibrated geometry remains review-only | `backend/app/services/spatial_matching/*`, `backend/app/services/compliance_service.py`, `backend/app/api/schemas/image_processing.py`, backend tests, `frontend/src/components/analysis/ComplianceReportPanel.tsx`, `frontend/src/types/index.ts`, `frontend/tests/compliance-report.test.tsx`, `docs/shared/CONTRIBUTIONS.md`, `docs/dhruv_docs/*` |
+
+| `2026-10-22 04:36 IST` | **Dhruv** | Explainable Product Appearance Reranking | Working tree (not committed) | `backend/.venv/bin/pytest backend/tests -q`; `cd frontend && npx tsc --noEmit && npm test -- --run && npm run build`; `git diff --check` | Keeps shelf-scoped CLIP as primary signal, adds optional color-histogram and package-shape reranking against snapshot packshots, exposes component scores, and preserves review state for weak CLIP evidence | `backend/app/services/product_matching/*`, `backend/app/services/cutout_service.py`, `backend/app/api/schemas/image_processing.py`, backend matching tests, `frontend/src/components/analysis/ProductMatchView.tsx`, `frontend/src/types/index.ts`, `frontend/tests/analysis-and-cutouts.test.tsx`, `docs/shared/CONTRIBUTIONS.md`, `docs/dhruv_docs/*` |
+
+| `2026-10-22 04:22 IST` | **Dhruv** | Individual Product Match View | Working tree (not committed) | `cd frontend && npx tsc --noEmit && npm test -- --run && npm run build`; `cd e2e && npm test -- --grep "Individual product catalogue matching"` | Added Product Match tab listing each individual crop and its top CLIP candidate, score, and review/confirmation state; retains current cluster views and shelf-scoped candidates | `frontend/src/components/analysis/{AnalysisTable.tsx,ProductMatchView.tsx}`, `frontend/tests/analysis-and-cutouts.test.tsx`, `e2e/tests/analysis_product_match.spec.ts`, `docs/shared/CONTRIBUTIONS.md`, `docs/dhruv_docs/*` |
+
+| `2026-10-22 03:22 IST` | **Dhruv** | Calibrate Analysis Matching for Pipeline Verification Shelf | Working tree (not committed) | `backend/.venv/bin/pytest backend/tests -q`; `cd frontend && npx tsc --noEmit && npm test -- --run`; Playwright Chromium check of `http://localhost:3000/analysis?outputId=7` | Calibrated catalogue match cutoff to 90% using Output #7's four known shelf products; high-confidence Lays/juice/laundry groups now match, low-confidence identity becomes review-needed, and stale analysis/audit cache versions are invalidated | `backend/app/services/{cutout_service.py,compliance_service.py}`, backend tests, `frontend/src/app/analysis/page.tsx`, `frontend/src/components/analysis/AnalysisTable.tsx`, `frontend/tests/analysis-and-cutouts.test.tsx`, `docs/dhruv_docs/*` |
+
 ---
 
 ## 1. Quick Overview Ledger
 
 | Date & Time | Contributor | Feature / Fix | Commit | How to Run / Test | Summary of What Was Done | Files Affected |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-10-22 02:43 IST` | **Dhruv** | Null Calibration Position Analysis Failure | Working tree (not committed) | `backend/.venv/bin/pytest backend/tests -q`; live GET `/api/v1/outputs/4/{analysis,cutouts,compliance}`; Chromium Playwright check at `/analysis?outputId=4` | Null `planogram_position` values are now treated as uncalibrated in both detection counters; added regression coverage | `backend/app/services/cutout_service.py`, `backend/tests/unit/test_cutout_service.py`, `docs/shared/CONTRIBUTIONS.md`, `docs/dhruv_docs/*` |
+| `2026-10-22 02:25 IST` | **Dhruv** | Phase 6 Compliance Reporting & Operator Workflow | Working tree (not committed) | `backend/.venv/bin/pytest backend/tests -q`; `cd frontend && npx tsc --noEmit && npm test -- --run` | Evidence/location reports, cutout-linked highlights, filters, recommended actions, durable dispositions/notes, dashboard history, JSON export | backend compliance API/DB/service/tests, frontend analysis/dashboard/report/types/tests, shared docs and Dhruv journal |
+| `2026-10-22 02:11 IST` | **Dhruv** | Phase 5 Shelf-Label OCR | Working tree (not committed) | `backend/.venv/bin/pytest backend/tests -q`; `cd frontend && npx tsc --noEmit && npm test -- --run`; `git diff --check` | Adds optional local EasyOCR, calibrated label-zone crops, text/price association and provisional audit findings with crop evidence | `backend/app/services/label_ocr_service.py`, backend audit/API/tests/docs |
+| `2026-10-22 02:02 IST` | **Dhruv** | Phase 4 Planogram Compliance Engine | Working tree (not committed) | `backend/.venv/bin/pytest backend/tests -q`; `cd frontend && npx tsc --noEmit && npm test -- --run`; `git diff --check` | Adds row-aware facing-slot assignment, explicit compliance findings/evidence, and versioned audit persistence linked to output/job/snapshot | `backend/app/services/compliance_service.py`, backend API/DB/services/tests, `docs/shared/*`, `docs/dhruv_docs/*` |
+| `2026-10-22 01:56 IST` | **Dhruv** | Phase 3 Photo-to-Planogram Position Mapping | Working tree (not committed) | `backend/.venv/bin/pytest backend/tests -q`; `cd image-parsing && PYTHONPATH=src .venv/bin/pytest tests -q`; `cd frontend && npx tsc --noEmit && npm test -- --run` | Adds straight-on row scaling and optional four-corner ArUco homography; records zero-based rows, physical cm spans, and calibration/tolerance status per detection | `backend/app/services/position_calibration.py`, `backend/app/services/cutout_service.py`, `backend/app/api/schemas/image_processing.py`, `backend/tests/unit/test_position_calibration.py`, `image-parsing/*`, `frontend/src/*`, `docs/shared/*`, `docs/dhruv_docs/*` |
+| `2026-10-22 01:48 IST` | **Dhruv** | Phase 2 Shelf-Scoped Cutout Matching | Working tree (not committed) | Python syntax compilation; Pydantic schema generation; `cd frontend && npx tsc --noEmit`; `git diff --check` | Scores individual cutouts only against the job snapshot shelf catalogue; persists ranked candidates, margins, and review state; invalidates stale analysis cache | `backend/app/services/cutout_service.py`, `backend/app/api/schemas/image_processing.py`, `frontend/src/types/index.ts`, `frontend/src/components/analysis/AnalysisTable.tsx`, `frontend/src/components/outputs/CutoutViewerModal.tsx`, `docs/shared/*`, `docs/dhruv_docs/*` |
+| `2026-10-22 01:42 IST` | **Dhruv** | Phase 1 Immutable Planogram Audit Snapshot | Working tree (not committed) | `backend/.venv/bin/pytest backend/tests -q`; `cd frontend && npx tsc --noEmit` | Captured versioned job-scoped ground truth: placements, facing slots, shelf catalogue, prices, provisional label zones, and checksum; exposed by APIs and output ZIP | `backend/*`, `frontend/src/types/index.ts`, `docs/shared/*`, `docs/dhruv_docs/*` |
 | `2026-10-21 22:45 IST` | **Dhruv** | YOLO Cutout Extraction, Visual Clustering & 4-Col Analysis | `8a0b94e` | `backend/.venv/bin/pytest backend/tests/ -v && npm test --prefix frontend` | Cutout extraction into products/shelves/empty_spaces, batched CLIP embeddings, intra-shelf clustering, strict >= 95% catalog matching, Cutouts modal, and 4-column Analysis Table | 13 files (`backend/*`, `frontend/*`) |
 | `2026-10-21 15:05 IST` | **Dhruv** | Shelf-Linked Image Intake & Annotated Outputs | `30474fc` | `backend/.venv/bin/pytest backend/tests -v` | Added persistent one-image-at-a-time shelf-photo intake, serial CV processing, annotated outputs, ZIP export, and UI/E2E coverage | 15 files (`backend/*`, `frontend/*`, `e2e/*`) |
 | `2026-10-21 14:55 IST` | **Dhruv** | Canonical Demo Asset Cleanup | `c104bb2` | `diff -qr sample_assets shelfsense_antigravity_handoff/sample_assets` | Removed the duplicate handoff catalogue and made root `sample_assets/` the only canonical demo asset source | 16 files (`shelfsense_antigravity_handoff/*`) |
@@ -20,6 +37,80 @@ This document is automatically updated upon every feature or fix commit. It info
 ---
 
 ## 2. Detailed Contribution Records
+
+### [2026-10-22 02:11 IST] Phase 5 — Shelf-Label OCR
+- **Contributor**: Dhruv
+- **Commit**: Working tree (not committed)
+- **Summary**: Added a lazily loaded EasyOCR CPU adapter as an optional, isolated dependency. Frozen placement label spans project into image crops using detected row bounds, with inverse four-corner homography when calibration markers are present; vertical label band remains a documented provisional bottom-row heuristic. OCR extracts token text/confidence, amount/currency, and explicit catalogue SKU/name references, linking each result to expected placement and crop evidence.
+- **Findings/policy**: Adds `wrong_product_label`, `price_mismatch`, `missing_label`, `unreadable_label`, and `needs_review` to the persisted compliance report. OCR findings are all warning-level and carry `provisional: true` / `needs_fixture_validation`; missing engine/model fails closed. Bumps compliance audit version to 2.
+- **How to Run / Test**:
+  ```bash
+  backend/.venv/bin/pip install -r backend/requirements-ocr.txt
+  backend/.venv/bin/pytest backend/tests -q
+  cd frontend && npx tsc --noEmit && npm test -- --run
+  git diff --check
+  ```
+- **Verification**: Backend suite 53 passed, frontend Vitest 18 passed, TypeScript check, Python compilation, and whitespace check passed. Deterministic tests cover cm-to-pixel projection, inverse-homography geometry, parsing/association, crop evidence, low confidence, empty labels, and missing OCR engine.
+- **Still open**: Real accuracy evaluation must remain undone until labelled shelf/price-tag photos and a ground-truth manifest exist. Existing `sample_assets/` contains catalogue packshots, not shelf-label evaluation photos. Definitive label/price alerts remain disabled by provisional status.
+- **Files affected**: New `backend/app/services/label_ocr_service.py`, `backend/requirements-ocr.txt`, `backend/OCR_SETUP.md`, `backend/tests/unit/test_label_ocr_service.py`; modified `backend/app/services/compliance_service.py`, `backend/app/services/cutout_service.py`, `backend/app/api/schemas/image_processing.py`, `backend/app/services/image_processing_service.py`, `backend/tests/unit/test_compliance_service.py`, `backend/tests/integration/test_image_processing_api.py`, shared API/architecture/roadmap docs, and Dhruv journals.
+
+### [2026-10-22 02:02 IST] Phase 4 — Planogram Compliance Engine
+- **Contributor**: Dhruv
+- **Commit**: Working tree (not committed)
+- **Summary**: Added deterministic row-aware, left-to-right assignment of individual product cutouts to frozen expected-facing slots. Results distinguish correct, misplaced, missing, insufficient quantity, unexpected, unrecognised, and needs-review states; expected slot findings include row/cm location and references to overlapping empty-space/product cutouts. Missing-stock claims are withheld if no calibrated position frame is available.
+- **Persistence/API**: Stores schema-versioned `compliance_audit` JSON on `ProcessedOutput` (with an idempotent SQLite migration) and as `compliance_audit.json` beside CV artifacts. Adds `GET /api/v1/outputs/{output_id}/compliance`, exposes persisted audits in output listings/ZIP exports, and ties each report to its output, job, and frozen snapshot SHA.
+- **How to Run / Test**:
+  ```bash
+  backend/.venv/bin/pytest backend/tests -q
+  cd frontend && npx tsc --noEmit && npm test -- --run
+  git diff --check
+  ```
+- **Verification**: Backend suite 46 passed; frontend Vitest 18 passed; TypeScript check, Python compileall, and whitespace check passed. Compliance unit tests exercise placement, swap, missing/insufficient with empty evidence, unexpected, unrecognised, review, and snapshot linkage; integration verifies API persistence and ZIP inclusion.
+- **Files Affected**: `backend/app/services/compliance_service.py` (new); `backend/app/services/cutout_service.py`; `backend/app/db/models.py`; `backend/app/db/database.py`; `backend/app/api/schemas/image_processing.py`; `backend/app/api/routes/image_processing.py`; `backend/app/services/image_processing_service.py`; `backend/tests/unit/test_compliance_service.py` (new); `backend/tests/integration/test_image_processing_api.py`; `docs/shared/COMPLIANCE_ROADMAP.md`; `docs/shared/API_CONTRACT.md`; `docs/shared/ARCHITECTURE.md`; and this Dhruv journal.
+
+### [2026-10-22 01:56 IST] Phase 3 — Photo-to-Planogram Position Mapping
+- **Contributor**: Dhruv
+- **Commit**: Working tree (not committed)
+- **Summary**: Added per-detection coordinate mapping from pixel boxes into the selected shelf's zero-based top-to-bottom row and physical x-span. Straight-on mode scales against detected row bounds and frozen shelf width; optional ArUco IDs 0–3 provide four-corner perspective-corrected coordinates. Missing/invalid calibration and incomplete row detection are explicit review states. Source crop pixels remain unchanged.
+- **Position tolerance**: `max(1.0 cm, 1% of shelf width)`, surfaced as provisional for later fixture calibration.
+- **Files affected**: New `backend/app/services/position_calibration.py`; updated cutout service/API schemas, image-parser calibration module/result schema/pipeline, `image-parsing/requirements.txt`, backend/CV tests, per-cutout inspector and analysis summary, API/architecture/roadmap and Dhruv journal records.
+- **Verification**: Backend full suite passed; image-parsing suite passed (31 tests); frontend type-check and production build passed; frontend Vitest passed (18 tests); Pydantic response schemas generated and `git diff --check` passed. Physical tolerance/marker repeatability validation remains pending a measured fixture.
+
+### [2026-10-22 01:48 IST] Phase 2 — Shelf-Scoped Individual Cutout Matching
+- **Contributor**: Dhruv
+- **Commit**: Working tree (not committed)
+- **Summary**:
+  - Removed live whole-database matching from the cutout analysis path. Each product crop is ranked independently against only the immutable `audit_snapshot.shelf_catalogue` captured for its job.
+  - Persisted top candidate, runner-up, raw cosine similarities, score margin, thresholds, and `matched` / `unmatched` / `needs_review` state per cutout. Missing snapshots/embeddings are explicitly review states; no global-catalogue fallback is used.
+  - Preserved per-cutout decisions alongside clustering. Cluster-level match is affirmative only if all member cutouts independently resolve to the same shelf product.
+  - Added analysis version + snapshot fingerprint cache validation and showed per-cutout match details in the inspector. Thresholds are provisional pending the controlled fixture set.
+- **Files affected**:
+  - `backend/app/services/cutout_service.py`: shelf-scoped per-item candidate ranking and stale cache invalidation.
+  - `backend/app/api/schemas/image_processing.py`: typed per-cutout match response and analysis metadata.
+  - `frontend/src/types/index.ts`, `frontend/src/components/outputs/CutoutViewerModal.tsx`: types and match/review information in crop details.
+  - `docs/shared/COMPLIANCE_ROADMAP.md`, `docs/shared/CONTRIBUTIONS.md`, `docs/dhruv_docs/*`: checklist and persistent handoff records.
+- **Static verification**: Python syntax compilation, Pydantic schema generation, frontend `npx tsc --noEmit`, and `git diff --check` passed.
+- **Test note**: Backend/frontend test suites were not run in this session. Thresholds remain uncalibrated until controlled compliance photos and ground truth are available.
+
+### [2026-10-22 01:42 IST] Phase 1 — Immutable Planogram Audit Snapshot
+- **Contributor**: Dhruv
+- **Commit**: Working tree (not committed)
+- **Summary of What Was Done**:
+  - Captures a versioned ground-truth snapshot on each processing job at queue time, including planogram/shelf metadata, row convention, expected placements, expanded individual facings, and the deduplicated shelf-specific product catalogue with stored embeddings.
+  - Captures provisional per-placement label zones with expected prices and currencies, marked as requiring later image calibration.
+  - Adds an idempotent SQLite migration, API exposure, output ZIP snapshot artifacts, and the multi-phase handoff checklist.
+- **How to Run / Test**:
+  ```bash
+  backend/.venv/bin/pytest backend/tests -q
+  cd frontend && npx tsc --noEmit
+  ```
+- **Files Affected**:
+  - `backend/app/db/models.py`, `backend/app/db/database.py`: Persist job snapshots and migrate existing SQLite databases.
+  - `backend/app/api/schemas/image_processing.py`: Expose snapshot data in image and output response contracts.
+  - `backend/app/services/image_processing_service.py`: Build, return, and export immutable snapshots.
+  - `frontend/src/types/index.ts`: Add typed audit snapshot contracts.
+  - `docs/shared/COMPLIANCE_ROADMAP.md` *(New)*: Phase checklist and controlled photo fixture plan.
+  - `docs/shared/API_CONTRACT.md`, `docs/shared/ARCHITECTURE.md`: Document the snapshot contract.
  
 ### [2026-10-21 22:45 IST] YOLO Cutout Extraction, Semantic Clustering & 4-Column Analysis Table
 - **Contributor**: Dhruv
@@ -200,3 +291,25 @@ This document is automatically updated upon every feature or fix commit. It info
   - `frontend/src/components/outputs/CutoutViewerModal.tsx`: Added per-card and detail-view download links.
   - `frontend/tests/analysis-and-cutouts.test.tsx`: Covered the visible individual download control.
   - `e2e/tests/cutout_download.spec.ts` *(New)*: Browser download regression coverage.
+### 2026-10-22 02:25 IST — Phase 6 Compliance Reports and Operator Workflow
+- **Contributor**: Dhruv with Codex
+- **Commit**: Working tree (not committed)
+- **Summary**: Added evidence/location reports, cutout-linked issue highlighting, severity/status filters, recommended actions, persistent issue acknowledgement/resolution and notes, dashboard compliance totals/history, and JSON report export.
+- **Files affected**: `backend/app/db/models.py`; `backend/app/api/routes/image_processing.py`; `backend/app/api/schemas/image_processing.py`; `backend/app/services/compliance_reporting_service.py`; `backend/tests/integration/test_image_processing_api.py`; `frontend/src/app/analysis/page.tsx`; `frontend/src/app/page.tsx`; `frontend/src/components/analysis/ComplianceReportPanel.tsx`; `frontend/src/lib/api.ts`; `frontend/src/types/index.ts`; `frontend/tests/compliance-report.test.tsx`; `docs/shared/{COMPLIANCE_ROADMAP.md,API_CONTRACT.md,ARCHITECTURE.md}`; `docs/dhruv_docs/{README.md,technical_decisions.md,conversation_history.md,files_affected.md}`.
+- **How to run / test**:
+  ```bash
+  backend/.venv/bin/pytest backend/tests -q
+  cd frontend && npx tsc --noEmit && npm test -- --run
+  ```
+- **Validation note**: Synthetic workflow regression coverage passes; physical shelf/label fixture calibration remains open.
+
+### 2026-10-22 02:43 IST — Null Calibration Position Analysis Failure
+- **Contributor**: Dhruv with Codex
+- **Commit**: Working tree (not committed)
+- **Summary**: Fixed analysis 500 on detection records whose `planogram_position` is explicitly null. The same unsafe nested `.get()` existed in both response and metrics counters; both now safely count only calibrated position dictionaries.
+- **Files affected**: `backend/app/services/cutout_service.py`, `backend/tests/unit/test_cutout_service.py`, and Dhruv handoff journal.
+- **How to run / test**:
+  ```bash
+  backend/.venv/bin/pytest backend/tests -q
+  ```
+- **Live verification**: Output #4 `analysis`, `cutouts`, and `compliance` endpoints returned HTTP 200; Chromium opened `/analysis?outputId=4`, rendered 11 findings, and showed no analysis error or JavaScript exceptions.

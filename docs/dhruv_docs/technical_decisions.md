@@ -1,6 +1,82 @@
 # Dhruv's Architecture Decision Records (ADRs)
 
+### [2026-10-22 06:19 IST] Normalized Row/Position Layout Comparison
+
+- **Decision**: Keep current shelf calibration and physical-coordinate assignment as the source of compliance decisions, and add a versioned normalized representation (x/shelf-width in [0,1]) for transparent side-by-side row sequence inspection.
+- **Representation**: Rows are zero-based internally and top-to-bottom; items carry one-based ordinals from left/right. Planogram expected facings, observed product cutouts, detected empty-space regions, and uncovered intervals remain distinct evidence types.
+- **Safety**: Incomplete calibration makes comparison review-only. The UI presents counts/order/interval summaries; pixel-equivalent or exact-image comparison is not attempted. Audit version increments to force stale stored records to rebuild.
+- **Alignment**: Each normalized row also gets a monotonic dynamic-programming sequence alignment with explicit paired, missing-expected, and unexpected-observed steps. This remains diagnostic; the existing physical nearest-slot assignment and catalogue verification remain the compliance decision path pending labeled fixture validation.
+
+### [2026-10-22 04:48 IST] Color-First Catalogue Candidate Gate
+
+- **Decision**: Replace soft CLIP/color/shape fusion with a two-stage decision path: (1) remove shelf-catalogue products below a provisional HSV color-histogram intersection threshold of 0.30; (2) rank only survivors by raw CLIP cosine similarity and return the maximum as the closest candidate.
+- **Fallback**: If no packshot candidates clear the gate, retain only the best color-compatible candidate(s) within a 0.05 score margin and mark `needs_review`. If catalogue packshot evidence is wholly unavailable, fall back to the full shelf catalogue but also force review. A color fallback can never be confirmed even if CLIP is high.
+- **Threshold and limits**: The 0.30 threshold is selected to reject the orange-juice candidate observed at 0.20 color similarity in the reported screenshot. It is a starting cutoff, not a universal calibrated value; illumination, package revisions, crop/background contamination, and missing packshots require validation against labeled shelf images.
+- **Cache/API/UI**: Increment analysis version to 6; return color score, before/after candidate counts, threshold, fallback state/reason, and matching method. UI states how many candidates passed the color gate and separately displays the raw CLIP score. Keep the existing 0.90 raw-CLIP match threshold and ambiguity margin.
+- **Simplification**: Remove weighted candidate fusion and package-shape ranking modules because they allow non-color signals to override the explicitly requested color-first gate. Existing CLIP model and embedding service remain unchanged.
+
+### [2026-10-22 04:36 IST] Explainable Product Appearance Reranking
+
+- **Decision**: Keep CLIP as the primary shelf-catalogue identity signal and use color histogram intersection (HSV hue, saturation-weighted) plus coarse package aspect ratio only to rerank eligible candidates. Appearance scores are supporting evidence, not standalone identity or probability estimates.
+- **Ranking and review policy**: Initial weights are provisional (80% CLIP, 15% color, 5% shape). Preserve raw CLIP score for the existing 0.90 confirmation threshold, and use the fused-score lead to detect ambiguity. Missing/unreadable packshots fall back to CLIP-only ranking. Catalogue scope remains the frozen shelf snapshot.
+- **Cache/API**: Bump analysis cache version so existing per-crop rankings are recomputed. Return raw CLIP score, rerank score, color score, shape score, and whether appearance evidence was available; Product Match labels raw similarity separately and states the rerank score is not a probability.
+- **Trade-off / pending calibration**: Hand-weighted contributions are not a measured accuracy improvement. Real precision/recall comparison requires labeled held-out shelf crops and packshots across lighting, orientation, and occlusion conditions. Existing optional shelf-label OCR is for shelf labels, not a reliable substitute for package OCR.
+
+### [2026-10-22 04:22 IST] Individual Product Match View
+
+- **Decision**: Keep the existing cluster filters at cluster granularity and implement Product Match as a separate per-cutout view. Flatten each cluster’s `similar_objects` in the client because every item already carries its own CLIP `catalog_match` result from the API.
+- **Presentation**: Show the top candidate even when it is below threshold or ambiguous, but mark only backend-confirmed matches as Confirmed; otherwise use Needs review. Display the candidate similarity separately from cluster cohesion. Use the frozen shelf catalogue results already stored with the output.
+- **Trade-off**: No ranking recomputation or API contract change is introduced. This keeps the view aligned with the original output/shelf snapshot and avoids silently searching the global product database.
+
+### [2026-10-22 03:22 IST] Analysis Matching Calibration for Pipeline Verification Shelf
+
+- **Decision**: Use a 0.90 minimum cosine similarity for the current four-product controlled shelf fixture. This is a fixture-specific baseline, not a general production accuracy claim. Keep the existing 0.03 runner-up margin so near-ties remain `needs_review`.
+- **Evidence and behavior**: Output #7's 20 orange juice, 15 Yellow Lays, and 14 laundry-liquid detections each scored at least 0.90 against the frozen shelf catalogue. The prior 0.95 threshold rejected every one. Below-threshold scores indicate insufficient identity evidence, not evidence that the product is absent; map them to review-needed rather than an unrecognised-product error.
+- **Cache/UI**: Bump analysis and audit versions to force re-evaluation of old cached scores/findings. Show the active threshold from the API and label the visual percentage as cluster cohesion, distinct from CLIP catalogue confidence.
+- **Trade-off / open validation**: Amul Chocolate remains review-needed because its individual crops score below 0.90 and/or disagree. More labeled examples are required before extrapolating this threshold; OCR findings remain provisional and out of scope.
+
+### [2026-10-22 02:11 IST] Phase 5 — Shelf-Label OCR
+
+- **Decision**: Use EasyOCR locally in CPU mode behind a separate lazy-loaded adapter and optional `backend/requirements-ocr.txt`; do not add cloud OCR or a runtime API key. Reader construction and inference are serialized/cached per backend process.
+- **Label geometry**: Project snapshotted physical x spans through detected row bounds, using inverse four-corner homography when available. Until actual label height is calibrated, crop the bottom 22% of the detected row and mark geometry provisional.
+- **Association and evidence**: Persist per-zone OCR strings/confidences, parsed amounts/currency, explicit catalogue SKU/name references, image-space bbox/polygon, and crop path into `label_audit` in the version-2 compliance report.
+- **Alert policy**: `wrong_product_label`, `price_mismatch`, `missing_label`, and `unreadable_label` are provisional warnings and require fixture validation. Missing package/model and invalid geometry fail closed as `needs_review`.
+- **Unresolved validation**: Repository assets have no labelled shelf-price photos/ground truth. Unit tests use a deterministic fake OCR reader and validate logic only; no real-world accuracy claim or definitive alert is made.
+
+### [2026-10-22 02:02 IST] Phase 4 — Planogram Compliance Engine
+
+- **Decision**: Evaluate individual cutouts against the immutable `expected_facing_slots` from the job snapshot, assigning in detected top-to-bottom row and left-to-right order using physical overlap/distance. Keep per-slot state/evidence separate from alerts, and expose the audit independently from the visual-cluster analysis.
+- **Conservative policy**: Correct requires both an unambiguous individual shelf-catalogue match and calibrated physical row/x agreement. A recognized product on an unassigned/incorrect slot is misplaced or unexpected; unknown identity is unrecognised; ambiguous identity or unavailable position is needs-review. Empty-space crops are supporting evidence. Missing/short facings derive from slots not correctly occupied, but are downgraded to needs-review when the position frame is unavailable.
+- **Persistence**: Store the versioned report in `processed_outputs.compliance_audit` and an output-local `compliance_audit.json`; report includes output/job IDs and snapshot SHA. The API serves it directly and output ZIPs include it.
+- **Trade-offs / pending**: A new nullable JSON column requires an idempotent SQLite migration. Audit `complete` only means evaluation completed. Phase 2 similarity thresholds and Phase 3 spatial tolerance remain provisional pending controlled fixtures.
+
+### [2026-10-22 01:56 IST] Phase 3 — Photo-to-Planogram Position Mapping
+
+- **Decision**: Preserve detector pixel boxes, and attach a separate optional physical position derived from the frozen shelf dimensions/row geometry. Straight-on images use per-row horizontal bounds; controlled perspective fixtures may use four OpenCV ArUco marker centres.
+- **Marker contract**: `DICT_4X4_50`, IDs 0/1/2/3 at usable shelf TL/TR/BR/BL; project those pixel anchors into a normalized rectangular frame with a homography. This rectifies coordinate measurement, not source image files or saved cutouts.
+- **Row convention**: CV parser row numbers are 1-based top-to-bottom; mapped planogram row indices are 0-based top-to-bottom. Row-count mismatch, missing row extents, invalid quadrilaterals, or unavailable physical dimensions are exposed as review conditions.
+- **Tolerance**: `max(1 cm, 1% of shelf width)` is an initial position comparison tolerance, not a measured accuracy bound. It requires real fixture validation.
+
 ---
+
+### [2026-10-22 01:42 IST] Phase 1 — Immutable Planogram Audit Snapshot
+- **Commit**: Working tree (not committed)
+- **Status**: Implemented; verification commands documented for handoff
+
+#### Decision
+Store the full audit ground truth as a versioned JSON value on `ProcessingJob`, captured in the same database transaction that queues the image. Expose that job snapshot through input/output responses and include it as a separate artifact in output ZIPs.
+
+#### Rationale
+Planograms, placements, product prices, and embeddings can change after image processing. A job-scoped snapshot gives future compliance matching the exact shelf-specific candidate catalogue and expected facing layout for that processing attempt. A failed retry creates a new job and therefore a new snapshot; a completed output keeps its original job snapshot.
+
+#### Snapshot Contents and Boundaries
+- Includes planogram/shelf metadata, top-to-bottom row convention, placement geometry in centimetres, expanded facing slots, deduplicated catalogue products, prices, and provisional label-zone spans.
+- Includes UTC capture time, schema version, and SHA-256 checksum.
+- Label zones carry expected price/currency and remain provisional until photo calibration defines image-space coordinates.
+- This phase does not change the current global CLIP matching, detection, OCR, compliance scoring, or dashboard behavior.
+
+#### Migration
+`init_db()` adds nullable `processing_jobs.audit_snapshot JSON` to existing SQLite databases after checking the table columns. Fresh databases receive it through SQLAlchemy metadata creation.
 
 ### [2026-10-21 22:45 IST] YOLO Cutout Extraction, Semantic Clustering & 4-Column Analysis Table
 - **Commit**: [`8a0b94e`](https://github.com/ShadowHey/Tredence_H4ck/commit/8a0b94e)
@@ -106,3 +182,25 @@ The previous client-side blob fetch depended on a separate asset request and sur
 - `backend/.venv/bin/pytest backend/tests -q` — 35 passed.
 - Frontend type-check, focused Vitest test, and production build passed.
 - Chromium Playwright confirmed a downloaded `.jpg` and no “Failed to fetch” banner.
+### [2026-10-22 01:48 IST] Phase 2 — Shelf-Scoped Individual Cutout Matching
+
+- **Status**: Implemented in working tree; score calibration remains pending controlled fixtures.
+- **Decision**: Compare each product crop embedding independently with only the frozen `shelf_catalogue` stored on its processing job. Never query/fallback to the mutable global Product table for audit matching.
+- **Recognition policy**: A cutout is `matched` only above the provisional 0.95 cosine threshold and by at least the provisional 0.03 margin over runner-up. Below threshold is `unmatched`; ambiguous, missing-snapshot, or unavailable-embedding cases are `needs_review` with explicit reasons.
+- **Identity and clustering**: Keep every crop’s match result on its own cutout record. Visual clusters remain presentation summaries and are marked matched only when all members resolve to the same SKU.
+- **Cache correctness**: Version results and attach the audit-snapshot fingerprint; recompute caches created by old global matching or for a different snapshot.
+- **Trade-off**: Conservative statuses avoid presenting a near-tie as a definitive SKU. The numeric thresholds are provisional; controlled fixture calibration is still required before operational claims.
+### [2026-10-22 02:25 IST] Phase 6 — Compliance Reporting & Operator Workflow
+
+- **Status**: Implemented in working tree; backend and frontend verification pass.
+- **Decision**: Keep operator disposition separate from generated compliance evidence. `ComplianceIssueResolution` references output ID and deterministic issue ID, stores `open`/`acknowledged`/`resolved` plus optional note, and is removed with its output.
+- **Reporting**: Per-output API decorates issues with stable identifiers and recommended actions; dashboard aggregates only persisted audits and recent planogram/shelf audit records. JSON export includes the report and originating immutable snapshot.
+- **Evidence display**: Cutout-backed findings can highlight their pixel bounding box on annotated output; slot-only findings show the audited row and physical centimetre range without pretending an uncalibrated mapping exists.
+- **Trade-off / remaining validation**: The summary endpoint deliberately does not run CV/OCR as a dashboard side effect. Controlled shelf photos remain necessary to evaluate real detection, position, and OCR accuracy.
+- **Verification**: `backend/.venv/bin/pytest backend/tests -q`; `cd frontend && npx tsc --noEmit && npm test -- --run`.
+
+### [2026-10-22 02:43 IST] Null Calibration Position Analysis Failure
+
+- **Cause**: Position mapping intentionally writes `planogram_position: null` when there is no usable calibration. Analysis summary counters used `item.get("planogram_position", {}).get(...)`; the default only handles a missing key, not a present null value, causing a 500 after detections were extracted.
+- **Fix**: A shared safe counter now checks that the detection and position are dictionaries before reading `status`. Both the API response count and persisted metrics use it.
+- **Verification**: Added null/missing/review/calibrated unit cases. Backend suite passed (54 tests); Output #4 analysis, cutouts, compliance APIs returned 200; Chromium rendered the analysis report with 11 findings and no page errors.

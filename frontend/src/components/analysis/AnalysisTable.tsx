@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CheckCircle2, XCircle, Search, HelpCircle, Layers, ZoomIn, Eye } from "lucide-react";
 import { getImageUrl } from "@/lib/api";
 import { ClusterRow, CutoutItem } from "@/types";
+import { ProductMatchView } from "@/components/analysis/ProductMatchView";
 
 interface AnalysisTableProps {
   clusters: ClusterRow[];
@@ -14,14 +15,19 @@ interface AnalysisTableProps {
 
 export function AnalysisTable({
   clusters,
-  threshold = 0.95,
+  threshold = 0.9,
   onInspectItem,
   loading = false,
 }: AnalysisTableProps) {
-  const [filter, setFilter] = useState<"all" | "matched" | "unmatched">("all");
+  const [filter, setFilter] = useState<"all" | "matched" | "unmatched" | "product-match">("all");
   const [search, setSearch] = useState("");
+  const selectFilter = (next: "all" | "matched" | "unmatched" | "product-match") => {
+    setFilter(next);
+    setSearch("");
+  };
 
   const filteredClusters = clusters.filter((c) => {
+    if (filter === "product-match") return false;
     if (filter === "matched" && !c.is_catalog_match) return false;
     if (filter === "unmatched" && c.is_catalog_match) return false;
 
@@ -38,6 +44,17 @@ export function AnalysisTable({
 
   const matchedCount = clusters.filter((c) => c.is_catalog_match).length;
   const unmatchedCount = clusters.length - matchedCount;
+  const productItems = clusters
+    .flatMap((cluster) => cluster.similar_objects)
+    .sort((a, b) => {
+      const aPosition = a.planogram_position;
+      const bPosition = b.planogram_position;
+      if (aPosition?.status === "calibrated" && bPosition?.status === "calibrated") {
+        return aPosition.row_index - bPosition.row_index || aPosition.center_x_cm - bPosition.center_x_cm || a.id.localeCompare(b.id);
+      }
+      const rowDelta = (a.row_number ?? Number.MAX_SAFE_INTEGER) - (b.row_number ?? Number.MAX_SAFE_INTEGER);
+      return rowDelta || (a.cluster_id ?? Number.MAX_SAFE_INTEGER) - (b.cluster_id ?? Number.MAX_SAFE_INTEGER) || a.id.localeCompare(b.id);
+    });
 
   return (
     <div className="bg-[#13161c] border border-[#262b36] rounded-2xl overflow-hidden flex flex-col shadow-xl" data-testid="analysis-table-container">
@@ -46,39 +63,54 @@ export function AnalysisTable({
         {/* Filter Pills */}
         <div className="flex items-center gap-1.5 bg-[#13161c] p-1 rounded-xl border border-[#262b36]">
           <button
-            onClick={() => setFilter("all")}
+            onClick={() => selectFilter("all")}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               filter === "all"
                 ? "bg-amber-500 text-gray-950 shadow"
                 : "text-gray-400 hover:text-gray-200"
             }`}
             data-testid="filter-all-btn"
+            aria-pressed={filter === "all"}
           >
             All Clusters ({clusters.length})
           </button>
           <button
-            onClick={() => setFilter("matched")}
+            onClick={() => selectFilter("matched")}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
               filter === "matched"
                 ? "bg-emerald-500 text-gray-950 shadow"
                 : "text-gray-400 hover:text-emerald-400"
             }`}
             data-testid="filter-matched-btn"
+            aria-pressed={filter === "matched"}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
             Matched Catalog ({matchedCount})
           </button>
           <button
-            onClick={() => setFilter("unmatched")}
+            onClick={() => selectFilter("unmatched")}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
               filter === "unmatched"
                 ? "bg-red-500/80 text-white shadow"
                 : "text-gray-400 hover:text-gray-200"
             }`}
             data-testid="filter-unmatched-btn"
+            aria-pressed={filter === "unmatched"}
           >
             <XCircle className="w-3.5 h-3.5" />
             Unmatched ({unmatchedCount})
+          </button>
+          <button
+            onClick={() => selectFilter("product-match")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              filter === "product-match"
+                ? "bg-amber-500 text-gray-950 shadow"
+                : "text-gray-400 hover:text-amber-300"
+            }`}
+            data-testid="filter-product-match-btn"
+            aria-pressed={filter === "product-match"}
+          >
+            Product Match ({productItems.length})
           </button>
         </div>
 
@@ -89,13 +121,17 @@ export function AnalysisTable({
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search SKU, name, cluster..."
+            placeholder={filter === "product-match" ? "Search crop, product, SKU..." : "Search SKU, name, cluster..."}
             className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[#13161c] border border-[#262b36] text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-amber-400 transition-colors"
           />
         </div>
       </div>
 
-      {/* 4-Column Table */}
+      {filter === "product-match" ? (
+        <ProductMatchView products={productItems} search={search} threshold={threshold} onInspectItem={onInspectItem} />
+      ) : (
+      /* 4-Column cluster table */
+      <div className="flex flex-col">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse" data-testid="analysis-4-col-table">
           <thead>
@@ -110,7 +146,7 @@ export function AnalysisTable({
 
               {/* Column 2 */}
               <th className="py-3.5 px-4 w-[16%] min-w-[150px]">
-                <span>Similarity Percentage</span>
+                <span>Cluster Cohesion</span>
               </th>
 
               {/* Column 3 */}
@@ -243,7 +279,7 @@ export function AnalysisTable({
                       <span className="text-[10px] text-gray-500">
                         {row.is_catalog_match
                           ? `Match score: ${(row.catalog_confidence * 100).toFixed(1)}% (≥ ${(threshold * 100).toFixed(0)}%)`
-                          : `Score ${(row.catalog_confidence * 100).toFixed(1)}% < ${(threshold * 100).toFixed(0)}% cutoff`}
+                          : `Needs review · Avg. top catalogue score ${(row.catalog_confidence * 100).toFixed(1)}%`}
                       </span>
                     </div>
                   </td>
@@ -284,7 +320,7 @@ export function AnalysisTable({
                       /* Strictly NO product image rendered when match is No */
                       <div className="text-gray-500 text-xs italic flex items-center gap-2 py-1" data-testid="catalog-product-none">
                         <span className="inline-block w-2 h-2 rounded-full bg-gray-600" />
-                        <span>No catalog product matched</span>
+                        <span>No confirmed catalog product</span>
                       </div>
                     )}
                   </td>
@@ -305,6 +341,8 @@ export function AnalysisTable({
           Strict catalog confidence threshold: <strong className="text-amber-400">{(threshold * 100).toFixed(0)}%</strong>
         </span>
       </div>
+      </div>
+      )}
     </div>
   );
 }

@@ -64,6 +64,7 @@ ShelfSense AI is a full-stack, AI-powered planogram designer and visual merchand
 ### B. Backend (`backend/`)
 - **Framework**: FastAPI + Pydantic v2 + SQLAlchemy ORM.
 - **Database**: SQLite with dynamic PRAGMA column auto-migration (`init_db()`).
+- **Audit ground truth**: Every queued `ProcessingJob` stores a versioned JSON snapshot of its planogram, selected shelf, placements/facings, shelf-specific product catalogue, and provisional expected label zones. Processed outputs expose their originating job snapshot so compliance analysis can use immutable ground truth.
 - **Endpoints**:
   - `/api/v1/products`: Product CRUD with image upload and automatic CLIP embedding.
   - `/api/v1/planograms`: Planogram creation, duplication, deletion, and placement management.
@@ -78,3 +79,22 @@ ShelfSense AI is a full-stack, AI-powered planogram designer and visual merchand
 ### D. Unified Logging Pipeline (`logs/`)
 - **Central File**: `logs/logs.txt` gathers Frontend actions, Backend HTTP requests, and Background Worker telemetry in chronological order.
 - **Monitor Tool**: `logs/log_collector.py` provides color-coded live streaming (`--follow`), background job filtering (`--jobs`), and summary metrics (`--summary`).
+# Phase 2 cutout recognition scope
+
+Shelf-image cutout matching is job-scoped: each crop embedding is compared only with embeddings captured in that job's immutable `audit_snapshot.shelf_catalogue`. Per-cutout ranked candidates and decision state are persisted with the cutout artifact. The existing visual clusters are for repeated-item presentation, not for collapsing item identity or substituting a centroid match. Analysis caches carry a version and snapshot fingerprint. Similarity and margin thresholds are provisional until the controlled compliance-photo fixtures are available.
+
+## Phase 3 photo-to-planogram coordinate mapping
+
+The backend maps detection boxes using the frozen job shelf width and its resolved top-to-bottom row geometry. Straight-on fallback uses the matching detected shelf-row pixel span; optional ArUco marker centres (IDs 0–3, TL/TR/BR/BL) provide a homography to rectify image coordinates for perspective views. Mapped detections retain source-image boxes/crops and receive an optional zero-based row and physical x-span in centimetres. The default position tolerance is provisional (`max(1 cm, 1% of shelf width)`); incomplete row detection or unavailable calibration is surfaced for review rather than silently guessed.
+
+## Phase 4 compliance evaluation
+
+The compliance service consumes the immutable job snapshot, individual cutout `catalog_match`/`planogram_position` data, and calibrated empty-space positions. It assigns detections to physical facing slots, records per-slot results and evidence-backed findings, and does not infer definitive missing stock without a calibrated position frame. The versioned JSON result is persisted on `ProcessedOutput` and as an output-directory sidecar, bound to the output/job and snapshot fingerprint; the API serves it independently of visual-cluster analysis.
+
+## Phase 5 shelf-label OCR
+
+An optional `backend/app/services/label_ocr_service.py` adapter uses local EasyOCR CPU inference, independent of the YOLO/image-parsing package. It maps frozen physical label spans through detected row bounds, using inverse four-corner homography when that calibration exists, and crops a provisional bottom-row band. Each crop is stored as evidence and OCR text/product references/price/currency associate to the frozen placement. OCR/association findings are merged into the versioned compliance audit, but remain warnings marked provisional until measured fixture accuracy is established. Missing dependencies/weights fail closed as `needs_review`; setup is in `backend/OCR_SETUP.md`.
+
+## Phase 6 compliance reporting and issue disposition
+
+The per-output compliance report decorates immutable computed findings with deterministic IDs, severity, location/evidence, recommended action, and persisted operator disposition. `ComplianceIssueResolution` is a separate SQLite record keyed by output and finding ID, so acknowledgement/resolution notes never rewrite the original computed audit. The dashboard aggregates generated audits and recent planogram/shelf history without initiating expensive image processing. JSON export includes report data and the originating audit snapshot. The UI overlays a referenced cutout's pixel box when available; physical slot findings without pixel evidence show row and centimetre span only.

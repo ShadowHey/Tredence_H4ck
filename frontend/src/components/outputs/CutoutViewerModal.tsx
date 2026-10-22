@@ -221,6 +221,11 @@ export function CutoutViewerModal({ outputId, onClose }: CutoutViewerModalProps)
                       <span className="text-[10px] text-gray-400">Row {item.row_number}</span>
                     </div>
                   )}
+                  {item.category === "product" && item.catalog_match && (
+                    <div className={`w-full mt-1 text-[10px] font-semibold ${item.catalog_match.status === "matched" ? "text-emerald-400" : item.catalog_match.status === "needs_review" ? "text-amber-300" : "text-gray-400"}`}>
+                      {item.catalog_match.status === "matched" ? `Matched · ${item.catalog_match.top_candidate?.sku ?? "SKU"}` : item.catalog_match.status === "needs_review" ? "Needs review" : "Unmatched"}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -285,6 +290,39 @@ export function CutoutViewerModal({ outputId, onClose }: CutoutViewerModalProps)
                 </span>
               </div>
             </div>
+
+            {selectedCrop.category === "product" && selectedCrop.catalog_match && (
+              <section className="rounded-lg border border-[#353b48] bg-[#13161c] p-3 space-y-2 text-xs" aria-label="Shelf catalogue match">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400 uppercase text-[10px] font-semibold">Shelf catalogue match</span>
+                  <span className={`font-semibold capitalize ${selectedCrop.catalog_match.status === "matched" ? "text-emerald-400" : selectedCrop.catalog_match.status === "needs_review" ? "text-amber-300" : "text-gray-300"}`}>
+                    {selectedCrop.catalog_match.status.replace("_", " ")}
+                  </span>
+                </div>
+                <p className="text-gray-400">{selectedCrop.catalog_match.reason.replaceAll("_", " ")}</p>
+                {selectedCrop.catalog_match.top_candidate && (
+                  <p className="text-gray-200">Top: <span className="font-semibold">{selectedCrop.catalog_match.top_candidate.name}</span> ({selectedCrop.catalog_match.top_candidate.sku}) · {selectedCrop.catalog_match.similarity == null ? "—" : `${(selectedCrop.catalog_match.similarity * 100).toFixed(1)}%`}</p>
+                )}
+                {selectedCrop.catalog_match.runner_up && (
+                  <p className="text-gray-400">Runner-up: {selectedCrop.catalog_match.runner_up.name} ({selectedCrop.catalog_match.runner_up.sku}) · {selectedCrop.catalog_match.runner_up_similarity == null ? "—" : `${(selectedCrop.catalog_match.runner_up_similarity * 100).toFixed(1)}%`}</p>
+                )}
+                {selectedCrop.catalog_match.confidence_margin != null && (
+                  <p className="text-gray-400">Score margin: {(selectedCrop.catalog_match.confidence_margin * 100).toFixed(1)} percentage points</p>
+                )}
+              </section>
+            )}
+
+            {selectedCrop.planogram_position && (
+              <section className="rounded-lg border border-[#353b48] bg-[#13161c] p-3 space-y-1 text-xs" aria-label="Planogram position">
+                <span className="text-gray-400 uppercase text-[10px] font-semibold">Planogram position</span>
+                <p className="text-gray-200">
+                  Row {selectedCrop.planogram_position.row_index + 1} · {selectedCrop.planogram_position.x_start_cm.toFixed(1)}–{selectedCrop.planogram_position.x_end_cm.toFixed(1)} cm from left
+                </p>
+                <p className="text-gray-500">
+                  {selectedCrop.planogram_position.method.replaceAll("_", " ")} · ±{selectedCrop.planogram_position.position_tolerance_cm.toFixed(1)} cm tolerance
+                </p>
+              </section>
+            )}
 
             <a
               href={cutoutDownloadUrl(selectedCrop)}

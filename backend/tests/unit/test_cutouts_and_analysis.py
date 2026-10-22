@@ -32,12 +32,12 @@ def test_normalize_vector():
 
 
 def test_catalog_match_threshold_rule():
-    """Verify that catalog match strictly requires confidence >= 95% (0.950)."""
-    assert CATALOG_MATCH_THRESHOLD == 0.95
+    """Verify that catalog match requires confidence >= 90% (0.900)."""
+    assert CATALOG_MATCH_THRESHOLD == 0.90
 
     # Test cases below and at/above threshold
-    below_score = 0.949
-    exact_score = 0.950
+    below_score = 0.899
+    exact_score = 0.900
     above_score = 0.978
 
     assert (below_score >= CATALOG_MATCH_THRESHOLD) is False

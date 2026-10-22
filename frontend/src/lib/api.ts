@@ -11,6 +11,8 @@ import {
   ProcessedOutput,
   CutoutsResponse,
   OutputAnalysisResponse,
+  ComplianceDashboardData,
+  ComplianceReport,
 } from "@/types";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -105,6 +107,8 @@ export const api = {
   getPlanograms: () => request<PlanogramSummary[]>("/api/v1/planograms"),
 
   getDashboardMetrics: () => request<DashboardMetrics>("/api/v1/planograms/metrics"),
+
+  getComplianceDashboard: () => request<ComplianceDashboardData>("/api/v1/compliance/summary"),
 
   getPlanogram: (id: number) => request<Planogram>(`/api/v1/planograms/${id}`),
 
@@ -270,6 +274,27 @@ export const api = {
 
   getOutputAnalysis: (outputId: number) =>
     request<OutputAnalysisResponse>(`/api/v1/outputs/${outputId}/analysis`),
+
+  getOutputCompliance: (outputId: number) =>
+    request<ComplianceReport>(`/api/v1/outputs/${outputId}/compliance`),
+
+  updateComplianceIssue: (outputId: number, issueId: string, update: { status: "open" | "acknowledged" | "resolved"; note?: string }) =>
+    request<{ issue_id: string; status: string; note?: string | null; updated_at?: string }>(
+      `/api/v1/outputs/${outputId}/compliance/issues/${issueId}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(update),
+      }),
+
+  exportComplianceReport: async (outputId: number): Promise<void> => {
+    const report = await request<{ report: ComplianceReport; source: { source_filename?: string } }>(
+      `/api/v1/outputs/${outputId}/compliance/export.json`);
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `shelfsense-compliance-output-${outputId}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  },
 
   analyzeOutput: (outputId: number) =>
     request<OutputAnalysisResponse>(`/api/v1/outputs/${outputId}/analyze`, {

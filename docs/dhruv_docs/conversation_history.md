@@ -1,6 +1,70 @@
 # Dhruv's Conversation History & Requirement Discussions
 
+### [2026-10-22 06:19 IST] Normalized Row/Position Layout Comparison
+
+- **Request**: Implement the agreed planogram/photo comparison using normalized row-wise positions, ordered products, and explicit empty/free intervals; preserve modularity for future work.
+- **Outcome**: Added `spatial_matching` modules for planogram normalization, calibrated image-row normalization, normalized interval generation, and a JSON-safe layout comparison. Compliance audit v4 now includes row sequences with normalized spans, left/right ordinals, product/empty evidence and open intervals; the report UI summarizes each row and shows positional order for findings.
+- **Safety**: Existing physical-cm assignment and review policy remain authoritative. Layout output is marked `needs_review` unless shelf calibration is complete; no missing-product conclusion is inferred from absent/uncalibrated geometry.
+- **Verification**: Full backend test suite passed; focused image-processing integration tests passed (2); all frontend Vitest tests passed (21), TypeScript check and production build passed, and `git diff --check` passed. A live image reanalysis was not run in this turn.
+
+### [2026-10-22 04:48 IST] Color-First Catalogue Candidate Gate
+
+- **Request**: Since Amul chocolate still showed Orange Juice as a similar candidate, make color the first filtering stage, then run CLIP on the remaining candidates and select the highest-CLIP candidate. Plan was approved for implementation.
+- **Outcome**: Implemented a hard color gate against packshots in the frozen shelf catalogue, followed by CLIP cosine ranking only over survivors. Chose an initial 0.30 hue-histogram intersection threshold (reported orange candidate was at 0.20); API/UI expose retained-vs-original candidate counts, color evidence and fallback state. Removed the weighted fusion and package-shape ranker. Bumped analysis version so stale cutout matching results recompute.
+- **Conservative fallback**: If none pass, only the nearest color candidate(s) are retained and the output is forced to Needs review; if packshots are unavailable, the original shelf catalogue is used with a review-required fallback. No fallback can be marked confirmed.
+- **Verification**: Backend suite and frontend suite pass; Playwright Product Match journey passes. A live API re-analysis of Output #7 (`bc_image1.png`) returns Amul Milk Chocolate for the affected crops (including former Orange Juice crop `prod_0002`); color gate retained one of four candidates. Synthetic tests cover no-pass and missing-packshot fallbacks. The actual fixture is verified, but broader real-photo calibration is still required.
+
+### [2026-10-22 04:36 IST] Explainable Product Appearance Reranking
+
+- **Request**: Reduce cases where Amul dark/milk chocolate crops rank as orange juice; implement the modular CLIP-plus-appearance refinement while preserving shelf-specific matching and review safeguards.
+- **Implementation**: Added matching helpers for image normalization, HSV color histogram similarity, package-shape similarity, and conservative candidate fusion. The existing CLIP embedding service remains the sole embedding implementation. Each crop is ranked against the frozen shelf catalogue; raw CLIP score is kept distinct from fused rerank score. Component scores are returned to the API and displayed in Product Match. Missing catalogue packshots fall back to CLIP-only ranking.
+- **Safety/limits**: A product cannot be confirmed unless raw CLIP still meets the existing 90% threshold and its fused-score lead is unambiguous. Weights are provisional and need labeled held-out fixture calibration; without running labeled shelf examples, the real chocolate/juice error cannot be claimed fully solved.
+- **Verification**: Backend suite: `backend/.venv/bin/pytest backend/tests -q` (59 passed). Frontend type check and Vitest: `cd frontend && npx tsc --noEmit && npm test -- --run` (21 passed). Production build and whitespace check are recorded after completion.
+
+### [2026-10-22 04:22 IST] Individual Product Match View
+
+- **Request**: Add a Product Match view alongside All Clusters, Matched Catalog, and Unmatched, showing every crop’s most visually similar catalogue product using CLIP.
+- **Implementation**: Added a fourth filter tab and a responsive individual-crop list with crop image, top shelf-catalogue candidate image/name/SKU, CLIP similarity, position/cluster context, and Confirmed vs Needs review state. Candidate is still shown below threshold or for ambiguous results, without falsely presenting it as confirmed. Search supports crop ID, candidate name/SKU, runner-up name/SKU, and cluster ID; changing tabs clears the query. The list sorts by calibrated row/x position where available.
+- **Data path**: Reused the existing per-crop `catalog_match` in the analysis response, which already returns the frozen shelf catalogue top candidate, score, status, and reason. No backend or schema changes were needed.
+- **Verification**: `cd frontend && npx tsc --noEmit && npm test -- --run && npm run build` passed (21 Vitest tests). Targeted Playwright Product Match flow passed against Output #7. Full Playwright suite had three unrelated failures in image-output deletion, planogram placement journey, and elevation-scale assertion; Product Match, cutout download, and screenshot tests passed.
+
+### [2026-10-22 03:22 IST] Analysis Matching Calibration for Pipeline Verification Shelf
+
+- **Request**: Correct Analysis for the selected planogram/shelf using the supplied four-product shelf images; treat scores above 90% as a good match.
+- **Evidence**: Output #7 (`bc_image1.png`) was linked to Pipeline Verification Planogram / Shelf 03 and had 75 detections in 9 groups. Existing 95% cutoff yielded zero matched groups, even though repeated Orange Juice, Yellow Lays, and Fresh Laundry Liquid crops had respective minimum individual catalogue scores of 92.2%, 93.0%, and 90.8%. Existing low-score results were escalated as definitive unrecognised-product errors.
+- **Outcome**: Calibrated the shelf-photo cutoff to 90%; confidence below the threshold now needs operator review instead of being labeled unrecognised. Analysis/audit versions were bumped to invalidate stale cached matches and report. UI now distinguishes cluster cohesion from catalogue-match confidence and derives the shown threshold from API data.
+- **Live verification**: Re-analyzed Output #7; API returned HTTP 200 and three matching clusters (orange juice, Yellow Lays, fresh laundry liquid). Playwright loaded `/analysis?outputId=7`, showed 3/9 matches and the 90% label, and recorded no page errors.
+- **Tests**: `backend/.venv/bin/pytest backend/tests -q`; `cd frontend && npx tsc --noEmit && npm test -- --run`.
+- **Remaining limitation**: The Amul Milk Chocolate crops scored below the calibrated threshold / were split across low-confidence crop candidates, so they remain in manual review. OCR still contributes 60 provisional label findings; this task did not calibrate OCR or eliminate those findings.
+
+### [2026-10-22 02:11 IST] Phase 5 — Shelf-Label OCR
+
+- **Request**: Implement Phase 5 with a task list, progressing carefully and checking completed work.
+- **Work delivered**: Added optional local EasyOCR CPU inference, row/cm-to-image label ROI projection and inverse ArUco homography, crop evidence, token confidence/price/currency extraction, catalogue-reference association, and provisional mismatch/missing/unreadable/review findings in the persisted compliance audit. Added OCR setup instructions and the Phase 5 checklist.
+- **Verification**: Backend tests 53 passed; frontend type-check and Vitest (18 passed); Python compilation and `git diff --check` passed. Label tests use a deterministic fake OCR engine.
+- **Open validation**: The environment has no EasyOCR installation/model, and repository assets have no labelled shelf-label photographs. The actual OCR accuracy checklist is deliberately left open; all findings remain provisional pending measured photos and ground truth.
+
+### [2026-10-22 02:02 IST] Phase 4 — Planogram Compliance Engine
+
+- **Request**: Implement Phase 4 properly, with a task list and completed items checked off.
+- **Work delivered**: Added physical, row-aware cutout-to-facing assignments, required compliance outcomes, expected-slot findings, empty-space evidence links, conservative review behavior, durable versioned report persistence, an output-specific API, and ZIP export support. Updated the shared phase checklist and API/architecture contracts.
+- **Verification**: `backend/.venv/bin/pytest backend/tests -q` (46 passed); frontend TypeScript check and Vitest (18 passed); Python compilation and `git diff --check` passed. The output API/ZIP integration test verifies persisted report linkage and export inclusion.
+- **Open validation**: The detector/catalogue thresholds and coordinate tolerance still need calibration against the controlled, physically measured fixture set; Phase 6 report/dashboard presentation remains future work.
+
 ---
+
+### [2026-10-22 01:42 IST] Phase 1 — Immutable Planogram Audit Snapshot
+- **Commit**: Working tree (not committed)
+- **Participants**: Dhruv & Codex
+
+#### Request
+Implement Phase 1 of the end-to-end compliance plan and maintain a checklist with completed items marked for the next agent.
+
+#### Outcome
+- Added a versioned snapshot to each queued processing job, containing the selected planogram and shelf, exact expected placements/facings, deduplicated shelf catalogue and embeddings, expected prices, and provisional label zones.
+- Exposed snapshot data through input and output responses and included it in output archives.
+- Added `docs/shared/COMPLIANCE_ROADMAP.md`, with Phase 1 implementation items checked and future phases open.
+- Test suite execution was not performed during this session.
 
 ### [2026-10-21 22:45 IST] YOLO Cutout Extraction, Semantic Clustering & 4-Column Analysis Table
 - **Commit**: [`8a0b94e`](https://github.com/ShadowHey/Tredence_H4ck/commit/8a0b94e)
@@ -107,3 +171,25 @@ Dhruv reported that the cutout inspector showed “Failed to fetch” and asked 
 - Diagnosed the failure in the individual browser-side cutout download path rather than the overall output-analysis page.
 - Implemented a server-resolved JPEG attachment endpoint and replaced blob fetching with native download links on each card and its detail dialog.
 - Confirmed the exact visible cutout downloads in Chromium with no error banner.
+### [2026-10-22 01:48 IST] Phase 2 — Shelf-Scoped Individual Cutout Matching
+
+- **Request**: Implement Phase 2 of the compliance plan, maintain a ticked task list, and avoid errors.
+- **Work delivered**: Individual cutouts now compare only against the processing job's immutable shelf catalogue; each retains top/runner-up candidate, similarity, margin, status, and reason. The cutout inspector exposes the decision, and versioned cache checks prevent stale whole-catalogue results from being reused.
+- **Still pending**: Calibrate 0.95 similarity and 0.03 margin thresholds with controlled shelf fixtures and labelled expected outcomes. No test run requested; implementation was not suite-verified in this session.
+### [2026-10-22 01:56 IST] Phase 3 — Photo-to-Planogram Position Mapping
+
+- **Request**: Implement Phase 3 with a ticked task list.
+- **Work delivered**: Added straight-on row-width scaling, optional four-corner ArUco marker detection and homography-based coordinate rectification, per-product/empty-space physical row/x-span output, explicit row-order and tolerance metadata, and review states for incomplete calibration.
+- **Verification**: Backend and CV test suites, frontend type-check, and frontend Vitest pass. A physical shelf test remains needed to validate tolerance and marker-placement repeatability.
+### [2026-10-22 02:25 IST] Phase 6 — Compliance Reporting & Operator Workflow
+
+- **Request**: Implement Phase 6 from the compliance roadmap, maintain a sequential task checklist, and avoid regressions.
+- **Delivered**: Added a finding-level report on the analysis page with location/evidence, filters, pixel highlights where actual cutout evidence exists, recommended actions, and persistent open/acknowledged/resolved states with operator notes. Added dashboard compliance totals/recent planogram-shelf audit history and JSON export.
+- **Verification**: Backend suite: 53 passed. Final frontend verification: `npx tsc --noEmit` passed, all 19 Vitest tests passed, and `npm run build` completed successfully. The first full run exposed a test-only image-dimension setup issue; the fixture was corrected before final verification.
+- **Remaining**: Synthetic fixtures validate the workflow. Physical compliance-photo evaluation and calibration of detection/position/OCR remain pending.
+
+### [2026-10-22 02:43 IST] Null Calibration Position Analysis Failure
+
+- **Request**: Fix the analysis page error shown in the screenshot.
+- **Diagnosis**: The backend had already extracted detections, but crashed while counting calibrated detections because some valid uncalibrated detections contain `planogram_position: null`.
+- **Fix and verification**: Guarded both position-count expressions through one helper and added a regression test. All 54 backend tests passed. Live Output #4 analysis/cutouts/compliance endpoints returned 200; Chromium loaded the report with 11 findings and no “Cutout analysis failed” alert or browser errors.

@@ -24,6 +24,7 @@ import { api, getImageUrl } from "@/lib/api";
 import { ProcessedOutput, OutputAnalysisResponse, CutoutItem } from "@/types";
 import { AnalysisTable } from "@/components/analysis/AnalysisTable";
 import { CutoutViewerModal } from "@/components/outputs/CutoutViewerModal";
+import { ComplianceReportPanel } from "@/components/analysis/ComplianceReportPanel";
 
 function AnalysisContent() {
   const searchParams = useSearchParams();
@@ -142,7 +143,7 @@ function AnalysisContent() {
             </h1>
           </div>
           <p className="text-xs text-gray-400 mt-1">
-            Intra-shelf visual clustering and semantic CLIP matching against product catalog (strict ≥ 95% confidence threshold).
+            Intra-shelf visual grouping and CLIP matching against this shelf’s catalogue (90% minimum; ambiguous or lower-confidence results need review).
           </p>
         </div>
 
@@ -193,6 +194,7 @@ function AnalysisContent() {
 
       {/* Main Body */}
       <main className="p-6 flex-1 space-y-6">
+        {selectedOutputId && currentOutputMeta && <ComplianceReportPanel key={selectedOutputId} output={currentOutputMeta} />}
         {error && (
           <div className="p-4 rounded-xl bg-red-950/40 border border-red-800 text-red-300 text-sm flex items-center gap-3">
             <XCircle className="w-5 h-5 shrink-0" />
@@ -272,11 +274,11 @@ function AnalysisContent() {
               </span>
             </div>
 
-            {/* Matched to Catalog (>= 95%) */}
+            {/* Matches above the calibrated catalogue threshold */}
             <div className="p-4 rounded-2xl bg-[#13161c] border border-[#262b36] flex flex-col justify-between shadow-sm">
               <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                Catalog Matched (≥ 95%)
+                Catalog Matched (≥ {(analysisData?.catalog_confidence_threshold ?? 0.9) * 100}%)
               </span>
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="text-2xl font-bold font-mono text-emerald-400" data-testid="stat-matched-clusters">
@@ -301,10 +303,10 @@ function AnalysisContent() {
                     ? analysisData.total_clusters - analysisData.matched_clusters_count
                     : "—"}
                 </span>
-                <span className="text-[11px] text-gray-500">clusters &lt; 95%</span>
+                <span className="text-[11px] text-gray-500">below threshold / review</span>
               </div>
               <span className="text-[10px] text-gray-500 mt-1">
-                Threshold: {(analysisData?.catalog_confidence_threshold ?? 0.95) * 100}%
+                Threshold: {(analysisData?.catalog_confidence_threshold ?? 0.9) * 100}%
               </span>
             </div>
           </div>
@@ -330,6 +332,11 @@ function AnalysisContent() {
                   {analysisData.clusters.length} rows
                 </span>
               </h2>
+            </div>
+            <div className={`rounded-lg border px-3 py-2 text-xs ${analysisData.position_calibration?.status === "calibrated" ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-300" : "border-amber-500/20 bg-amber-500/5 text-amber-300"}`} data-testid="position-calibration-status">
+              Position mapping: {analysisData.position_calibration?.status === "calibrated"
+                ? `${analysisData.position_calibration.method.replaceAll("_", " ")} · ±${analysisData.position_calibration.position_tolerance_cm?.toFixed(1)} cm · ${analysisData.detections_with_calibrated_positions} detections mapped${analysisData.position_calibration.row_count_match === false ? ` · row detector ${analysisData.position_calibration.detected_row_count}/${analysisData.position_calibration.expected_row_count}` : ""}`
+                : `Needs review${analysisData.position_calibration?.reason ? ` · ${analysisData.position_calibration.reason.replaceAll("_", " ")}` : " · no usable shelf calibration"}`}
             </div>
 
             {/* Render the strict 4-column Table */}
@@ -409,6 +416,17 @@ function AnalysisContent() {
                   [{enlargedCrop.bbox_xyxy.join(", ")}]
                 </span>
               </div>
+              {enlargedCrop.planogram_position && (
+                <div className="p-2.5 rounded-xl bg-[#13161c] border border-[#262b36] col-span-2">
+                  <span className="text-gray-400 block text-[10px] uppercase font-semibold">Planogram Position</span>
+                  <span className="text-gray-200 font-medium">
+                    Row {enlargedCrop.planogram_position.row_index + 1} · {enlargedCrop.planogram_position.x_start_cm.toFixed(1)}–{enlargedCrop.planogram_position.x_end_cm.toFixed(1)} cm from left
+                  </span>
+                  <span className="text-gray-500 block text-[10px] mt-1">
+                    {enlargedCrop.planogram_position.method.replaceAll("_", " ")} · ±{enlargedCrop.planogram_position.position_tolerance_cm.toFixed(1)} cm tolerance
+                  </span>
+                </div>
+              )}
             </div>
 
             <button

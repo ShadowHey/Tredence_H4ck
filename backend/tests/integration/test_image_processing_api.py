@@ -7,6 +7,7 @@ from PIL import Image
 from sqlalchemy.orm import sessionmaker
 
 from app.services import image_processing_service as service
+from app.db.models import ProcessedOutput
 
 
 def _sample_jpeg() -> io.BytesIO:
@@ -70,6 +71,38 @@ def test_one_image_generates_traceable_output_and_zip(client, db_session, monkey
     assert output["shelf_id"] == shelf_id
     assert output["shelf_snapshot"]["name"] == "Reference Bay"
     assert output["metrics"]["product_count"] == 3
+    compliance = client.get(f"/api/v1/outputs/{output['id']}/compliance")
+    assert compliance.status_code == 200
+    audit = compliance.json()
+    assert audit["output_id"] == output["id"]
+    assert audit["job_id"] == output["job_id"]
+    assert audit["audit_snapshot_sha256"] == output["audit_snapshot"]["snapshot_sha256"]
+    assert audit["schema_version"] == 1
+    assert audit["audit_version"] == 4
+    assert audit["label_audit"]["status"] == "no_expected_label_zones"
+
+    # Exercise a report issue and its durable operator workflow without depending on CV model output.
+    stored_output = db_session.query(ProcessedOutput).filter_by(id=output["id"]).one()
+    test_issue = {"type": "missing_product", "severity": "error", "sku": "TEST-1",
+                  "row_index": 0, "x_start_cm": 2.0, "x_end_cm": 12.0,
+                  "reason": "expected_slot_not_confirmed"}
+    stored_output.compliance_audit = {**audit, "issues": [test_issue]}
+    db_session.commit()
+    report = client.get(f"/api/v1/outputs/{output['id']}/compliance").json()
+    assert report["issues"][0]["status"] == "open"
+    assert report["issues"][0]["recommended_action"]
+    issue_id = report["issues"][0]["issue_id"]
+    resolved = client.patch(f"/api/v1/outputs/{output['id']}/compliance/issues/{issue_id}",
+                            json={"status": "resolved", "note": "Restocked during audit."})
+    assert resolved.status_code == 200
+    assert client.get(f"/api/v1/outputs/{output['id']}/compliance").json()["issues"][0]["status"] == "resolved"
+    assert client.get(f"/api/v1/compliance/summary").json()["summary"]["resolved"] == 1
+    compliance_export = client.get(f"/api/v1/outputs/{output['id']}/compliance/export.json")
+    assert compliance_export.status_code == 200
+    assert compliance_export.json()["report"]["issues"][0]["resolution_note"] == "Restocked during audit."
+    invalid_issue = client.patch(f"/api/v1/outputs/{output['id']}/compliance/issues/{'f' * 64}",
+                                 json={"status": "resolved"})
+    assert invalid_issue.status_code == 404
     artifact_path = temp_uploads_dir / "/".join(output["annotated_image_path"].split("/")[1:])
     json_path = temp_uploads_dir / "/".join(output["result_json_path"].split("/")[1:])
     assert artifact_path.exists()
@@ -78,6 +111,10 @@ def test_one_image_generates_traceable_output_and_zip(client, db_session, monkey
     exported = client.post("/api/v1/outputs/export", json={"output_ids": [output["id"]]})
     assert exported.status_code == 200
     assert exported.headers["content-type"].startswith("application/zip")
+    import zipfile
+    from io import BytesIO
+    with zipfile.ZipFile(BytesIO(exported.content)) as archive:
+        assert f"output-{output['id']}/compliance_audit.json" in archive.namelist()
 
     removed = client.request("DELETE", "/api/v1/outputs", json={"output_ids": [output["id"]]})
     assert removed.status_code == 200
