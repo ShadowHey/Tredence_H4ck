@@ -95,3 +95,63 @@ sample_assets/compliance-fixtures/v1/
     08_ocr_challenge/
   ground-truth/expected-audits.json
 ```
+
+## Detection Accuracy Follow-up — Phases A and B (2026-10-22)
+
+### Phase A — Ground-truth fixture (implemented, scoped)
+- [x] Pin the original Output #7 shelf photo by SHA-256 and dimensions.
+- [x] Record the frozen 4-row, 15-facing planogram, row/SKU mapping, operator-described observations, and expected alert policy.
+- [x] Label provenance and limitations: this is scenario-level/manual visual truth, not pixel-coordinate annotations or a detector benchmark.
+- [x] Add integrity and policy regression tests.
+- [ ] Complete manually reviewed per-facing bounding-box coordinates before reporting YOLO precision/recall or tuning thresholds.
+
+### Phase B — Detection/crop safeguards (implemented, conservative)
+- [x] Suppress only near-contained same-class duplicates after YOLO's normal NMS; preserve separate adjacent products and original coordinates.
+- [x] Mark row-relative narrow/short boxes as `review` in parser JSON; leave their coordinates unchanged.
+- [x] Propagate geometry-quality status and flags into cutout analysis metadata and API types; invalidate stale cutout cache.
+- [x] Add unit tests and run a model-backed smoke pass on the pinned photo.
+- [ ] Train/calibrate localization against reviewed bbox labels, then evaluate the original image and perturbation cases before changing confidence/NMS settings.
+
+The safeguards improve observability and avoid unsafe guessed geometry. They do not claim to repair half-product boxes or improve model localization; that requires labeled data and a measured evaluation loop.
+
+### Phase C — Catalogue consensus and fragmented cluster identity (implemented, conservative)
+- [x] Preserve every individual crop's shelf-catalogue match as independent evidence.
+- [x] Consolidate fragmented visual clusters only when a clear candidate majority agrees within the same calibrated row.
+- [x] Keep mixed-identity, uncalibrated-row, and weak-evidence groups separate; suspicious geometry crops do not vote.
+- [x] Confirm a cluster only with at least two supporting detections, a 60% candidate majority, and enough individually confirmed crop matches; otherwise expose the best-supported candidate as review-needed.
+- [x] Return vote counts/ratio and render the candidate plus consensus state in Cluster Breakdown; bump analysis cache version.
+- [x] Add pure unit coverage for majority merge, dissenting product, row isolation, flagged-crop abstention, and singleton abstention.
+- [ ] Calibrate the provisional 60% / two-crop rule using a manually labeled crop-identity fixture across compliant and deliberately mixed rows.
+
+**Phase C boundary:** This phase changes cluster aggregation and presentation only. It does not rewrite individual CLIP/color-first rankings, change YOLO localization, or change compliance issue/alert policy. Consensus is not a probability; weak evidence remains review-needed.
+
+### Phase D — Planogram comparison and actionable alert policy (implemented, provisional)
+- [x] Group expected facing slots by planogram placement and row; avoid treating a single gap among a large facing count as a placement-level low-stock alert.
+- [x] Retain individual slot results and evidence in the report while raising one aggregate availability issue only when 50% or fewer of expected facings are detected for that placement.
+- [x] Raise one `missing_product` issue for a placement with zero attributable units and one `insufficient_quantity` warning at/below the 50% boundary.
+- [x] Count recognized same-row units for stock quantity even if a unit is misplaced within that row; retain the separate misplaced-location finding.
+- [x] Suppress definitive shortage issues when position calibration is unavailable; keep rows/slots review-needed.
+- [x] Add regression tests for one missing out of 15, exactly-half stock, no stock, placement isolation, and audit versioning.
+- [ ] Validate the requested cutoff and alert behavior against manually reviewed physical shelf photos and per-facing ground truth.
+
+**Phase D boundary:** The 50% value is a product-requested provisional rule, not a learned or industry-calibrated threshold. YOLO and CLIP errors can still affect inferred quantities and placements; no certainty is claimed beyond available evidence.
+
+### Phase E — Evidence-complete operator report (implemented)
+- [x] Export a versioned JSON evidence manifest linking the report to the original input, annotated image, detector JSON, and frozen audit snapshot.
+- [x] Index product, empty-space, and shelf crops with category, image path, source bbox, confidence, crop-quality metadata, and mapped planogram position.
+- [x] Display audit state and expected-versus-observed facing quantities in the report.
+- [x] Highlight both product and empty-space crop boxes for a selected finding and provide direct downloads of each evidence crop.
+- [x] Cover export provenance and report evidence in backend/API and frontend component tests.
+- [ ] Validate evidence paths and issue-to-crop correspondence on manually reviewed physical shelf photos.
+
+**Phase E boundary:** The export is a path-based evidence index, not a self-contained ZIP. It reuses existing artifact storage and the cutout download route and does not alter detection, matching, compliance rules, or thresholds. Physical photo validation remains required before relying on the report for real-world decisions.
+
+### Phase F — Verification and handoff (implemented)
+- [x] Cover duplicate suppression, adjacent products, fragmented same-row clusters, cross-row separation, dissenting candidates, and ambiguous individual CLIP results.
+- [x] Cover misplaced products; 14/15 and 7/15 placement occupancy; isolated empty-space evidence; count variation of ±2 same-SKU items; and uncalibrated inputs.
+- [x] Exercise fixture-photo upload, assignment to a fixture-derived planogram/shelf, queue processing, frozen snapshot, and report retrieval with deterministic reviewed detection evidence.
+- [x] Exercise the saved labeled output and its selected planogram report in Chromium Playwright.
+- [x] Run and record full backend, image-parser, frontend, TypeScript, production-build, and targeted Playwright checks.
+- [ ] Run model-backed inference against manually labeled per-item bounding boxes and validate actual detections, matching, physical positions, and report outcomes.
+
+**Phase F implementation note (2026-10-22):** Compliance now tolerates a same-row, same-SKU count delta up to two above or below the planogram count, while still retaining slot-level gap evidence; larger overages remain unexpected. Audit version advanced to 6. This narrow tolerance is provisional and specifically reflects the reviewed fixture scenario. The fixture integration uses deterministic operator-reviewed detection evidence after real upload/selection/queue operations; it does not establish YOLO/CLIP accuracy. Exact commands and results are recorded in Dhruv's journal and the contributions ledger.

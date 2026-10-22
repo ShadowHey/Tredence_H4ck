@@ -10,6 +10,7 @@ import numpy as np
 from .config import PipelineConfig, load_config
 from .calibration import detect_shelf_corner_markers
 from .detector import ProductEmptySpaceDetector
+from .detection_refinement import assess_row_box_quality
 from .empty_space import EmptySpaceRefiner
 from .row_segmenter import ShelfRowSegmenter
 from .schemas import ImageParsingResult, ImageParsingSummary
@@ -153,6 +154,11 @@ class ShelfImageParsingPipeline:
 
         assigned_products = self.empty_refiner.assign_to_rows(products, shelf_rows, img_h)
         assigned_empty = self.empty_refiner.assign_to_rows(refined_empty, shelf_rows, img_h)
+        # Preserve original YOLO coordinates, but make likely partial/truncated boxes
+        # explicit so downstream matching and compliance can abstain instead of
+        # treating a suspicious crop as a reliable product observation.
+        assigned_products = assess_row_box_quality(assigned_products)
+        assigned_empty = assess_row_box_quality(assigned_empty)
 
         # ----------------------------------------------------
         # Stage 5: Generate statistics

@@ -37,6 +37,23 @@ def test_catalog_match_below_threshold_is_review_not_false_unrecognised_alert(mo
     assert result["reason"] == "below_similarity_threshold"
 
 
+def test_catalog_match_with_ambiguous_clip_margin_remains_review_needed(monkeypatch):
+    scores = {0.93: 0.93, 0.92: 0.92}
+    monkeypatch.setattr(cutout_service.embedding_service, "cosine_similarity", lambda _a, b: scores[b[0]])
+    catalogue = [
+        {"id": 1, "sku": "SKU-A", "name": "Candidate A", "embedding": [0.93] + [0.0] * 511},
+        {"id": 2, "sku": "SKU-B", "name": "Candidate B", "embedding": [0.92] + [0.0] * 511},
+    ]
+
+    result = cutout_service._catalogue_match([1.0] + [0.0] * 511, catalogue, True)
+
+    assert result["top_candidate"]["sku"] == "SKU-A"
+    assert result["runner_up"]["sku"] == "SKU-B"
+    assert result["confidence_margin"] == 0.01
+    assert result["status"] == "needs_review"
+    assert result["reason"] == "ambiguous_candidates"
+
+
 def test_catalogue_match_color_filters_orange_before_clip_ranks_remaining_product(monkeypatch, tmp_path):
     from PIL import Image
 

@@ -24,10 +24,11 @@ from app.services.position_calibration import map_detections_to_planogram
 from app.services.compliance_service import AUDIT_VERSION, build_compliance_audit
 from app.services.label_ocr_service import analyze_shelf_labels
 from app.services.product_matching import filter_candidates_by_color
+from app.services.product_matching.cluster_consensus import catalogue_consensus, merge_clusters_by_catalog_consensus
 
 logger = logging.getLogger(__name__)
 
-ANALYSIS_VERSION = 6
+ANALYSIS_VERSION = 8
 CATALOG_MATCH_THRESHOLD = 0.90  # Calibrated against the four-product Pipeline Verification shelf.
 CATALOG_MATCH_MARGIN_THRESHOLD = 0.03  # Provisional ambiguity margin.
 INTRA_CLUSTER_SIMILARITY_THRESHOLD = 0.88
@@ -303,6 +304,8 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
                     "confidence": round(float(prod.get("confidence", 0.0)), 4),
                     "row_number": prod.get("row_number"),
                     "area_px": prod.get("area_px"),
+                    "quality_status": prod.get("quality_status", "unchecked"),
+                    "quality_flags": list(prod.get("quality_flags") or []),
                     "catalog_match": None,
                 })
 
@@ -461,6 +464,21 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
                 source_crop=product_crops_pil[index] if index < len(product_crops_pil) else None,
             )
 
+        # Consolidate visually fragmented clusters only when same-row catalogue
+        # evidence agrees; individual crop identities and review states stay intact.
+        clusters_raw = merge_clusters_by_catalog_consensus(clusters_raw, product_cutouts_meta)
+        for cluster in clusters_raw:
+            indices = cluster["member_indices"]
+            pairwise_sims = [sim_matrix[a][b] for a in indices for b in indices if a != b]
+            cluster["similarity_percentage"] = round(
+                min(100.0, max(0.0, (sum(pairwise_sims) / len(pairwise_sims)) * 100.0))
+                if pairwise_sims else 0.0,
+                1,
+            )
+            vectors = [product_vectors[index] for index in indices]
+            centroid_raw = [sum(vector[dim] for vector in vectors) / len(vectors) for dim in range(512)]
+            cluster["centroid_vector"] = _normalize_vector(centroid_raw)
+
         cluster_rows: List[Dict[str, Any]] = []
         matched_count = 0
 
@@ -471,12 +489,17 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
             members = [product_cutouts_meta[m] for m in cl["member_indices"]]
 
             member_matches = [member.get("catalog_match", {}) for member in members]
-            matched_candidates = [match.get("top_candidate") for match in member_matches if match.get("status") == "matched"]
-            same_candidate = bool(matched_candidates) and len(matched_candidates) == len(members) and len({candidate.get("id") for candidate in matched_candidates}) == 1
-            is_match = same_candidate
-            scores = [match["similarity"] for match in member_matches if isinstance(match.get("similarity"), (int, float))]
+            consensus = catalogue_consensus(members)
+            is_match = consensus["status"] == "matched"
+            consensus_candidate_id = (consensus["candidate"] or {}).get("id")
+            scores = [
+                match["similarity"] for match in member_matches
+                if isinstance(match.get("similarity"), (int, float))
+                and isinstance(match.get("top_candidate"), dict)
+                and match["top_candidate"].get("id") == consensus_candidate_id
+            ]
             catalog_confidence = round((sum(scores) / len(scores)) if scores else 0.0, 6)
-            matched_prod_dict = matched_candidates[0] if is_match else None
+            matched_prod_dict = consensus["candidate"]
             if is_match and matched_prod_dict:
                 matched_count += 1
 
@@ -488,6 +511,13 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
                 "is_catalog_match": is_match,          # Column 3
                 "catalog_confidence": catalog_confidence,
                 "catalog_product": matched_prod_dict,  # Column 4
+                "catalog_consensus": {
+                    "status": consensus["status"],
+                    "reason": consensus["reason"],
+                    "support_count": consensus["support_count"],
+                    "considered_count": consensus["considered_count"],
+                    "support_ratio": consensus["support_ratio"],
+                },
             })
 
         # Sort clusters: matched clusters first, then by item_count descending
@@ -543,7 +573,9 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
         with open(cutouts_file, "w", encoding="utf-8") as f:
             json.dump(cutouts_payload, f, indent=2)
 
-        compliance_audit = _persist_compliance_audit(db, output, cutouts_payload, snapshot_hash)
+        compliance_audit = _persist_compliance_audit(
+            db, output, cutouts_payload, snapshot_hash, force_recompute=force_recompute,
+        )
         analysis_payload["compliance_summary"] = compliance_audit["summary"]
         with analysis_file.open("w", encoding="utf-8") as f:
             json.dump(analysis_payload, f, indent=2)
@@ -574,13 +606,19 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
         raise HTTPException(status_code=500, detail=f"Cutout analysis failed: {exc}") from exc
 
 
-def _persist_compliance_audit(db: Session, output: ProcessedOutput, cutouts: Dict[str, Any], snapshot_hash: Optional[str]) -> Dict[str, Any]:
+def _persist_compliance_audit(
+    db: Session,
+    output: ProcessedOutput,
+    cutouts: Dict[str, Any],
+    snapshot_hash: Optional[str],
+    force_recompute: bool = False,
+) -> Dict[str, Any]:
     """Persist the current audit in SQLite and beside its immutable CV artifacts."""
     output_dir = settings.UPLOADS_DIR / "image_processing" / "outputs" / str(output.job_id)
     audit_path = output_dir / "compliance_audit.json"
     snapshot = output.job.audit_snapshot if output.job else None
     current = output.compliance_audit if isinstance(output.compliance_audit, dict) else None
-    if (current and current.get("audit_version") == AUDIT_VERSION
+    if (not force_recompute and current and current.get("audit_version") == AUDIT_VERSION
             and current.get("audit_snapshot_sha256") == snapshot_hash
             and current.get("output_id") == output.id and audit_path.is_file()):
         return current

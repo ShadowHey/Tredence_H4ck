@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from .geometry import calculate_box_area, clip_box, normalize_box
+from .detection_refinement import suppress_nested_duplicates
 from .schemas import DetectionItem
 
 
@@ -103,6 +104,12 @@ class ProductEmptySpaceDetector:
                 empty_regions.append(item)
             else:
                 products.append(item)
+
+        # YOLO performs its configured IoU NMS. This additional class-aware pass is
+        # deliberately stricter: it removes only near-contained duplicates, never
+        # merging or expanding neighboring product detections.
+        products = suppress_nested_duplicates(products)
+        empty_regions = suppress_nested_duplicates(empty_regions)
 
         # Sort products left-to-right, top-to-bottom
         products.sort(key=lambda p: (p.bbox_xyxy[1], p.bbox_xyxy[0]))

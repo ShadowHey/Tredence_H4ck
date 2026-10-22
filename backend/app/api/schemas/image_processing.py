@@ -121,6 +121,8 @@ class CutoutItem(BaseModel):
     row_number: Optional[int] = None
     cluster_id: Optional[int] = None
     area_px: Optional[int] = None
+    quality_status: Literal["unchecked", "usable", "review"] = "unchecked"
+    quality_flags: list[str] = Field(default_factory=list)
     catalog_match: Optional["CutoutCatalogMatch"] = None
     planogram_position: Optional[PlanogramPosition] = None
 
@@ -175,6 +177,7 @@ class ClusterRow(BaseModel):
     is_catalog_match: bool
     catalog_confidence: float
     catalog_product: Optional[CatalogMatchedProduct] = None
+    catalog_consensus: dict[str, Any] = Field(default_factory=dict)
 
 
 class OutputAnalysisResponse(BaseModel):

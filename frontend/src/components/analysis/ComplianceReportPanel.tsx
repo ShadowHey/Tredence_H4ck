@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Download, MapPin, RefreshCw } from "lucide-react";
-import { api, getImageUrl } from "@/lib/api";
+import { API_BASE_URL, api, getImageUrl } from "@/lib/api";
 import { ComplianceIssue, ComplianceReport, CutoutItem, ProcessedOutput } from "@/types";
 
 const label = (value: string) => value.replaceAll("_", " ");
@@ -23,13 +23,13 @@ export function ComplianceReportPanel({ output }: { output: ProcessedOutput }) {
     catch (err) { setError(err instanceof Error ? err.message : "Could not load compliance report."); }
   };
   useEffect(() => { void load(); }, [output.id]);
-  useEffect(() => { api.getOutputCutouts(output.id).then(data => setCutouts(data.products)).catch(() => setCutouts([])); }, [output.id]);
+  useEffect(() => { api.getOutputCutouts(output.id).then(data => setCutouts([...data.products, ...data.empty_spaces, ...data.shelves])).catch(() => setCutouts([])); }, [output.id]);
 
   const visibleIssues = useMemo(() => (report?.issues ?? []).filter((issue) =>
     (statusFilter === "all" || issue.status === statusFilter) &&
     (severityFilter === "all" || (issue.severity ?? "warning") === severityFilter)), [report, statusFilter, severityFilter]);
   const selectedIssue = report?.issues.find(issue => issue.issue_id === selectedIssueId);
-  const evidenceIds = new Set([selectedIssue?.cutout_id, ...(selectedIssue?.evidence?.product_cutout_ids ?? [])].filter(Boolean));
+  const evidenceIds = new Set([selectedIssue?.cutout_id, ...(selectedIssue?.evidence?.product_cutout_ids ?? []), ...(selectedIssue?.evidence?.empty_space_cutout_ids ?? [])].filter(Boolean));
   const highlightedCutouts = cutouts.filter(cutout => evidenceIds.has(cutout.id));
 
   const update = async (issue: ComplianceIssue, status: "open" | "acknowledged" | "resolved", note = notes[issue.issue_id] ?? issue.resolution_note ?? "") => {
@@ -49,7 +49,9 @@ export function ComplianceReportPanel({ output }: { output: ProcessedOutput }) {
   return <section className="rounded-2xl border border-[#262b36] bg-[#13161c] overflow-hidden" data-testid="compliance-report">
     <div className="flex flex-wrap items-center justify-between gap-3 p-5 border-b border-[#262b36]">
       <div>
-        <h2 className="font-semibold text-gray-100">Shelf compliance report</h2>
+        <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-gray-100">Shelf compliance report</h2>
+          {report && <span data-testid="audit-status" className={`rounded px-2 py-1 text-[10px] uppercase ${report.status === "complete" ? "bg-emerald-500/10 text-emerald-300" : "bg-amber-500/10 text-amber-300"}`}>{report.status === "complete" ? "Audit complete" : "Review required"}</span>}
+        </div>
         <p className="text-xs text-gray-400 mt-1">Findings are tied to this input image and its frozen planogram/shelf snapshot.</p>
       </div>
       <div className="flex gap-2">
@@ -87,7 +89,7 @@ export function ComplianceReportPanel({ output }: { output: ProcessedOutput }) {
           <div className="relative w-fit max-w-full mx-auto" data-testid="annotated-issue-overlay">
             <img src={getImageUrl(output.annotated_image_path)} alt={`Annotated evidence for ${output.source_filename}`} onLoad={event => setImageDimensions({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} className="block max-w-full max-h-[620px] w-auto object-contain" />
             {(highlightedCutouts.length > 0 || selectedIssue?.bbox_xyxy) && imageDimensions.width > 0 && <svg aria-label="Selected issue detection overlay" className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${imageDimensions.width} ${imageDimensions.height}`} preserveAspectRatio="none">
-              {highlightedCutouts.map(cutout => <rect key={cutout.id} x={cutout.bbox_xyxy[0]} y={cutout.bbox_xyxy[1]} width={cutout.bbox_xyxy[2] - cutout.bbox_xyxy[0]} height={cutout.bbox_xyxy[3] - cutout.bbox_xyxy[1]} fill="rgba(245,158,11,.15)" stroke="#f59e0b" strokeWidth="5" />)}
+              {highlightedCutouts.map(cutout => <rect key={cutout.id} data-testid={`evidence-overlay-${cutout.id}`} x={cutout.bbox_xyxy[0]} y={cutout.bbox_xyxy[1]} width={cutout.bbox_xyxy[2] - cutout.bbox_xyxy[0]} height={cutout.bbox_xyxy[3] - cutout.bbox_xyxy[1]} fill={cutout.category === "empty_space" ? "rgba(59,130,246,.18)" : "rgba(245,158,11,.15)"} stroke={cutout.category === "empty_space" ? "#3b82f6" : "#f59e0b"} strokeWidth="5" />)}
               {selectedIssue?.bbox_xyxy && <rect x={selectedIssue.bbox_xyxy[0]} y={selectedIssue.bbox_xyxy[1]} width={selectedIssue.bbox_xyxy[2] - selectedIssue.bbox_xyxy[0]} height={selectedIssue.bbox_xyxy[3] - selectedIssue.bbox_xyxy[1]} fill="rgba(239,68,68,.16)" stroke="#ef4444" strokeWidth="5" />}
             </svg>}
           </div>
@@ -110,11 +112,20 @@ export function ComplianceReportPanel({ output }: { output: ProcessedOutput }) {
                 {issue.ordinal_from_left != null && <span>Observed item {issue.ordinal_from_left} from left</span>}
                 {issue.expected_ordinal_from_left != null && <span>Expected position {issue.expected_ordinal_from_left} from left</span>}
                 {issue.sku && <span>SKU {issue.sku}</span>}{issue.expected_sku && <span>Expected {issue.expected_sku}</span>}
+                {issue.expected_quantity != null && issue.observed_quantity != null && <span data-testid="quantity-evidence">Detected {issue.observed_quantity} / {issue.expected_quantity} facings{issue.occupancy_ratio != null ? ` (${Math.round(issue.occupancy_ratio * 100)}%)` : ""}</span>}
                 {issue.cutout_id && <span>Detection {issue.cutout_id}</span>}{issue.slot_id && <span>Slot {issue.slot_id}</span>}
                 {(issue.evidence?.product_cutout_ids?.length || issue.evidence?.empty_space_cutout_ids?.length) ? <span>Evidence: {[...(issue.evidence?.product_cutout_ids ?? []), ...(issue.evidence?.empty_space_cutout_ids ?? [])].join(", ")}</span> : null}
                 {issue.label_zone_id && <span>Label zone {issue.label_zone_id}</span>}
                 {issue.evidence_crop_path && <a href={getImageUrl(issue.evidence_crop_path)} target="_blank" rel="noreferrer" className="text-amber-300 underline">View label crop</a>}
               </div>
+              {selectedIssueId === issue.issue_id && <div className="mt-3 grid grid-cols-2 gap-2" data-testid="issue-evidence-gallery">
+                {highlightedCutouts.map(cutout => <div key={cutout.id} className="rounded-lg border border-[#303642] bg-[#0d0f12] p-2">
+                  <img src={getImageUrl(cutout.crop_path)} alt={`${cutout.category === "empty_space" ? "Empty-space" : cutout.category === "product" ? "Product" : "Shelf"} evidence ${cutout.id}`} className="w-full h-24 object-contain rounded" />
+                  <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-gray-400"><span className="capitalize">{label(cutout.category)} evidence</span>
+                    <a aria-label={`Download ${label(cutout.category)} cutout ${cutout.id}`} href={`${API_BASE_URL.replace(/\/$/, "")}/api/v1/outputs/${output.id}/cutouts/${encodeURIComponent(cutout.id)}/download`} className="text-amber-300 underline">Download</a></div>
+                </div>)}
+                {!highlightedCutouts.length && <p className="col-span-2 text-xs text-gray-500">No crop files are available for this finding; use its row and centimetre location as evidence.</p>}
+              </div>}
               <p className="text-xs text-gray-300 mt-3"><span className="text-gray-500">Recommended: </span>{issue.recommended_action}</p>
               <label className="block mt-3"><span className="text-[10px] uppercase tracking-wide text-gray-500">Operator note</span><textarea aria-label={`Operator note for ${issue.issue_id}`} value={notes[issue.issue_id] ?? issue.resolution_note ?? ""} onChange={event => setNotes(current => ({ ...current, [issue.issue_id]: event.target.value }))} maxLength={2000} rows={2} className="mt-1 w-full resize-y rounded-lg bg-[#0d0f12] border border-[#353b48] px-2 py-1.5 text-xs text-gray-200" placeholder="Add context for the next audit operator…" /></label>
               <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-[#303642]"><span className="text-xs text-gray-400 capitalize">{label(issue.status)}</span><div className="flex gap-2">

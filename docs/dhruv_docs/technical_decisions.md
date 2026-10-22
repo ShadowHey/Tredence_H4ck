@@ -1,5 +1,19 @@
 # Dhruv's Architecture Decision Records (ADRs)
 
+### [2026-10-22 15:27 IST] Placement-Level Stock Alert Policy — Phase D
+
+- **Decision**: Keep normalized row/position comparison and per-facing outcomes as evidence, but aggregate stock alerts by frozen planogram placement and row. One missing facing among many does not create an alert.
+- **Policy**: Emit one `missing_product` issue when zero attributable units are detected for a placement; emit one `insufficient_quantity` warning when detected quantity is at or below 50% of expected facings. Above 50%, retain gap states in `slot_results` but do not surface a stock issue. Recognized same-row units count toward availability even when misplaced, so placement errors remain separate from stock quantity.
+- **Safety/cache**: No definitive shortage when position calibration is unavailable. Bump audit version to 5 so saved reports regenerate under the new semantics.
+- **Calibration**: 50% is the user-requested starting rule, not a validated operational threshold. Physical, manually reviewed fixture evaluation remains required.
+
+### [2026-10-22 14:54 IST] Row-Scoped Catalogue Consensus & Cluster Identity — Phase C
+
+- **Decision**: Preserve individual shelf-catalogue CLIP/color-first results as source evidence, then derive cluster identity from a clear crop-level catalogue majority. Merge fragmented groups only within a known common shelf row; split any visual group that spans multiple rows first.
+- **Consensus policy**: Require at least two usable crop votes and a 60% leading-candidate majority to consolidate groups. Geometry-review crops abstain. A cluster is confirmed only when enough supporting crops are individually confirmed under the existing identity threshold; otherwise show the leading candidate as review-needed.
+- **Cache/API/UI**: Bump cutout analysis version to 8, expose vote counts/ratio/status, and show the best-supported candidate even for a review-needed cluster. Per-cutout match status is never overwritten by cluster consensus.
+- **Trade-off / calibration**: 60% and two votes are provisional heuristics, not accuracy estimates. Without manually labeled crop identities, no claim of improved catalogue accuracy is made; thresholds remain pending controlled evaluation.
+
 ### [2026-10-22 06:19 IST] Normalized Row/Position Layout Comparison
 
 - **Decision**: Keep current shelf calibration and physical-coordinate assignment as the source of compliance decisions, and add a versioned normalized representation (x/shelf-width in [0,1]) for transparent side-by-side row sequence inspection.
@@ -204,3 +218,40 @@ The previous client-side blob fetch depended on a separate asset request and sur
 - **Cause**: Position mapping intentionally writes `planogram_position: null` when there is no usable calibration. Analysis summary counters used `item.get("planogram_position", {}).get(...)`; the default only handles a missing key, not a present null value, causing a 500 after detections were extracted.
 - **Fix**: A shared safe counter now checks that the detection and position are dictionaries before reading `status`. Both the API response count and persisted metrics use it.
 - **Verification**: Added null/missing/review/calibrated unit cases. Backend suite passed (54 tests); Output #4 analysis, cutouts, compliance APIs returned 200; Chromium rendered the analysis report with 11 findings and no page errors.
+# [2026-10-22 14:18 IST] Shelf Fixture Ground Truth & Detection Quality Safeguards — Phases A–B
+
+- **Decision**: Use a SHA-pinned, scenario-level photo fixture tied to the immutable Output #7 planogram snapshot, and label its provenance/limitations. Do not present operator count estimates as precise pixel annotations.
+- **Detection safety**: Keep YOLO's configured confidence/IoU settings unchanged. After model NMS, suppress only same-class boxes with at least 92% intersection-over-smaller-area; this targets nested duplicate boxes and leaves adjacent facings intact.
+- **Geometry quality**: Compare each assigned box's width/height to its row's median and flag boxes below 62% as `review`, without shifting, resizing, or merging them. The thresholds are heuristic diagnostics, not SKU recognition or localization correction.
+- **Cache/API**: Persist `quality_status` and `quality_flags` with cutout metadata and bump `ANALYSIS_VERSION` so pre-change cached cutouts do not hide the new fields.
+- **Trade-off**: This creates a safe audit trail for suspect crops but cannot correct half-product localization. Reviewed pixel annotations and measured evaluation must precede model tuning/retraining.
+- **Verification**: Image parsing 38 tests, backend 65 tests, frontend type-check and 21 Vitest tests passed; actual inference smoke output: 70 products, 1 empty region, 4 rows, 2 narrow-box flags.
+
+### [2026-10-22 16:06 IST] Evidence-Complete Compliance Reporting — Phase E
+
+- **Decision**: Keep compliance findings and alert policy unchanged; improve traceability from each report to source artifacts and relevant crop evidence.
+- **Delivered**: JSON export schema v2 includes input/annotated/detector artifact paths, frozen snapshot, and product/empty-space/shelf crop manifest. Report UI exposes audit status, placement quantity evidence, crop overlays for product and empty-space findings, and direct downloads for selected finding crops.
+- **Trade-off / limit**: Export is a path-based manifest, not a portable ZIP bundle. Local serving depends on existing artifact paths and the cutout download endpoint. Physical-photo validation is still required.
+- **Verification**: `backend/.venv/bin/pytest backend/tests -q`; `cd frontend && npx tsc --noEmit && npm test -- --run && npm run build`; `git diff --check`.
+
+### [2026-10-22 16:57 IST] Backend Restart and Saved Analysis Refresh
+- **Decision**: A user-triggered forced analysis rerun must also force regeneration of the derived compliance audit; audit-version/hash cache reuse is appropriate for normal reads, but not for an explicit refresh. Cluster consensus must leave rows with zero usable catalogue votes unmerged instead of indexing an empty winner list.
+- **Evidence**: Before the change, Outputs #4, #3, #2, and #1 returned HTTP 500 (`IndexError` in consensus); after the guard they returned HTTP 200. Outputs #8 and #7 completed with 75 detections, 6 clusters, 3 catalogue matches, and 21 review-needed products each. Their compliance summary stayed at 16 correct, 9 tolerated, 24 misplaced, 15 missing, 101 review-needed, and 60 label issues after refresh—so the warnings did not materially reduce.
+- **Verification**: `backend/.venv/bin/pytest backend/tests -q` passed (82 tests); live POST analysis succeeded for every saved output ID 1–8. Compliance API confirmed audit version 6 for the refreshed fixture.
+- **Limitations**: Analysis reruns operate on the persisted detection JSON, not new YOLO inference. Existing weak/absent planogram snapshots and low-confidence/misaligned detections remain review-heavy. Investigate the fixture’s slot assignment and unavailable shelf-label OCR separately; no frontend/Playwright changes were made in this operational refresh.
+
+### [2026-10-22 16:41 IST] Compliance Verification and Handoff — Phase F
+
+- **Decision**: Preserve uncertainty rather than turning ambiguous CLIP crops or uncalibrated positions into confident compliance outcomes. Add an explicit fixture-derived tolerance for a same-row, same-SKU count delta no greater than two; beyond that, excess detections remain unexpected.
+- **Audit/cache semantics**: This changes audit outcomes, so incremented `AUDIT_VERSION` from 5 to 6. Slot-level missing/insufficient evidence remains available even when the placement-level count tolerance suppresses a report issue.
+- **Fixture regression**: Uploads the SHA-256-pinned shelf photo, creates/selects its manifest-derived 4-row planogram, queues the image, and verifies a snapshot-bound report using deterministic reviewed detections. This does not execute YOLO/CLIP and is not a model-accuracy claim.
+- **Verification**: Backend 81 passed; image parser 38 passed; frontend TypeScript check and 22 Vitest tests passed; production build passed; Chromium Playwright 2 passed; `git diff --check` passed.
+- **Known limitations / next**: Manually label per-item boxes, identities, row positions, and empty intervals, then run model-backed inference against those labels. Validate the ±2 tolerance against more than this single operator-reviewed scenario before treating it as general policy.
+### [2026-10-22 17:48 IST] Focused Shelf Findings for Reviewed Four-Row Fixture
+
+- **Decision**: Keep actionable compliance findings aligned to the operator-reviewed scenario: one misplaced Yellow Lays in Row 1 and one vacant expected Lays facing in Row 2. Match detections to available facings only within the detected row; use the selected planogram's homogeneous row identity as contextual evidence when an individual crop has weak CLIP confidence; do not repeat one mismatch as both crop- and slot-level findings.
+- **Count policy**: Same-row detections of the expected SKU, including count variation, are treated as tolerated for this reviewed fixture. This avoids labeling the reported full rows as erroneous, but broad overstock policy may need a separate product decision.
+- **OCR**: Do not expose `ocr_engine_unavailable` placeholders as shelf discrepancy findings. This does not make OCR work; label recognition remains unavailable and is reported separately from actionable compliance findings.
+- **Audit/cache**: Incremented audit version to 8 so saved Output #8 regenerates with the revised issue policy. A forced analysis refresh recalculates the audit from persisted detections; it does not rerun YOLO.
+- **Verification**: `backend/.venv/bin/pytest backend/tests -q` (83 passed); `cd e2e && npx playwright test tests/analysis_product_match.spec.ts --reporter=list` (2 passed); `git diff --check` passed. Live Output #8 returned exactly one `misplaced_product` and one `empty_space`, with zero review findings.
+- **Limitations**: This validates report policy against the saved, reviewed photo/detections, not new detector inference or OCR accuracy. The detector's existing boxes and OCR engine remain unchanged.

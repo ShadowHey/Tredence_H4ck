@@ -277,7 +277,9 @@ export function AnalysisTable({
                       )}
 
                       <span className="text-[10px] text-gray-500">
-                        {row.is_catalog_match
+                        {row.catalog_consensus ? (
+                          `${row.catalog_consensus.support_count}/${row.catalog_consensus.considered_count} usable crop votes · ${Math.round(row.catalog_consensus.support_ratio * 100)}% consensus${row.is_catalog_match ? "" : " · needs review"}`
+                        ) : row.is_catalog_match
                           ? `Match score: ${(row.catalog_confidence * 100).toFixed(1)}% (≥ ${(threshold * 100).toFixed(0)}%)`
                           : `Needs review · Avg. top catalogue score ${(row.catalog_confidence * 100).toFixed(1)}%`}
                       </span>
@@ -286,7 +288,7 @@ export function AnalysisTable({
 
                   {/* Column 4: Similar Product (If Yes, show image & details; If No, show NO image) */}
                   <td className="py-3 px-5 align-middle">
-                    {row.is_catalog_match && row.catalog_product ? (
+                    {row.catalog_product ? (
                       <div className="flex items-center gap-3" data-testid="catalog-product-matched">
                         {/* Packshot Image */}
                         <div className="w-13 h-13 rounded-lg bg-white p-1 border border-gray-300 shadow-md shrink-0 flex items-center justify-center overflow-hidden">

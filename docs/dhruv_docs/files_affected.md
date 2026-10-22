@@ -1,5 +1,22 @@
 # Dhruv's Files & Folders Affected Log (Blast Radius)
 
+### [2026-10-22 16:57 IST] Backend Restart and Saved Analysis Refresh
+
+#### Files modified
+- `backend/app/services/product_matching/cluster_consensus.py`: Guard against empty per-row catalogue vote counters; no-vote clusters remain separate.
+- `backend/app/services/cutout_service.py`: Propagate forced recompute into compliance audit persistence, so explicit reruns refresh derived warnings.
+- `backend/tests/unit/test_cluster_consensus.py`: Add regression for rows containing only unusable/review-needed crop votes.
+- `docs/shared/CONTRIBUTIONS.md`, `docs/dhruv_docs/{README.md,technical_decisions.md,conversation_history.md,files_affected.md}`: Record rerun outcomes, tests, and follow-up limits.
+
+#### Runtime effects
+- Restarted backend process on port 8000; frontend process was left running.
+- Recomputed analysis/audit artifacts for saved Outputs #1–#8 using their existing persisted detections. No original inputs or source uploads were modified.
+- All outputs returned HTTP 200 after the edge-case fix. Output #8 audit summary remains 16 correct, 9 tolerated, 24 misplaced, 15 missing, 101 review-needed, 60 label issues; warnings did not materially reduce.
+
+#### Verification
+- `backend/.venv/bin/pytest backend/tests -q` — 82 passed.
+- Live `POST /api/v1/outputs/{1..8}/analyze` — HTTP 200 each; `GET /api/v1/outputs/8/compliance` — audit version 6.
+
 ### [2026-10-22 06:19 IST] Normalized Row/Position Layout Comparison
 
 #### Files created
@@ -339,3 +356,89 @@ npm run build --prefix frontend
 
 #### Database changes
 - None.
+# [2026-10-22 14:18 IST] Shelf Fixture Ground Truth & Detection Quality Safeguards — Phases A–B
+
+#### Files created
+- `image-parsing/tests/fixtures/compliance/pipeline-verification/shelf_photo.png`: Copy of the original Output #7 input, pinned by hash in its manifest.
+- `image-parsing/tests/fixtures/compliance/pipeline-verification/manifest.json`: Frozen planogram mapping and operator-reviewed scenario outcomes/provenance.
+- `image-parsing/tests/fixtures/compliance/pipeline-verification/README.md`: Fixture scope and explicit non-benchmark limitations.
+- `image-parsing/src/shelf_image_parsing/detection_refinement.py`: Nested duplicate suppression and row-relative geometry warnings.
+- `image-parsing/tests/unit/test_detection_refinement.py`, `test_compliance_fixture.py`: Logic and fixture integrity/policy tests.
+
+#### Files modified
+- `image-parsing/src/shelf_image_parsing/{detector.py,pipeline.py,schemas.py}`: Conservative duplicate cleanup and output quality flags.
+- `image-parsing/tests/fixtures/README.md`, `image-parsing/README.md`, `image-parsing/TASK_CHECKLIST.md`: Fixture/module documentation and completed A/B checklist.
+- `backend/app/services/cutout_service.py`: Propagates detection quality metadata; cache version 7.
+- `backend/app/api/schemas/image_processing.py`, `frontend/src/types/index.ts`: Typed quality fields.
+- `frontend/src/components/analysis/ProductMatchView.tsx`, `frontend/tests/analysis-and-cutouts.test.tsx`: Display/test a separate geometry warning for flagged crops without changing the product-identity state.
+- `docs/shared/COMPLIANCE_ROADMAP.md`, `docs/shared/CONTRIBUTIONS.md`, all four `docs/dhruv_docs/` files: Handoff and contribution record.
+
+#### Database changes
+- None.
+# [2026-10-22 14:54 IST] Row-Scoped Catalogue Consensus & Cluster Identity — Phase C
+
+#### Files created
+- `backend/app/services/product_matching/cluster_consensus.py`: Conservative, row-scoped same-candidate cluster merge and consensus evaluation; geometry-review crops abstain.
+- `backend/tests/unit/test_cluster_consensus.py`: Regression tests for majority consolidation, dissenting products, cross-row isolation/splitting, low-quality abstention, and singleton review.
+
+#### Files modified
+- `backend/app/services/cutout_service.py`: Runs crop-specific catalogue matching before consensus consolidation, retains individual results, calculates merged cluster metrics/consensus, and bumps analysis cache version to 8.
+- `backend/app/api/schemas/image_processing.py`, `frontend/src/types/index.ts`: Expose typed consensus state and support counts.
+- `frontend/src/components/analysis/AnalysisTable.tsx`, `frontend/tests/analysis-and-cutouts.test.tsx`: Display leading catalogue candidate and vote support even when cluster confirmation remains review-needed; test this state.
+- `image-parsing/TASK_CHECKLIST.md`, `docs/shared/COMPLIANCE_ROADMAP.md`: Tick Phase C implementation tasks and record calibration boundary.
+- `docs/shared/CONTRIBUTIONS.md`, all four `docs/dhruv_docs/` files: Record request, decision, affected files, tests, and the pending validation handoff.
+
+#### Database changes
+- None. Existing cached analysis files are invalidated by analysis version 8.
+# [2026-10-22 15:27 IST] Placement-Level Stock Alert Policy — Phase D
+
+#### Files modified
+- `backend/app/services/compliance_service.py`: Aggregate stock findings by planogram placement/row; keep slot results; gate alerts at <=50% expected units; count recognized same-row misplaced units as stock presence; withhold definitive stock issues when calibration is unavailable; bump audit version to 5.
+- `backend/tests/unit/test_compliance_service.py`: Add one-of-15 no-alert, exact half, zero-quantity single finding, row/placement isolation, and update the audit version assertion.
+- `backend/tests/integration/test_image_processing_api.py`: Update the versioned audit response assertion.
+- `image-parsing/TASK_CHECKLIST.md`, `docs/shared/COMPLIANCE_ROADMAP.md`: Tick Phase D implementation tasks and note remaining empirical validation.
+- `docs/shared/CONTRIBUTIONS.md`, all four `docs/dhruv_docs/` files: Record the behavior, verification commands, and handoff.
+
+#### Database changes
+- None. Existing computed audits are regenerated using audit version 5.
+
+### [2026-10-22 16:06 IST] Evidence-Complete Compliance Reporting — Phase E
+
+#### Files modified
+- `backend/app/services/compliance_reporting_service.py`: Upgrade JSON export to schema v2 and enumerate source, annotated, detector, snapshot, and product/empty-space/shelf crop evidence assets.
+- `backend/tests/integration/test_image_processing_api.py`: Assert export schema version and provenance fields.
+- `frontend/src/components/analysis/ComplianceReportPanel.tsx`: Show audit status and stock quantities; display and overlay selected product/empty-space crops with direct downloads.
+- `frontend/src/types/index.ts`: Type quantity and positional evidence fields.
+- `frontend/tests/compliance-report.test.tsx`: Verify audit status, quantity display, both crop overlays, and download links.
+- `image-parsing/TASK_CHECKLIST.md`, `docs/shared/COMPLIANCE_ROADMAP.md`: Add Phase E deliverables and retain real-photo validation as open.
+- `docs/shared/CONTRIBUTIONS.md`, `docs/dhruv_docs/{README.md,technical_decisions.md,conversation_history.md,files_affected.md}`: Record decision, request, scope, tests, and handoff.
+
+#### Database changes
+- None. Existing cutout download route and artifact storage are reused; no migration or new persistence model.
+
+### [2026-10-22 16:41 IST] Compliance Verification and Handoff — Phase F
+
+#### Files modified
+- `backend/app/services/compliance_service.py`: Add named ±2 same-row/same-SKU count-variation tolerance for overage detections; preserve individual slot statuses; add a separate tolerated assignment state; bump compliance audit version from 5 to 6.
+- `backend/tests/unit/test_compliance_service.py`: Cover 7/15 alert, isolated empty-region evidence at 14/15, ±2 count range, neighboring same-SKU facings, and audit v6.
+- `backend/tests/unit/test_cutout_service.py`: Cover an above-threshold but low-margin ambiguous CLIP candidate pair remains `needs_review`.
+- `backend/tests/integration/test_image_processing_api.py`: Expect audit version 6.
+- `backend/tests/integration/test_phase_f_fixture.py` *(new)*: Upload SHA-pinned fixture, construct/select the manifest planogram, process queued input, and assert snapshot-bound compliance outcomes with deterministic reviewed detections.
+- `e2e/tests/analysis_product_match.spec.ts`: Verify the saved labeled shelf output links to the correct planogram and renders the normalized four-row compliance report in Chromium.
+- `image-parsing/TASK_CHECKLIST.md`, `docs/shared/COMPLIANCE_ROADMAP.md`: Record Phase F checks and the remaining model-backed/pixel-label validation.
+- `docs/shared/CONTRIBUTIONS.md`, `docs/dhruv_docs/{README.md,technical_decisions.md,conversation_history.md,files_affected.md}`: Record the change, exact commands/results, and limitations.
+
+#### Database changes
+- No migration. Compliance audits are regenerated under version 6; historical resolution records remain keyed to their existing issue IDs.
+### [2026-10-22 17:48 IST] Focused Shelf Findings for Reviewed Four-Row Fixture
+
+#### Files modified
+- `backend/app/services/compliance_service.py`: Bump audit version to 8; assign slot comparisons row-locally; use homogeneous-row product identity as context for low-confidence crops; emit one misplaced finding rather than duplicated slot-level reports; detect evidence-backed empty facings; suppress unavailable OCR engine placeholders from actionable shelf findings; tolerate same-row expected-SKU count variance under this reviewed policy.
+- `backend/app/services/compliance_reporting_service.py`: Make the misplaced-item recommendation describe the source and target rows and the product that should occupy the vacated facing; make empty-facing guidance name its expected product.
+- `backend/tests/unit/test_compliance_service.py`: Add a reviewed four-row regression asserting exactly one misplaced Lays and one Row 2 empty-facing finding, and update empty/count-variation expectations.
+- `backend/tests/integration/test_image_processing_api.py`: Expect audit version 8.
+- `e2e/tests/analysis_product_match.spec.ts`: Assert API and UI show the two intended findings and actionable recommendations.
+- `docs/shared/CONTRIBUTIONS.md`, `docs/dhruv_docs/{README.md,technical_decisions.md,conversation_history.md,files_affected.md}`: Record outcome, test commands/results, and limitations.
+
+#### Runtime/data changes
+- No schema migration. Saved Output #8 was re-analyzed and its derived compliance audit regenerated at version 8 from persisted detections. No fresh YOLO inference was run; OCR remains unavailable.
