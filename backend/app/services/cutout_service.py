@@ -23,12 +23,14 @@ from app.services.embedding_service import embedding_service
 from app.services.position_calibration import map_detections_to_planogram
 from app.services.compliance_service import AUDIT_VERSION, build_compliance_audit
 from app.services.label_ocr_service import analyze_shelf_labels
+from app.services.price_tag_detection_service import detect_price_tags, draw_price_tag_boxes, read_tag_prices
 from app.services.product_matching import filter_candidates_by_color
 from app.services.product_matching.cluster_consensus import catalogue_consensus, merge_clusters_by_catalog_consensus
 
 logger = logging.getLogger(__name__)
 
-ANALYSIS_VERSION = 8
+ANALYSIS_VERSION = 9
+PRODUCT_BOX_CONFIDENCE_THRESHOLD = 0.60
 CATALOG_MATCH_THRESHOLD = 0.90  # Calibrated against the four-product Pipeline Verification shelf.
 CATALOG_MATCH_MARGIN_THRESHOLD = 0.03  # Provisional ambiguity margin.
 INTRA_CLUSTER_SIMILARITY_THRESHOLD = 0.88
@@ -276,8 +278,25 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
             # 1. Extract Product Cutouts
             product_crops_pil: List[Image.Image] = []
             product_cutouts_meta: List[Dict[str, Any]] = []
+            detection_summary = detections_data.get("summary") if isinstance(detections_data.get("summary"), dict) else {}
+            product_confidence_threshold = float(
+                detection_summary.get("product_confidence_threshold", PRODUCT_BOX_CONFIDENCE_THRESHOLD)
+            )
+            excluded_products_raw = list(detections_data.get("excluded_products", []))
+            eligible_products = []
+            for prod in detections_data.get("products", []):
+                try:
+                    confidence = float(prod.get("confidence", 0.0))
+                except (TypeError, ValueError):
+                    confidence = 0.0
+                if confidence < product_confidence_threshold:
+                    # Also filter historical detection JSON that predates this
+                    # product-specific cutoff, so cached output analysis upgrades.
+                    excluded_products_raw.append(prod)
+                else:
+                    eligible_products.append(prod)
 
-            for idx, prod in enumerate(detections_data.get("products", [])):
+            for idx, prod in enumerate(eligible_products):
                 bbox = prod.get("bbox_xyxy", [])
                 if len(bbox) != 4:
                     continue
@@ -307,6 +326,28 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
                     "quality_status": prod.get("quality_status", "unchecked"),
                     "quality_flags": list(prod.get("quality_flags") or []),
                     "catalog_match": None,
+                })
+
+            # These boxes are not product detections for matching/counting. Keep
+            # only their coordinates as uncertainty evidence for compliance.
+            excluded_products_meta: List[Dict[str, Any]] = []
+            for idx, prod in enumerate(excluded_products_raw):
+                bbox = prod.get("bbox_xyxy", [])
+                if len(bbox) != 4:
+                    continue
+                x1 = _safe_clamp(bbox[0], img_w - 1)
+                y1 = _safe_clamp(bbox[1], img_h - 1)
+                x2 = _safe_clamp(bbox[2], img_w)
+                y2 = _safe_clamp(bbox[3], img_h)
+                if x2 <= x1 or y2 <= y1:
+                    continue
+                excluded_products_meta.append({
+                    "id": f"excluded_prod_{idx + 1:04d}",
+                    "bbox_xyxy": [x1, y1, x2, y2],
+                    "confidence": round(float(prod.get("confidence", 0.0)), 4),
+                    "row_number": prod.get("row_number"),
+                    "planogram_position": None,
+                    "excluded_reason": "below_product_confidence_threshold",
                 })
 
             # 2. Extract Empty Spaces Cutouts
@@ -371,6 +412,14 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
         shelf_geometry = snapshot.get("shelf") if isinstance(snapshot, dict) else None
         product_cutouts_meta, position_calibration = map_detections_to_planogram(
             product_cutouts_meta,
+            shelf_cutouts_meta,
+            shelf_geometry,
+            img_w,
+            img_h,
+            calibration_data.get("shelf_corners_xy") if isinstance(calibration_data, dict) else None,
+        )
+        excluded_products_meta, _ = map_detections_to_planogram(
+            excluded_products_meta,
             shelf_cutouts_meta,
             shelf_geometry,
             img_w,
@@ -540,10 +589,13 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
             "shelf_name": shelf_snap.get("name", "Shelf"),
             "shelf_dimensions": shelf_dims_str,
             "total_detections": len(product_cutouts_meta) + len(shelf_cutouts_meta) + len(empty_cutouts_meta),
+            "total_product_crops": len(product_cutouts_meta),
             "total_clusters": len(cluster_rows),
             "matched_clusters_count": matched_count,
             "catalog_confidence_threshold": CATALOG_MATCH_THRESHOLD,
             "catalog_match_margin_threshold": CATALOG_MATCH_MARGIN_THRESHOLD,
+            "product_confidence_threshold": product_confidence_threshold,
+            "excluded_low_confidence_product_count": len(excluded_products_meta),
             "analysis_version": ANALYSIS_VERSION,
             "catalog_scope": "job_audit_snapshot.shelf_catalogue",
             "audit_snapshot_sha256": snapshot_hash,
@@ -562,6 +614,7 @@ def extract_cutouts_and_analyze(db: Session, output_id: int, force_recompute: bo
             "position_calibration": position_calibration,
             "calibration_corners_xy": calibration_data.get("shelf_corners_xy") if isinstance(calibration_data, dict) else None,
             "products": product_cutouts_meta,
+            "excluded_products": excluded_products_meta,
             "shelves": shelf_cutouts_meta,
             "empty_spaces": empty_cutouts_meta,
         }
@@ -637,6 +690,31 @@ def _persist_compliance_audit(
         position_calibration=cutouts.get("position_calibration"),
         shelf_corners_xy=cutouts.get("calibration_corners_xy"),
     )
+    # Actual tag boxes are independent of product detections and planogram slots.
+    # Cached Roboflow predictions prevent report refreshes from making cloud calls.
+    price_tags = detect_price_tags(input_path, output_dir)
+    price_tags = read_tag_prices(price_tags)
+    shelf_width = (snapshot.get("shelf", {}).get("width_cm")
+                   if isinstance(snapshot, dict) and isinstance(snapshot.get("shelf"), dict) else None)
+    for tag in price_tags.get("detections", []):
+        box = tag.get("bbox_xyxy")
+        if not isinstance(box, list) or len(box) != 4:
+            continue
+        center_x, center_y = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+        for shelf_row in cutouts.get("shelves", []):
+            row_box = shelf_row.get("bbox_xyxy")
+            if (isinstance(row_box, list) and len(row_box) == 4
+                    and row_box[1] <= center_y <= row_box[3]):
+                tag["row_number"] = shelf_row.get("row_number")
+                if isinstance(shelf_width, (int, float)) and row_box[2] > row_box[0]:
+                    scale = float(shelf_width) / (row_box[2] - row_box[0])
+                    tag["x_center_cm"] = round((center_x - row_box[0]) * scale, 2)
+                break
+    label_audit["price_tag_detection"] = price_tags
+    try:
+        draw_price_tag_boxes(_disk_path(output.annotated_image_path), price_tags.get("detections", []))
+    except Exception as exc:
+        logger.warning("Could not draw price-tag overlay (%s)", type(exc).__name__)
     audit = build_compliance_audit(
         output_id=output.id,
         job_id=output.job_id,
@@ -645,6 +723,7 @@ def _persist_compliance_audit(
         snapshot_sha256=snapshot_hash,
         products=cutouts.get("products", []),
         empty_spaces=cutouts.get("empty_spaces", []),
+        excluded_products=cutouts.get("excluded_products", []),
         position_calibration=cutouts.get("position_calibration"),
         label_audit=label_audit,
     )

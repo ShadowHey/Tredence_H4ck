@@ -1,5 +1,60 @@
 # Dhruv's Architecture Decision Records (ADRs)
 
+### [2026-10-23 05:27 IST] Designer Loopback Loading Fix
+
+- **Decision**: Explicitly allow `127.0.0.1` in Next.js development origins while retaining normal production behavior.
+- **Reason**: The supplied Designer URL uses `127.0.0.1`, while the development server accepted HMR only through `localhost`. Its rejected websocket prevented client hydration, so the screen remained on the server-rendered loading fallback and issued no backend requests.
+- **Verification**: A fresh Chromium visit to `http://127.0.0.1:3000/designer` hydrates the page and loads a planogram. TypeScript, Vitest, and production build all pass.
+
+### [2026-10-23 03:43 IST] Per-Image Compliance Score
+
+- **Decision**: Score each processed shelf image from its immutable, planogram-facing audit rather than from raw detector boxes, findings, model confidences, OCR results, or issue-resolution workflow state.
+- **Formula**: `100 × correct_facings / (correct_facings + confirmed_non_compliant_facings + recognised_unexpected_products_outside_expected_slots)`. Review-only slots are excluded from this denominator and reported through evidence coverage: `100 × assessed_facings / expected_facings`.
+- **Reliability policy**: A score is `verified` only with calibrated positions, a frozen snapshot, at least 80% evidence coverage, and no review blockers. It is `provisional` when scoreable evidence remains but low-confidence excluded detections, review slots, or non-provisional audit review blockers exist. It is `not_scored` rather than zero without calibration/snapshot, with no expected or definitive facings, or below the coverage threshold.
+- **UI**: The selected image’s score is shown in the top-right of the Analysis compliance-report header beside—but distinct from—the audit-status badge. The report summary now shows correct, non-compliant, review, evidence, and finding counts. Dashboard history displays a compact score/state pill.
+- **Versioning and boundary**: Audit version advanced to 11 so stale persisted audits regenerate. Provisional OCR/price-label findings do not alter the v1 numerical score. The 80% coverage threshold is an explicit product policy pending calibration with labelled physical shelf fixtures.
+- **Verification**: `backend/.venv/bin/pytest backend/tests -q` (93 passed); `cd frontend && npx tsc --noEmit && npm test -- --run && npm run build` (22 Vitest tests, type-check, and production build passed); `git diff --check` passed.
+
+### [2026-10-23 00:33 IST] Backend Restart and Output #13 Re-analysis
+
+- **Decision / scope**: Refresh the current saved output after price-tag/OCR became available; do not reprocess the source image or alter code as part of this runtime request.
+- **Result**: Output #13 includes 15 Roboflow price-tag detections and EasyOCR results (6 unambiguous values, 9 unclear). Product matching and compliance counters are unchanged from the preceding analysis.
+- **Verification**: Backend health returned HTTP 200; analyze and compliance endpoints returned HTTP 200. Browser/Playwright verification could not be performed because local browser access is disabled in Work settings.
+- **Caveat**: Saved YOLO detections were reused. A fresh detector pass is needed to evaluate YOLO behavior changes; none were made here.
+
+### [2026-10-23 00:25 IST] Roboflow Price Tags and EasyOCR Runtime Verification
+
+- **Decision**: Keep the Roboflow API key server-side and send it only in the Bearer authorization header. The installed `inference-sdk` 1.1.2 does not accept the prompt's `api_key_transport` configuration option, so unsupported SDK versions use the direct header-auth HTTPX request instead of query-string authentication.
+- **OCR behavior**: Price-tag crops reuse the shared EasyOCR reader and price parser. A confidently parsed single amount is displayed; multiple candidate amounts, low-confidence text, or bare integers with no visible decimal/currency remain `Not clearly visible`. Fixed an integration mismatch where the shelf-label parser returns one optional price object, not a list.
+- **Runtime verification**: Installed EasyOCR 1.7.2 and inference-sdk 1.1.2 in `backend/.venv`; first-run EasyOCR model weights are cached in the user model directory. Live Roboflow inference produced 15 price-tag boxes; EasyOCR accepted 6 unambiguous prices and conservatively left 9 unclear.
+- **Verification**: `backend/.venv/bin/pytest backend/tests -q` (all tests passed); `backend/.venv/bin/pip check`; `git diff --check`. The live test also wrote a purple-box preview to an ignored/generated uploads output folder.
+- **Limitations**: The external model and OCR result are only smoke-tested on one shelf photo. No Playwright run was needed for this dependency/backend fix; physical price correctness needs manually labeled validation.
+
+### [2026-10-22 19:57 IST] Operator-Labeled Compliance Rules Update — second shelf photo
+
+- **Decision**: Add this photo as a separate coarse-labeled case in the Dhruv draft; do not change implementation or merge its expected counts with `bc_image2.png`.
+- **Expected labels**: Nine empty facings (Row 1: 3, Row 2: 1, Row 3: 4, Row 4: 1); four are marked in the annotated image and five are missed per the operator. One Row 1 Yellow Lays is correctly detected as misplaced. One wrong product in Row 3 is not actionable in the current result.
+- **Report direction**: Preserve distinct physical anomalies; empty-region detection/association needs a recall investigation. A wrong product in the Orange Juice row must lead to a localized actionable correction when evidence supports it, or an explicit unknown-product review with guidance when identity is uncertain.
+- **Evidence boundary**: The image overlay header reports 32 products, 4 empty slots, and 4 rows. These are detector diagnostics, while the nine-gap expectation and qualitative “about five or six review suggestions” are operator feedback; exact location annotation and dashboard counts are not yet verified.
+- **No code change**: This entry only extends `COMPLIANCE_DECISION_RULES_DRAFT.md`; proposed behavior remains unapproved and unimplemented.
+
+### [2026-10-22 19:43 IST] Operator-Labeled Compliance Rules Draft — `bc_image2.png`
+
+- **Decision**: Capture the operator's expected findings and rule proposals in a Dhruv-owned draft for review before altering shared compliance policy or code. This is a design/handoff artifact, not implemented logic.
+- **Expected labels**: Row 1 has two empty facings and one misplaced Yellow Lays; Row 2 one empty facing; Row 3 two empty facings and one unknown product; Row 4 one empty facing. Desired total: six empty-facing conditions, one misplaced known product and one unknown product.
+- **Observed conflict**: The screenshot header reads 36 products, 7 empty slots, and 3 rows, while the operator identifies four visible merchandise rows and six empty spaces plus an unknown item. The current UI shows 66 findings/57 review-needed and visible repeated Fresh Laundry relocation findings. These differences are recorded for investigation, not resolved by assumption.
+- **Rule direction**: Validate row mapping before issuing relocation advice; preserve uncertainty when rows/identity are ambiguous; group duplicate/fragment boxes into distinct physical conditions; keep empty, misplaced, unknown, and stock findings separate; avoid turning one cause into repeated crop-level alerts.
+- **Next**: Obtain pixel-level boxes and agreement on row mismatch, empty grouping, unknown identity, and stock rules before implementation. See `COMPLIANCE_DECISION_RULES_DRAFT.md`.
+
+### [2026-10-22 19:12 IST] Product Detection Confidence Gate (60%)
+
+- **Decision**: Treat 0.60 as a product acceptance cutoff, distinct from the lower shared YOLO proposal threshold. Keep product boxes with confidence `>= 0.60`; exclude boxes below it from crops, embeddings, catalogue matches, clusters, and product quantity.
+- **Empty-space independence**: Do not raise the shared proposal floor, because that would also suppress low-confidence empty-space proposals. The product-only gate leaves row/empty-space processing intact.
+- **Compliance safety**: Keep excluded product boxes only as uncertainty geometry. If mapped onto an expected facing, mark that slot uncertain/review and avoid deriving an empty/missing/shortage solely from filtering. Review status is distinct from an actionable discrepancy.
+- **Reprocessing/cache**: Version analysis and audit outputs and add an explicit endpoint that reruns YOLO on the stored source image before rebuilding cutouts and compliance, rather than reinterpreting stale boxes.
+- **Evidence**: Saved Output #8 reprocessed: 60 accepted product crops; 10 below-threshold boxes; 9 excluded boxes map to expected-facing uncertainty. The two reviewed findings remain one misplaced Row 1 Lays and one empty Row 2 facing.
+- **Calibration caveat**: 60% is the requested initial cutoff, not an empirically calibrated optimum. Pixel-level ground-truth evaluation is still needed to measure recall loss and false-positive reduction.
+
 ### [2026-10-22 15:27 IST] Placement-Level Stock Alert Policy — Phase D
 
 - **Decision**: Keep normalized row/position comparison and per-facing outcomes as evidence, but aggregate stock alerts by frozen planogram placement and row. One missing facing among many does not create an alert.

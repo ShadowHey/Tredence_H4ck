@@ -319,6 +319,38 @@ def _run_pipeline(source_path: Path, output_dir: Path) -> tuple[Path, Path, dict
     return annotated_path, json_path, result_json
 
 
+def reprocess_output_image(db: Session, output_id: int) -> dict[str, Any]:
+    """Re-run YOLO on a saved source photo, then rebuild its cutouts and analysis."""
+    output = (
+        db.query(ProcessedOutput)
+        .options(joinedload(ProcessedOutput.input_image), joinedload(ProcessedOutput.job))
+        .filter(ProcessedOutput.id == output_id)
+        .first()
+    )
+    if not output:
+        raise HTTPException(status_code=404, detail=f"ProcessedOutput with ID {output_id} not found.")
+
+    source_path = _disk_path(output.input_image.storage_path)
+    if not source_path.is_file():
+        raise HTTPException(status_code=404, detail="The saved source shelf image is unavailable.")
+    output_dir = settings.UPLOADS_DIR / "image_processing" / "outputs" / str(output.job_id)
+    try:
+        annotated, result_json, payload = _run_pipeline(source_path, output_dir)
+        output.annotated_image_path = f"uploads/image_processing/outputs/{output.job_id}/{annotated.name}"
+        output.result_json_path = f"uploads/image_processing/outputs/{output.job_id}/{result_json.name}"
+        output.metrics = payload.get("summary", {})
+        db.commit()
+
+        from app.services.cutout_service import extract_cutouts_and_analyze
+        return extract_cutouts_and_analyze(db, output.id, force_recompute=True)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        db.rollback()
+        log_backend("ERROR", "OUTPUT_REPROCESS_FAILED", f"Output {output_id}: {exc}")
+        raise HTTPException(status_code=500, detail=f"Image reprocessing failed: {exc}") from exc
+
+
 def process_pending_jobs() -> None:
     """Drain the durable queue serially. Safe to call from a background task or worker loop."""
     if not _worker_lock.acquire(blocking=False):

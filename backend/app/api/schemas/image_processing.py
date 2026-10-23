@@ -61,6 +61,22 @@ class ProcessedOutputResponse(BaseModel):
     compliance_audit: Optional[dict[str, Any]] = None
 
 
+class ComplianceScore(BaseModel):
+    formula_version: int
+    score: Optional[float] = None
+    state: Literal["verified", "provisional", "not_scored"]
+    evidence_coverage_percent: float
+    evidence_coverage_threshold_percent: float
+    expected_facing_count: int
+    correct_facing_count: int
+    non_compliant_facing_count: int
+    unexpected_product_count: int
+    review_facing_count: int
+    assessed_facing_count: int
+    score_denominator: int
+    reasons: list[str] = Field(default_factory=list)
+
+
 class ComplianceAuditResponse(BaseModel):
     schema_version: int
     audit_version: int
@@ -70,9 +86,12 @@ class ComplianceAuditResponse(BaseModel):
     audit_snapshot_sha256: Optional[str] = None
     status: Literal["complete", "needs_review"]
     summary: dict[str, int]
+    excluded_low_confidence_products: int = 0
+    product_confidence_threshold: float = 0.60
     assignments: list[dict[str, Any]]
     slot_results: list[dict[str, Any]]
     layout_comparison: dict[str, Any] = Field(default_factory=dict)
+    compliance_score: ComplianceScore
     issues: list[dict[str, Any]]
     label_audit: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
@@ -187,11 +206,14 @@ class OutputAnalysisResponse(BaseModel):
     shelf_name: Optional[str] = None
     shelf_dimensions: Optional[str] = None
     total_detections: int
+    total_product_crops: Optional[int] = None
+    product_confidence_threshold: Optional[float] = None
+    excluded_low_confidence_product_count: Optional[int] = None
     total_clusters: int
     matched_clusters_count: int
     catalog_confidence_threshold: float = 0.95
     catalog_match_margin_threshold: float = 0.03
-    analysis_version: int = 3
+    analysis_version: int = 9
     catalog_scope: str = "job_audit_snapshot.shelf_catalogue"
     audit_snapshot_sha256: Optional[str] = None
     products_needing_review: int = 0

@@ -162,3 +162,13 @@ guessed bounding-box repair is claimed.
 - [ ] Run actual model inference and manually compare every crop, row/position, and issue against pixel-level labels; the fixture is scenario-labeled only, so this remains the next validation task.
 
 **Phase F boundary:** The upload-to-report integration uses a deterministic test detector/audit adapter after selecting the real fixture-derived planogram; it proves the queue, frozen snapshot, report, and policy contract, but is not a live YOLO/CLIP accuracy benchmark. The ±2 same-SKU count tolerance is a provisional rule from the operator-reviewed fixture, not a generally calibrated retail policy.
+
+### Product Box Confidence Gate — 2026-10-22 (implemented)
+- [x] Add a product-only confidence cutoff of 60%; detections at exactly 60% are retained and detections below 60% are excluded from product crops, embeddings, clusters, and product counts.
+- [x] Keep the shared YOLO proposal threshold unchanged so empty-space and shelf-row detection remain independent of the product cutoff.
+- [x] Preserve excluded product boxes as diagnostics-only uncertainty geometry; overlapping expected facings become review/uncertain instead of being declared empty or missing solely because a low-confidence product box was filtered.
+- [x] Apply the same filter when reprocessing saved outputs and expose effective threshold and excluded count in analysis/report responses.
+- [x] Cover threshold boundaries and independent empty-space proposals; run backend, parser, frontend, build, and Playwright checks.
+- [ ] Calibrate the 60% cutoff against manually labeled product boxes and review excluded geometry on additional shelf photos.
+
+**Confidence-gate boundary:** 60% is the requested initial operating cutoff, not a universally calibrated detector threshold. Empty-space proposal handling is deliberately unaffected. Excluded boxes are never counted as products or used as identity evidence.

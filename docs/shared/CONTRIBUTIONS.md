@@ -1,6 +1,86 @@
 # ShelfSense AI — Universal Team Contributions Registry
 
 **Single Source of Truth for Team Work & Feature Execution**  
+
+### 2026-10-23 05:27 IST — Designer Loopback Loading Fix
+- **Contributor**: Dhruv with Codex
+- **Commit**: Working tree (not committed)
+- **Quick summary**: Fixed the Planogram Designer remaining on “Loading Planogram Studio…” when opened at `http://127.0.0.1:3000/designer`. Next.js development HMR was rejecting that loopback origin, so the page never hydrated and its initial API requests never ran. The frontend now explicitly allows `127.0.0.1` as a local development origin; it was restarted on port 3000.
+- **Files affected**: `frontend/next.config.ts`; this ledger and Dhruv journal files.
+- **How to run / test**:
+  ```bash
+  cd frontend && npm run dev -- --hostname 0.0.0.0 -p 3000
+  cd frontend && npx tsc --noEmit && npm test -- --run && npm run build
+  ```
+- **Results**: A clean Chromium visit to `http://127.0.0.1:3000/designer` loaded the Designer and made its API requests; TypeScript, 22 frontend unit tests, and the production build passed.
+
+### 2026-10-23 03:43 IST — Per-Image Compliance Score
+- **Contributor**: Dhruv with Codex
+- **Commit**: Working tree (not committed)
+- **Quick summary**: Added a versioned, facing-based compliance score to every rebuilt image audit. The score measures confirmed correct facings against confirmed non-compliant facings plus recognised unexpected products outside expected slots; review-only evidence affects coverage rather than reducing the score. Scores become `not_scored` below 80% evidence coverage, without calibrated positions/snapshot, or with no definitive facing outcome. The Analysis report header and dashboard history now show the score, reliability state, and evidence coverage.
+- **Files affected**: Compliance audit service/API schema/reporting summary; Analysis report/dashboard UI and TypeScript contracts; backend and frontend tests; Dhruv journal files.
+- **How to run / test**:
+  ```bash
+  backend/.venv/bin/pytest backend/tests -q
+  cd frontend && npx tsc --noEmit && npm test -- --run && npm run build
+  git diff --check
+  ```
+- **Results**: Backend 93 passed; frontend 22 passed; TypeScript and production build passed; whitespace check passed. Audit version advanced to 11 so previously saved audits rebuild before returning a score.
+
+### 2026-10-23 00:33 IST — Backend Restart and Output #13 Re-analysis
+- **Contributor**: Dhruv with Codex
+- **Commit**: Working tree (not committed)
+- **Quick summary**: Restarted the existing backend and refreshed Output #13's saved analysis/compliance. Roboflow found 15 price tags; OCR read 6 prices and marked 9 unclear. Product-analysis counts and compliance findings did not change.
+- **Files affected**: No source files changed. Runtime artifacts are under `backend/uploads/image_processing/outputs/14/`; this ledger and Dhruv journal record the rerun.
+- **How to run / verify**: `curl -sS http://127.0.0.1:8000/health`; `curl -X POST http://127.0.0.1:8000/api/v1/outputs/13/analyze`; `curl -sS http://127.0.0.1:8000/api/v1/outputs/13/compliance`.
+- **Result / caveat**: Compliance summary remains 57 review items and 44 excluded low-confidence product detections; no merchandising anomalies. Re-analysis reused saved YOLO detections; it did not run fresh YOLO inference. Updated page: `http://localhost:3000/analysis?outputId=13`.
+
+### 2026-10-23 00:25 IST — Roboflow Price Tags and EasyOCR Runtime Verification
+- **Contributor**: Dhruv with Codex
+- **Commit**: Working tree (not committed)
+- **Quick summary**: Installed the optional Roboflow inference SDK and EasyOCR dependencies in the backend virtualenv, initialized the OCR model weights, and ran the price-tag flow against one shelf photo. Live inference found 15 price tags; OCR accepted 6 unambiguous prices and marked 9 unclear. Fixed compatibility with the installed SDK (which does not support `api_key_transport`) by using header-only HTTPX fallback, fixed a parser return-shape mismatch, and withheld bare integer OCR amounts that could have lost a decimal.
+- **Files affected**: `backend/{requirements-roboflow.txt,requirements-ocr.txt,PRICE_TAG_DETECTION_SETUP.md}`; `backend/app/core/config.py`; `backend/app/services/{price_tag_detection_service.py,cutout_service.py,compliance_service.py}`; `backend/tests/unit/test_price_tag_detection_service.py`; `backend/tests/{integration/test_image_processing_api.py,unit/test_compliance_service.py}`; `frontend/src/components/analysis/ComplianceReportPanel.tsx`; `docs/dhruv_docs/{README.md,technical_decisions.md,conversation_history.md,files_affected.md}`; this ledger.
+- **How to run / test**:
+  ```bash
+  cd backend && .venv/bin/pytest tests -q
+  cd .. && backend/.venv/bin/pip check
+  git diff --check
+  ```
+- **Live inference evidence**: Model `price-tag-detection-kjttf/16` returned 15 tag boxes on an existing shelf photo. EasyOCR accepted 6 unambiguous prices and returned 9 conservative “Not clearly visible” results. Preview: `backend/uploads/image_processing/outputs/14/roboflow_smoke_sdk_abs/shelf_tag_overlay.jpg`.
+- **Security / limitations**: The Roboflow key remains in `backend/.env` and was never printed or added to source control. Because the installed SDK version rejects `api_key_transport`, header-only HTTPX fallback was used; query-string auth is not used. This is a single-image smoke check, not price-accuracy validation; no Playwright run was performed.
+
+### 2026-10-22 19:57 IST — Operator-Labeled Compliance Rules Update (second shelf photo)
+- **Contributor**: Dhruv with Codex
+- **Commit**: Working tree (not committed)
+- **Quick summary**: Extended the existing Dhruv-owned decision-rules draft with a separate four-row shelf case: nine operator-labeled empty facings (four currently marked, five missed), one correctly detected misplaced Row 1 Yellow Lays, and one wrong Row 3 product without an action. Recorded that a future system should investigate empty-region recall and provide evidence-grounded correction guidance for wrong products. Documentation only; no code or saved analysis was changed.
+- **Files affected**: `docs/dhruv_docs/COMPLIANCE_DECISION_RULES_DRAFT.md`; `docs/shared/CONTRIBUTIONS.md`; `docs/dhruv_docs/{README.md,technical_decisions.md,conversation_history.md,files_affected.md}`.
+- **How to run / test**: No runtime tests required; documentation-only update. `git diff --check`.
+- **Evidence note**: Screenshot header says 32 products, 4 empty slots, 4 rows; operator's left-to-right labels sum to nine empty facings (Row 1: 3, Row 2: 1, Row 3: 4, Row 4: 1). This is coarse semantic ground truth pending pixel-level interval annotations. The user's estimate of five or six remaining review suggestions is qualitative and was not independently verified.
+
+### 2026-10-22 19:43 IST — Operator-Labeled Compliance Rules Draft (`bc_image2.png`)
+- **Contributor**: Dhruv with Codex
+- **Commit**: Working tree (not committed)
+- **Quick summary**: Added a Dhruv-owned draft preserving the operator's intended row-level findings separately from current screenshot detector/report output, with candidate future rules, acceptance criteria, open decisions, and an agent handoff checklist. Documentation only; the analysis pipeline was not altered.
+- **Files affected**: `docs/dhruv_docs/COMPLIANCE_DECISION_RULES_DRAFT.md` (new); `docs/dhruv_docs/{README.md,technical_decisions.md,conversation_history.md,files_affected.md}`; this ledger.
+- **How to run / test**: No test command required; documentation-only change. `git diff --check` is the relevant formatting check.
+- **Evidence recorded**: Operator labels six empty facings (two Row 1, one Row 2, two Row 3, one Row 4), one misplaced Row 1 Yellow Lays, and one unknown Row 3 product. Screenshot header instead reads 36 products, 7 empty slots, 3 rows; UI shows 66 findings and 57 review-needed, with visible repeated Row 3 laundry relocation cards. Pixel-level labels are still needed to settle exact coordinates and whether the seventh empty detection is duplicate/fragmented.
+
+### 2026-10-22 19:12 IST — Product Detection Confidence Gate (60%)
+- **Contributor**: Dhruv with Codex
+- **Commit**: Working tree (not committed)
+- **Quick summary**: Added a product-only 60% YOLO acceptance threshold, kept empty-space proposal behavior independent, made overlapping excluded detections uncertainty-only in compliance, and added fresh YOLO reprocessing for saved outputs. Reprocessed Output #8: 60 accepted product crops, 10 excluded boxes, 9 mapped uncertainty boxes; only the reviewed misplaced Row 1 Lays and empty Row 2 Lays facing remain actionable.
+- **Files affected**: Image-parser config/detector/pipeline/schemas/CLI and tests; backend cutout/compliance/reprocess services, API/schema and tests; frontend analysis/report/API/types; image-parser checklist; shared compliance roadmap; Dhruv journal.
+- **How to run / test**:
+  ```bash
+  backend/.venv/bin/pytest backend/tests -q
+  cd image-parsing && PYTHONPATH=src .venv/bin/pytest tests -q
+  cd frontend && npx tsc --noEmit && npm test -- --run && npm run build
+  cd e2e && npx playwright test tests/analysis_product_match.spec.ts --reporter=list
+  git diff --check
+  curl -X POST http://localhost:8000/api/v1/outputs/8/reprocess
+  ```
+- **Results**: Backend 84 passed; image parser 40 passed; frontend 22 passed plus TypeScript; production build succeeded; Chromium Playwright 2 passed; whitespace check passed. The reprocessed audit status remains review-required due to mapped low-confidence uncertainty, with no extra actionable findings.
+- **Limitations**: 60% is an initial requested cutoff, not calibrated. Manually labeled per-box ground truth is needed to measure precision/recall and calibrate. OCR is unchanged. No database migration.
 This document is automatically updated upon every feature or fix commit. It informs all team members and AI agents **who made what**, **when it was made**, **what files were affected**, and **exact commands to run/test the feature**.
 
 | `2026-10-22 17:48 IST` | **Dhruv** | Focused Shelf Findings for Reviewed Four-Row Fixture | `9acd62b` (`feat(analysis): improve shelf detection and compliance findings`) | `backend/.venv/bin/pytest backend/tests -q` (83 passed); `cd e2e && npx playwright test tests/analysis_product_match.spec.ts --reporter=list` (2 passed after starting backend with `cd backend && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload`); `git diff --check` | Regenerated Output #8 under audit v8 and reduced the reviewed image to exactly one Row 1 misplaced Yellow Lays and one Row 2 empty Yellow Lays facing. Row-scoped assignments prevent cross-row noise; homogeneous-row context suppresses per-crop uncertain-ID repeats; duplicate slot confirmations and OCR-unavailable label warnings no longer appear as shelf findings. OCR itself remains unavailable; analysis rerun reuses persisted detections, not fresh YOLO inference | `backend/app/services/compliance_service.py`, `backend/app/services/compliance_reporting_service.py`, `backend/tests/unit/test_compliance_service.py`, `backend/tests/integration/test_image_processing_api.py`, `e2e/tests/analysis_product_match.spec.ts`, `docs/shared/CONTRIBUTIONS.md`, `docs/dhruv_docs/*` |

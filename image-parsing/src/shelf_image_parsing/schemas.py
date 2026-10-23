@@ -49,6 +49,8 @@ class ImageParsingSummary(BaseModel):
     )
     total_empty_area_px: int = Field(default=0, description="Total accumulated empty pixel area")
     total_product_area_px: int = Field(default=0, description="Total accumulated product pixel area")
+    excluded_product_count: int = Field(default=0, description="Product-class boxes excluded by the product confidence floor")
+    product_confidence_threshold: float = Field(default=0.60, description="Minimum confidence required for a product box to enter matching")
 
 
 class ImageParsingResult(BaseModel):
@@ -62,6 +64,10 @@ class ImageParsingResult(BaseModel):
     )
     summary: ImageParsingSummary
     products: List[DetectionItem] = Field(default_factory=list)
+    excluded_products: List[DetectionItem] = Field(
+        default_factory=list,
+        description="Low-confidence product boxes retained for uncertainty diagnostics only; never cropped or matched.",
+    )
     empty_regions: List[DetectionItem] = Field(default_factory=list)
     shelf_rows: List[ShelfRowItem] = Field(default_factory=list)
     calibration: Optional[dict] = Field(

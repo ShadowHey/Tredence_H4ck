@@ -185,7 +185,7 @@ function AnalysisContent() {
                 data-testid="reanalyze-btn"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${reanalyzing ? "animate-spin" : ""}`} />
-                {reanalyzing ? "Clustering..." : "Re-run Analysis"}
+                {reanalyzing ? "Re-running YOLO..." : "Re-run YOLO Analysis"}
               </button>
             </>
           )}
@@ -270,7 +270,10 @@ function AnalysisContent() {
                 <span className="text-[11px] text-gray-500">intra-shelf groups</span>
               </div>
               <span className="text-[10px] text-gray-500 mt-1">
-                From {analysisData?.total_detections ?? 0} total bounding box crops
+                {analysisData?.total_product_crops ?? analysisData?.total_detections ?? 0} product crops retained
+                {(analysisData?.excluded_low_confidence_product_count ?? 0) > 0 && (
+                  <> · {analysisData?.excluded_low_confidence_product_count} excluded below {Math.round((analysisData?.product_confidence_threshold ?? 0.6) * 100)}% confidence</>
+                )}
               </span>
             </div>
 

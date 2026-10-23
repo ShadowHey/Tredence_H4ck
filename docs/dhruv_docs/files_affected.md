@@ -1,5 +1,91 @@
 # Dhruv's Files & Folders Affected Log (Blast Radius)
 
+### [2026-10-23 05:27 IST] Designer Loopback Loading Fix
+
+#### Files modified
+- `frontend/next.config.ts`: Allows the local `127.0.0.1` development origin so Next HMR can establish and client pages hydrate when using the loopback-IP URL.
+
+#### Runtime / verification impact
+- Restarted the frontend development server on port 3000. The backend remains on port 8000 and required no source or data change.
+
+### [2026-10-23 03:43 IST] Per-Image Compliance Score
+
+#### Files modified
+- `backend/app/services/compliance_service.py`: Adds formula v1, score/evidence/reliability calculation, and advances audit version to 11.
+- `backend/app/api/schemas/image_processing.py`: Exposes the typed compliance-score audit contract.
+- `backend/app/services/compliance_reporting_service.py`: Includes each persisted score in dashboard audit history.
+- `frontend/src/types/index.ts`: Adds score/dashboard TypeScript models.
+- `frontend/src/components/analysis/ComplianceReportPanel.tsx`: Renders the selected image’s score, reliability, evidence coverage, and score-supporting summary cards.
+- `frontend/src/app/page.tsx`: Renders compact score/state pills in recent audit history.
+- `backend/tests/unit/test_compliance_service.py`, `backend/tests/integration/test_image_processing_api.py`, `frontend/tests/compliance-report.test.tsx`: Cover score calculation, provisional/not-scored safety states, API schema output, and score UI rendering.
+
+#### No schema migration
+- Score data is persisted inside the existing versioned `processed_outputs.compliance_audit` JSON; audit-version invalidation rebuilds old audits on access.
+
+### [2026-10-23 00:33 IST] Backend Restart and Output #13 Re-analysis
+
+#### Files created/modified
+- No source code changed. Updated this session's journal and `docs/shared/CONTRIBUTIONS.md` only.
+
+#### Runtime artifacts / impact
+- Recomputed Output #13 from saved detections. Runtime files are under `backend/uploads/image_processing/outputs/14/`, including the refreshed annotated image and price-tag crops/JSON.
+- Backend: `http://localhost:8000`; frontend analysis page: `http://localhost:3000/analysis?outputId=13`.
+
+### [2026-10-23 00:25 IST] Roboflow Price Tags and EasyOCR Runtime Verification
+
+#### Files created/modified
+- `backend/requirements-roboflow.txt`, `backend/requirements-ocr.txt`: Pin optional Roboflow SDK and EasyOCR requirements for backend setup.
+- `backend/PRICE_TAG_DETECTION_SETUP.md`: Document environment configuration and feature setup.
+- `backend/app/core/config.py`: Read the optional Roboflow key/model configuration server-side.
+- `backend/app/services/price_tag_detection_service.py`: Detect tags, save crops, use header-only fallback for SDK versions lacking header transport, and OCR/parse prices.
+- `backend/app/services/cutout_service.py`, `backend/app/services/compliance_service.py`: Include price-tag artifacts in pipeline output and version the derived audit.
+- `backend/tests/unit/test_price_tag_detection_service.py`: Cover tag geometry/cache, secure old-SDK fallback, price parsing, and ambiguous OCR.
+- `frontend/src/components/analysis/ComplianceReportPanel.tsx`: Display label OCR evidence and “Label Fetched Price”.
+- `backend/tests/integration/test_image_processing_api.py`, `backend/tests/unit/test_compliance_service.py`: Update audit-version expectations.
+- `docs/shared/CONTRIBUTIONS.md` and the Dhruv journal files: Record results and handoff.
+
+#### Runtime artifacts / impact
+- No database schema migration. Live inference used an existing shelf input and wrote tag crops/JSON plus `shelf_tag_overlay.jpg` under `backend/uploads/image_processing/outputs/14/roboflow_smoke_sdk_abs/` (generated uploads, not source files).
+- EasyOCR model files are cached under the user's `~/.EasyOCR/model`; they are not repository assets and contain no API secrets.
+
+### [2026-10-22 19:57 IST] Operator-Labeled Compliance Rules Update — second shelf photo
+
+#### Files modified
+- `docs/dhruv_docs/COMPLIANCE_DECISION_RULES_DRAFT.md`: Adds a second isolated operator-labeled photo case, row-by-row detected/missed gaps, the un-actioned wrong product, candidate acceptance criteria, and a reminder to keep the case separate from the earlier six-empty example.
+- `docs/shared/CONTRIBUTIONS.md`: Records this documentation-only update and its verification command.
+- `docs/dhruv_docs/README.md`, `technical_decisions.md`, `conversation_history.md`, `files_affected.md`: Adds this timestamped journal entry and cross-links.
+
+#### Runtime/source impact
+- No application code, tests, API, database, saved analysis, report, generated output, or running process was changed. Existing unrelated working-tree edits were preserved.
+
+### [2026-10-22 19:43 IST] Operator-Labeled Compliance Rules Draft — `bc_image2.png`
+
+#### Files created
+- `docs/dhruv_docs/COMPLIANCE_DECISION_RULES_DRAFT.md`: Captures the operator-labeled expected issues for `bc_image2.png`, distinguishes them from the visible current detector/report output, proposes reviewable future decision logic, lists acceptance criteria and open policy questions, and provides a next-agent checklist. Explicitly marked draft/unimplemented.
+
+#### Files modified
+- `docs/shared/CONTRIBUTIONS.md`: Adds this documentation-only work and notes that no tests or pipeline execution were required.
+- `docs/dhruv_docs/README.md`: Adds a journal timeline link to the draft.
+- `docs/dhruv_docs/technical_decisions.md`: Records the design boundary and observed discrepancy.
+- `docs/dhruv_docs/conversation_history.md`: Records the request, operator labels, and no-code scope.
+
+#### Runtime/source impact
+- No code, API, database, saved analysis, report, output artifact, or running process was changed.
+
+### [2026-10-22 19:12 IST] Product Detection Confidence Gate (60%)
+
+#### Files modified/added
+- `image-parsing/src/shelf_image_parsing/config.py`, `detector.py`, `pipeline.py`, `schemas.py`, `cli.py`, `image-parsing/config/default.yaml`: Add configurable product-only 0.60 threshold; isolate it from empty-space proposal generation; retain excluded boxes as diagnostics; report threshold/count.
+- `image-parsing/tests/unit/test_detector_confidence.py` *(new)* and `image-parsing/tests/integration/test_pipeline.py`: Verify below/equal/above cutoff, empty-region independence, validation, and diagnostics.
+- `backend/app/services/cutout_service.py`, `compliance_service.py`, `image_processing_service.py`; `backend/app/api/routes/image_processing.py`, `backend/app/api/schemas/image_processing.py`: Filter legacy saved detections, prevent excluded boxes becoming product evidence, map overlaps as uncertainty, and support fresh source-image reprocessing with versioned results.
+- `backend/tests/unit/test_compliance_service.py`, `backend/tests/integration/test_image_processing_api.py`: Cover uncertainty behavior and reprocessing API.
+- `frontend/src/app/analysis/page.tsx`, `frontend/src/components/analysis/ComplianceReportPanel.tsx`, `frontend/src/lib/api.ts`, `frontend/src/types/index.ts`: Trigger fresh YOLO reprocessing and show accepted/excluded counts and uncertainty note.
+- `image-parsing/TASK_CHECKLIST.md`, `docs/shared/COMPLIANCE_ROADMAP.md`, `docs/shared/CONTRIBUTIONS.md`, and Dhruv journal files: Record scope, verification, result, and calibration caveat.
+
+#### Runtime/data effects
+- No database migration. Analysis cache and compliance audit versions advanced; Output #8 generated artifacts and derived report were regenerated locally from the saved source photo.
+- Output #8: 60 accepted products, 10 below-threshold excluded boxes, 9 mapped uncertainty geometries; two actionable findings remain (misplaced Row 1 Lays; empty Row 2 Lays facing). Review-required audit status reflects uncertainty, not additional discrepancy findings.
+
 ### [2026-10-22 16:57 IST] Backend Restart and Saved Analysis Refresh
 
 #### Files modified

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -34,6 +35,10 @@ class Settings(BaseSettings):
     IMAGE_PROCESSING_MAX_UPLOAD_SIZE_BYTES: int = 15 * 1024 * 1024
     IMAGE_PROCESSING_TIMEOUT_SECONDS: int = 300
     IMAGE_PARSING_DIR: Path = BASE_DIR.parent / "image-parsing"
+
+    # Optional server-side Roboflow price-tag inference. Never expose this to the UI.
+    ROBOFLOW_API_KEY: Optional[str] = None
+    ROBOFLOW_PRICE_TAG_MODEL_ID: str = "price-tag-detection-kjttf/16"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

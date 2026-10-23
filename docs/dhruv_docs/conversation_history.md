@@ -1,5 +1,51 @@
 # Dhruv's Conversation History & Requirement Discussions
 
+### [2026-10-23 05:27 IST] Designer Loopback Loading Fix
+
+- **User request**: Fix the Planogram Designer because it stayed on “Loading Planogram Studio…” at `127.0.0.1:3000/designer`.
+- **Diagnosis / outcome**: Reproduced the issue in a clean Chromium context. The `127.0.0.1` HMR websocket was rejected before Designer hydration, so there were no backend API requests to resolve the initial loader. Added the local loopback origin to Next configuration, restarted the frontend, and verified the Designer loads successfully from the same URL.
+
+### [2026-10-23 03:43 IST] Per-Image Compliance Score
+
+- **User request**: Inspect the existing codebase, explain a simple reliable per-image compliance score and its formula without changing code; clarify the meaning of a facing; recommend the best UI placement; then implement the agreed plan safely.
+- **Agreed product behaviour**: A facing is one visible, expected product position. Score the selected processed shelf image—not the whole planogram—from expected facing slots. Pair the score with evidence coverage and reliability state so ambiguous shelf photos never appear as a low-compliance score.
+- **Implemented outcome**: Added score payload/versioning, score reliability logic, API/export propagation, Analysis header/summary presentation, dashboard history pill, and regression coverage. No OCR/price-label penalty is included in v1.
+
+### [2026-10-23 00:33 IST] Backend Restart and Output #13 Re-analysis
+
+- **Request**: Restart the backend and show the updated analysis changes.
+- **Actions / outcome**: Restarted Uvicorn on port 8000, health returned HTTP 200, and `POST /api/v1/outputs/13/analyze` completed. Analysis page: `http://localhost:3000/analysis?outputId=13`.
+- **Observed delta**: Price-tag detection is complete for model `price-tag-detection-kjttf/16`: 15 tags, 6 prices read (`5.99` twice, `4.99` once, `3.99` three times), 9 marked “Not clearly visible”. Compliance remains 57 review entries / 57 label issues and 44 excluded low-confidence product boxes; merchandising anomaly counters remain zero. Product matching remains 18 detections, 14 crops, 8 clusters, 0 matched clusters, and 14 review candidates.
+- **Important limit**: Refresh reran analysis from persisted detections; no new YOLO inference or recognition-code changes were performed. Browser automation is unavailable in this Work session, so API health and response data were verified directly.
+
+### [2026-10-23 00:25 IST] Roboflow Price Tags and EasyOCR Runtime Verification
+
+- **Request**: Download EasyOCR and all requirements for the price-tag feature, allow the downloads to finish, then use the feature.
+- **Actions / outcome**: Installed optional `inference-sdk` and EasyOCR dependencies in the backend virtualenv. First initialization downloaded EasyOCR's detector and English recognition weights. Ran Roboflow model `price-tag-detection-kjttf/16` against an existing shelf input; it returned 15 tag detections, with 15 local crops. EasyOCR accepted 6 unambiguous prices and marked 9 as not clearly visible. During verification, fixed the older SDK's unsupported `api_key_transport` handling and the price-parser object/list mismatch; added fallback/auth and OCR ambiguity regression coverage. Bare integer text without an explicit currency/decimal is now withheld because decimal loss (for example, `4.99` -> `499`) is ambiguous.
+- **Security / evidence**: The configured environment key was not printed or committed; requests use Bearer header auth. A purple-box preview and tag crops are generated under the existing ignored uploads tree.
+- **Verification**: Backend suite, pip dependency consistency, and diff whitespace checks passed. Exact commands: `backend/.venv/bin/pytest backend/tests -q`; `backend/.venv/bin/pip check`; `git diff --check`.
+- **Limitations**: This is one live shelf-photo smoke test. OCR outputs are provisional; the seven unclear tags should remain so rather than inventing prices. No UI/browser flow was exercised in this turn.
+
+### [2026-10-22 19:57 IST] Operator-Labeled Compliance Rules Update — second shelf photo
+
+- **Request**: Record the latest photo's expected anomalies so future compliance rules can be developed from operator-reviewed examples; do not alter code or current analysis.
+- **Operator labels**: Row 1 has one detected empty, a correctly identified misplaced Yellow Lays, and two missed empties; Row 2 has one missed empty; Row 3 has two detected empties, two missed empties, and a wrong product with no suggestion; Row 4 has one detected empty.
+- **Interpretation recorded**: This totals nine empty facings (four detected, five missed), one misplaced product, and one wrong product needing an action path. The visual object in Row 3 resembles a `DAILY CLEAN SPRAY` bottle; expected replacement guidance should be Orange Juice only if the selected planogram confirms it. The reported reduction to roughly five or six review suggestions is retained as qualitative user feedback, not a verified counter.
+- **Outcome**: Extended the existing draft and journal/ledger only. No implementation, report rerun, saved-output mutation, or source change.
+
+### [2026-10-22 19:43 IST] Operator-Labeled Compliance Rules Draft — `bc_image2.png`
+- **Request**: Use the operator's visual interpretation to preserve what the correct report should have shown, and prepare a document from which future agents can derive rules to implement later. Do not change the current pipeline behavior in this step.
+- **Recorded expected outcome**: Row 1: empty, misplaced Yellow Lays, empty; Row 2: one empty; Row 3: two empties then an unknown product; Row 4: one empty. This is six empty-facing conditions, one misplaced known product, and one unknown product.
+- **Current screenshot mismatch recorded separately**: It shows header metrics of 36 products, 7 empty slots, 3 detected rows; report metrics of 66 findings and 57 review-needed; visible repeated Fresh Laundry-from-Row-3-to-Row-4 recommendations. The operator identifies four rows and six true empty spaces. Need coordinate labels to establish which detector empty is duplicate/fragment and confirm exact object locations.
+- **Delivered**: Added `COMPLIANCE_DECISION_RULES_DRAFT.md` with evidence-vs-ground-truth separation, candidate decision sequence, acceptance criteria, open policy questions, and handoff checklist. Documentation-only; no source code, report data, or runtime processing changed.
+
+### [2026-10-22 19:12 IST] Product Detection Confidence Gate (60%)
+- **Request**: Implement the rule that YOLO product boxes below 60% confidence are not considered products, while preserving empty-space detection and verifying behavior.
+- **Implemented**: Added an independent product cutoff in image parsing/config/CLI, excluded low-score boxes from downstream product evidence, retained their geometry only to mark overlapping planogram facings uncertain, and added fresh YOLO reprocessing for saved outputs with UI/API diagnostics.
+- **Live fixture**: Reprocessed Output #8 from its saved source photo. It now has 60 retained product crops, 10 excluded boxes, 9 mapped uncertainty boxes, and still exactly two actionable findings: misplaced Yellow Lays in Row 1 and one empty expected Lays facing in Row 2. Mapped uncertainty keeps audit status review-required without adding shortage/empty findings.
+- **Verification**: Backend pytest (84), image-parser pytest (40), frontend TypeScript and Vitest (22), production build, targeted Chromium Playwright (2), and `git diff --check` passed. Exact commands are in the contribution ledger.
+- **Limitations**: 60% is an initial requested threshold, not calibrated accuracy. Empty-space proposals remain under the existing shared YOLO floor. OCR is unchanged; confidence precision/recall needs pixel-level labels.
+
 ### [2026-10-22 16:57 IST] Backend Restart and Saved Analysis Refresh
 - **Request**: Restart the backend and run the saved analyses again to inspect whether suggestions and warnings updated after the compliance work.
 - **Actions**: Restarted Uvicorn on port 8000 without restarting Next.js. Fixed cluster consensus when a row has no usable catalogue votes, and made forced analysis also regenerate its compliance audit rather than reuse a same-version audit. Re-ran saved Outputs #1–#8.

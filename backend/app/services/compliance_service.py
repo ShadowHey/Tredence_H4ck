@@ -8,9 +8,11 @@ from typing import Any, Optional
 from app.services.spatial_matching import build_layout_comparison
 
 AUDIT_SCHEMA_VERSION = 1
-AUDIT_VERSION = 8
+AUDIT_VERSION = 11
 LOW_STOCK_OCCUPANCY_THRESHOLD = 0.50
 SAME_ROW_COUNT_VARIATION_TOLERANCE = 2
+COMPLIANCE_SCORE_FORMULA_VERSION = 1
+COMPLIANCE_SCORE_MIN_EVIDENCE_COVERAGE_PERCENT = 80.0
 
 
 def _finite_number(value: Any) -> Optional[float]:
@@ -51,9 +53,111 @@ def _slot_distance(position: dict[str, Any], slot: dict[str, Any]) -> tuple[int,
     return (0 if position["row_index"] == slot["row_index"] else 1, -overlap_ratio, gap + center_delta * 0.01)
 
 
+def _build_compliance_score(
+    *, snapshot_available: bool, positions_available: bool, slot_results: list[dict[str, Any]],
+    assignments: list[dict[str, Any]], issues: list[dict[str, Any]], excluded_product_count: int,
+) -> dict[str, Any]:
+    """Return a facing-based score without treating inconclusive evidence as failure.
+
+    The score measures only expected, physically addressable facings. Review-only
+    slots reduce evidence coverage, not the score itself. A recognised unexpected
+    product outside all expected slots is the sole non-slot penalty.
+    """
+    expected_slot_ids = {str(slot.get("slot_id")) for slot in slot_results if slot.get("slot_id")}
+    correct_slot_ids = {
+        str(slot["slot_id"]) for slot in slot_results
+        if slot.get("slot_id") and slot.get("status") == "correct"
+    }
+    non_compliant_statuses = {"misplaced_product", "missing_product", "insufficient_quantity", "empty_space"}
+    non_compliant_slot_ids = {
+        str(slot["slot_id"]) for slot in slot_results
+        if slot.get("slot_id") and slot.get("status") in non_compliant_statuses
+    }
+    # A recognised product from outside the selected shelf catalogue can occupy an
+    # expected slot even though the slot result is conservatively marked review.
+    for assignment in assignments:
+        slot_id = assignment.get("slot_id")
+        if assignment.get("status") in {"misplaced_product", "unexpected_product"} and slot_id:
+            slot_id = str(slot_id)
+            if slot_id in expected_slot_ids:
+                non_compliant_slot_ids.add(slot_id)
+    correct_slot_ids -= non_compliant_slot_ids
+
+    unexpected_cutout_ids = {
+        str(assignment.get("cutout_id") or f"unexpected-{index}")
+        for index, assignment in enumerate(assignments)
+        if assignment.get("status") == "unexpected_product" and not assignment.get("slot_id")
+    }
+    expected_facing_count = len(expected_slot_ids)
+    correct_facing_count = len(correct_slot_ids)
+    non_compliant_facing_count = len(non_compliant_slot_ids)
+    unexpected_product_count = len(unexpected_cutout_ids)
+    assessed_facing_count = correct_facing_count + non_compliant_facing_count
+    review_facing_count = max(0, expected_facing_count - assessed_facing_count)
+    coverage_percent = round(
+        (assessed_facing_count / expected_facing_count) * 100 if expected_facing_count else 0.0,
+        1,
+    )
+    score_denominator = assessed_facing_count + unexpected_product_count
+    review_blockers = any(
+        issue.get("type") == "needs_review" and not issue.get("provisional", False)
+        for issue in issues
+        if isinstance(issue, dict)
+    )
+
+    reasons: list[str] = []
+    if not snapshot_available:
+        reasons.append("missing_audit_snapshot")
+    if not positions_available:
+        reasons.append("position_calibration_unavailable")
+    if expected_facing_count == 0:
+        reasons.append("no_expected_facings")
+    if assessed_facing_count == 0:
+        reasons.append("no_definitive_facing_outcomes")
+    if coverage_percent < COMPLIANCE_SCORE_MIN_EVIDENCE_COVERAGE_PERCENT:
+        reasons.append("insufficient_evidence_coverage")
+
+    cannot_score = bool(
+        not snapshot_available
+        or not positions_available
+        or expected_facing_count == 0
+        or assessed_facing_count == 0
+        or coverage_percent < COMPLIANCE_SCORE_MIN_EVIDENCE_COVERAGE_PERCENT
+    )
+    if cannot_score:
+        state = "not_scored"
+        score = None
+    else:
+        if excluded_product_count:
+            reasons.append("low_confidence_product_detections_excluded")
+        if review_facing_count:
+            reasons.append("facing_slots_need_review")
+        if review_blockers:
+            reasons.append("audit_review_required")
+        state = "provisional" if reasons else "verified"
+        score = round((correct_facing_count / score_denominator) * 100, 1) if score_denominator else None
+
+    return {
+        "formula_version": COMPLIANCE_SCORE_FORMULA_VERSION,
+        "score": score,
+        "state": state,
+        "evidence_coverage_percent": coverage_percent,
+        "evidence_coverage_threshold_percent": COMPLIANCE_SCORE_MIN_EVIDENCE_COVERAGE_PERCENT,
+        "expected_facing_count": expected_facing_count,
+        "correct_facing_count": correct_facing_count,
+        "non_compliant_facing_count": non_compliant_facing_count,
+        "unexpected_product_count": unexpected_product_count,
+        "review_facing_count": review_facing_count,
+        "assessed_facing_count": assessed_facing_count,
+        "score_denominator": score_denominator,
+        "reasons": reasons,
+    }
+
+
 def build_compliance_audit(
     *, output_id: int, job_id: int, source_filename: str, snapshot: Optional[dict[str, Any]],
     snapshot_sha256: Optional[str], products: list[dict[str, Any]], empty_spaces: list[dict[str, Any]],
+    excluded_products: Optional[list[dict[str, Any]]] = None,
     position_calibration: Optional[dict[str, Any]] = None, label_audit: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Assign product detections to facing slots and derive explainable findings.
@@ -255,6 +359,16 @@ def build_compliance_audit(
             issues[-1]["expected_ordinal_from_left"] = assignment.get("expected_ordinal_from_left")
 
     empty_positions = [(str(item.get("id", "")), _position(item)) for item in empty_spaces]
+    excluded_positions = [_position(item) for item in (excluded_products or [])]
+    excluded_positions = [position for position in excluded_positions if position]
+
+    def slot_has_excluded_candidate(slot: dict[str, Any]) -> bool:
+        return any(
+            candidate["row_index"] == slot["row_index"]
+            and max(0.0, min(candidate["x_end_cm"], slot["x_end_cm"])
+                    - max(candidate["x_start_cm"], slot["x_start_cm"])) > 0
+            for candidate in excluded_positions
+        )
     # Without a valid position mapping, absence cannot safely be asserted from image detections.
     positions_available = bool(isinstance(position_calibration, dict) and position_calibration.get("status") == "calibrated")
     slot_results = []
@@ -270,8 +384,9 @@ def build_compliance_audit(
         _placement_id, product_id, row_index = key
         # Count recognized units in this row even when misplaced within it; a
         # position error is not itself evidence of a stock shortage.
-        occupied = min(len(group_slots), observed_by_product_row.get((product_id, row_index), 0))
-        placement_occupancy[key] = (occupied, len(group_slots))
+        reliable_slots = [slot for slot in group_slots if not slot_has_excluded_candidate(slot)]
+        occupied = min(len(reliable_slots), observed_by_product_row.get((product_id, row_index), 0))
+        placement_occupancy[key] = (occupied, len(reliable_slots))
 
     for slot in valid_slots:
         is_correct = slot["slot_id"] in correctly_occupied
@@ -287,6 +402,8 @@ def build_compliance_audit(
         elif not positions_available:
             status = "needs_review"
         elif occupant:
+            status = "needs_review"
+        elif slot_has_excluded_candidate(slot):
             status = "needs_review"
         else:
             placement_key = (str(slot.get("placement_id") or slot["slot_id"]),
@@ -327,6 +444,8 @@ def build_compliance_audit(
                 default=(0.0, None))
             if empty_slot is None or overlap <= 0 or empty_slot["slot_id"] in assigned_item_by_slot:
                 continue
+            if slot_has_excluded_candidate(empty_slot):
+                continue
             if empty_slot["slot_id"] in empty_reported_slots:
                 continue
             empty_reported_slots.add(empty_slot["slot_id"])
@@ -349,7 +468,8 @@ def build_compliance_audit(
     for (placement_id, product_id, row_index), group_slots in placement_groups.items():
         occupied, expected = placement_occupancy[(placement_id, product_id, row_index)]
         occupancy_ratio = occupied / expected if expected else 1.0
-        if not positions_available or occupied == expected or occupancy_ratio > LOW_STOCK_OCCUPANCY_THRESHOLD:
+        if (not positions_available or expected == 0 or occupied == expected
+                or occupancy_ratio > LOW_STOCK_OCCUPANCY_THRESHOLD):
             continue
         status = "missing_product" if occupied == 0 else "insufficient_quantity"
         evidence = [empty_id for empty_id, pos in empty_positions if pos and pos["row_index"] == row_index
@@ -394,14 +514,23 @@ def build_compliance_audit(
     summary["empty_space"] = sum(1 for issue in issues if issue["type"] == "empty_space")
     summary["needs_review"] = sum(1 for issue in issues if issue["type"] == "needs_review")
     summary["label_issue_count"] = len(actionable_label_issues)
+    summary["excluded_low_confidence_products"] = len(excluded_positions)
     status = "needs_review" if (any(issue["type"] == "needs_review" for issue in issues)
-                                  or not positions_available or not isinstance(snapshot, dict)) else "complete"
+                                  or excluded_positions or not positions_available or not isinstance(snapshot, dict)) else "complete"
     layout_comparison = build_layout_comparison(snapshot=snapshot if isinstance(snapshot, dict) else None,
         products=products, empty_spaces=empty_spaces, assignments=assignments, calibration=position_calibration)
+    compliance_score = _build_compliance_score(
+        snapshot_available=isinstance(snapshot, dict), positions_available=positions_available,
+        slot_results=slot_results, assignments=assignments, issues=issues,
+        excluded_product_count=len(excluded_positions),
+    )
     return {"schema_version": AUDIT_SCHEMA_VERSION, "audit_version": AUDIT_VERSION,
             "output_id": output_id, "job_id": job_id, "source_filename": source_filename,
             "audit_snapshot_sha256": snapshot_sha256, "status": status,
             "summary": summary, "assignments": assignments, "slot_results": slot_results,
             "layout_comparison": layout_comparison,
+            "compliance_score": compliance_score,
+            "excluded_low_confidence_products": len(excluded_positions),
+            "product_confidence_threshold": 0.60,
             "label_audit": label_audit,
             "issues": issues, "created_at": now.isoformat()}

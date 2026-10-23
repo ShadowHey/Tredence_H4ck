@@ -297,7 +297,7 @@ export const api = {
   },
 
   analyzeOutput: (outputId: number) =>
-    request<OutputAnalysisResponse>(`/api/v1/outputs/${outputId}/analyze`, {
+    request<OutputAnalysisResponse>(`/api/v1/outputs/${outputId}/reprocess`, {
       method: "POST",
     }),
 };
