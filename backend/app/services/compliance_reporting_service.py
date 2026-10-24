@@ -120,7 +120,8 @@ def get_dashboard_compliance_summary(db: Session) -> dict[str, Any]:
                         "planogram_name": planogram.get("name"), "shelf_name": shelf.get("name"),
                         "created_at": output.created_at.isoformat(), "audit_status": audit.get("status", "needs_review"),
                         "issue_count": len(issues), "open_count": open_count,
-                        "acknowledged_count": acknowledged, "resolved_count": resolved, "needs_review_count": needs_review})
+                        "acknowledged_count": acknowledged, "resolved_count": resolved, "needs_review_count": needs_review,
+                        "compliance_score": audit.get("compliance_score") if isinstance(audit.get("compliance_score"), dict) else None})
     return {"summary": counts, "history": history[:20]}
 
 

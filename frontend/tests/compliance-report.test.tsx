@@ -25,6 +25,7 @@ const issue = {
 describe("ComplianceReportPanel", () => {
   it("shows location/evidence, filters findings, persists resolution, and exposes JSON export", async () => {
     apiMock.getOutputCompliance.mockResolvedValue({ output_id: 7, source_filename: "shelf.jpg", status: "needs_review", summary: { needs_review: 0 }, issues: [issue],
+      compliance_score: { formula_version: 1, score: 96.3, state: "provisional", evidence_coverage_percent: 94.7, evidence_coverage_threshold_percent: 80, expected_facing_count: 57, correct_facing_count: 52, non_compliant_facing_count: 2, unexpected_product_count: 0, review_facing_count: 3, assessed_facing_count: 54, score_denominator: 54, reasons: ["facing_slots_need_review"] },
       layout_comparison: { coordinate_system: "normalized_shelf_width", row_order: "top_to_bottom", shelf_width_cm: 100, calibration_status: "calibrated", comparison_status: "ready", rows: [{ row_index: 0, row_number: 1, alignment_status: "aligned", expected_facings: [{ slot_id: "slot-1", sku: "SKU-1", status: "missing_product", ordinal_from_left: 1, ordinal_from_right: 1, normalized_start: 0, normalized_end: 0.2 }], observed_products: [], observed_empty_regions: [], expected_free_intervals: [{ normalized_start: 0.2, normalized_end: 1 }], observed_free_intervals: [{ normalized_start: 0, normalized_end: 1 }] }] } });
     apiMock.getOutputCutouts.mockResolvedValue({
       products: [{ id: "cutout-1", category: "product", crop_path: "uploads/cutout-1.jpg", bbox_xyxy: [10, 20, 30, 40] }],
@@ -42,6 +43,10 @@ describe("ComplianceReportPanel", () => {
     expect(screen.getByText("10.0–20.0 cm from left")).toBeInTheDocument();
     expect(screen.getByText("Restock the expected product.")).toBeInTheDocument();
     expect(screen.getByTestId("audit-status")).toHaveTextContent("Review required");
+    expect(screen.getByTestId("compliance-score")).toHaveTextContent("96.3 / 100");
+    expect(screen.getByTestId("compliance-score")).toHaveTextContent("Provisional · 94.7% evidence");
+    expect(screen.getByText("52")).toBeInTheDocument();
+    expect(screen.getByText("Non-compliant")).toBeInTheDocument();
     expect(screen.getByTestId("quantity-evidence")).toHaveTextContent("Detected 14 / 15 facings (93%)");
     fireEvent.click(screen.getByTestId("compliance-issue"));
     expect(await screen.findByLabelText("Selected issue detection overlay")).toBeInTheDocument();

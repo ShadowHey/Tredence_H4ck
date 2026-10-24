@@ -7,6 +7,18 @@ import { ComplianceIssue, ComplianceReport, CutoutItem, ProcessedOutput } from "
 
 const label = (value: string) => value.replaceAll("_", " ");
 
+const scoreStateLabel = (state: "verified" | "provisional" | "not_scored") => ({
+  verified: "Verified",
+  provisional: "Provisional",
+  not_scored: "Not scored",
+}[state]);
+
+const scoreStateClass = (state: "verified" | "provisional" | "not_scored") => ({
+  verified: "text-emerald-300",
+  provisional: "text-amber-300",
+  not_scored: "text-gray-400",
+}[state]);
+
 export function ComplianceReportPanel({ output }: { output: ProcessedOutput }) {
   const [report, setReport] = useState<ComplianceReport | null>(null);
   const [cutouts, setCutouts] = useState<CutoutItem[]>([]);
@@ -28,6 +40,8 @@ export function ComplianceReportPanel({ output }: { output: ProcessedOutput }) {
   const visibleIssues = useMemo(() => (report?.issues ?? []).filter((issue) =>
     (statusFilter === "all" || issue.status === statusFilter) &&
     (severityFilter === "all" || (issue.severity ?? "warning") === severityFilter)), [report, statusFilter, severityFilter]);
+  const priceTagAudit = report?.label_audit?.price_tag_detection as { status?: string; detections?: Array<Record<string, unknown>> } | undefined;
+  const complianceScore = report?.compliance_score;
   const selectedIssue = report?.issues.find(issue => issue.issue_id === selectedIssueId);
   const evidenceIds = new Set([selectedIssue?.cutout_id, ...(selectedIssue?.evidence?.product_cutout_ids ?? []), ...(selectedIssue?.evidence?.empty_space_cutout_ids ?? [])].filter(Boolean));
   const highlightedCutouts = cutouts.filter(cutout => evidenceIds.has(cutout.id));
@@ -50,17 +64,44 @@ export function ComplianceReportPanel({ output }: { output: ProcessedOutput }) {
     <div className="flex flex-wrap items-center justify-between gap-3 p-5 border-b border-[#262b36]">
       <div>
         <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-gray-100">Shelf compliance report</h2>
-          {report && <span data-testid="audit-status" className={`rounded px-2 py-1 text-[10px] uppercase ${report.status === "complete" ? "bg-emerald-500/10 text-emerald-300" : "bg-amber-500/10 text-amber-300"}`}>{report.status === "complete" ? "Audit complete" : "Review required"}</span>}
         </div>
         <p className="text-xs text-gray-400 mt-1">Findings are tied to this input image and its frozen planogram/shelf snapshot.</p>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {complianceScore && <div data-testid="compliance-score" className="rounded-xl border border-[#353b48] bg-[#0d0f12] px-3 py-2 text-right">
+          <div className="text-[10px] uppercase tracking-wide text-gray-500">Compliance score</div>
+          <div className="mt-0.5 text-lg font-semibold text-gray-100">{complianceScore.score == null ? "Not scored" : `${complianceScore.score.toFixed(1)} / 100`}</div>
+          <div className={`text-[11px] ${scoreStateClass(complianceScore.state)}`}>{scoreStateLabel(complianceScore.state)} · {complianceScore.evidence_coverage_percent.toFixed(1)}% evidence</div>
+        </div>}
+        {report && <span data-testid="audit-status" className={`rounded px-2 py-1 text-[10px] uppercase ${report.status === "complete" ? "bg-emerald-500/10 text-emerald-300" : "bg-amber-500/10 text-amber-300"}`}>{report.status === "complete" ? "Audit complete" : "Review required"}</span>}
         <button onClick={() => void load()} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[#353b48] text-sm text-gray-300"><RefreshCw className="w-4 h-4"/>Refresh</button>
         <button onClick={() => void exportReport()} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500 text-gray-950 text-sm font-semibold"><Download className="w-4 h-4"/>Export JSON</button>
       </div>
     </div>
     {error && <div role="alert" className="m-4 p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-300">{error}</div>}
     {report && <>
+      {priceTagAudit && <section className="mx-4 mt-4 overflow-x-auto rounded-xl border border-[#262b36] bg-[#0d0f12]" data-testid="price-tag-results">
+        <div className="border-b border-[#262b36] px-4 py-3">
+          <h3 className="text-sm font-semibold text-gray-100">Detected shelf labels</h3>
+          <p className="mt-1 text-xs text-gray-400">Roboflow tag detection · status: {priceTagAudit.status ?? "unknown"}</p>
+        </div>
+        <table className="w-full text-left text-xs">
+          <thead className="text-gray-400"><tr><th className="px-4 py-3">Tag</th><th className="px-4 py-3">Location</th><th className="px-4 py-3">Detection confidence</th><th className="px-4 py-3">OCR status</th><th className="px-4 py-3">Label Fetched Price</th></tr></thead>
+          <tbody className="divide-y divide-[#262b36] text-gray-200">
+            {(priceTagAudit.detections ?? []).map((tag, index) => <tr key={String(tag.id ?? index)}>
+              <td className="px-4 py-3"><a className="text-amber-300 underline" href={getImageUrl(String(tag.crop_path ?? ""))} target="_blank" rel="noreferrer">{String(tag.id ?? `Tag ${index + 1}`)} crop</a></td>
+              <td className="px-4 py-3">{tag.row_number ? `Row ${String(tag.row_number)}` : "Row unknown"}{typeof tag.x_center_cm === "number" ? ` · ${tag.x_center_cm.toFixed(1)} cm from left` : ""}</td>
+              <td className="px-4 py-3">{typeof tag.confidence === "number" ? `${Math.round(tag.confidence * 100)}%` : "—"}</td>
+              <td className="px-4 py-3">{String(tag.ocr_status ?? "pending")}</td>
+              <td className="px-4 py-3">{String(tag.label_fetched_price ?? "Not clearly visible")}</td>
+            </tr>)}
+            {!(priceTagAudit.detections?.length) && <tr><td colSpan={5} className="px-4 py-4 text-gray-400">{priceTagAudit.status === "complete" ? "No price tags detected." : "Price-tag detection is unavailable; existing shelf analysis is unaffected."}</td></tr>}
+          </tbody>
+        </table>
+      </section>}
+      {(report.excluded_low_confidence_products ?? 0) > 0 && <div role="status" data-testid="excluded-confidence-note" className="mx-4 mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-200">
+        {report.excluded_low_confidence_products} low-confidence product box(es) were excluded from product matching (cutoff {Math.round((report.product_confidence_threshold ?? 0.6) * 100)}%). Any overlapping expected facing is treated as uncertain—not automatically empty or missing.
+      </div>}
       {report.layout_comparison && <div className="mx-4 mt-4 rounded-xl border border-[#262b36] bg-[#0d0f12] p-4" data-testid="normalized-layout-comparison">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div><h3 className="text-sm font-semibold text-gray-100">Normalized shelf layout</h3>
@@ -81,7 +122,10 @@ export function ComplianceReportPanel({ output }: { output: ProcessedOutput }) {
         </div>)}
       </div>}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2 p-4">
-        {[["Findings", report.issues.length], ["Open", report.issues.filter(i => i.status === "open").length], ["Acknowledged", report.issues.filter(i => i.status === "acknowledged").length], ["Resolved", report.issues.filter(i => i.status === "resolved").length], ["Review needed", report.summary.needs_review ?? 0]].map(([name, value]) =>
+        {(complianceScore
+          ? [["Correct", complianceScore.correct_facing_count], ["Non-compliant", complianceScore.non_compliant_facing_count + complianceScore.unexpected_product_count], ["Need review", complianceScore.review_facing_count], ["Evidence", `${complianceScore.evidence_coverage_percent.toFixed(1)}%`], ["Findings", report.issues.length]]
+          : [["Findings", report.issues.length], ["Open", report.issues.filter(i => i.status === "open").length], ["Acknowledged", report.issues.filter(i => i.status === "acknowledged").length], ["Resolved", report.issues.filter(i => i.status === "resolved").length], ["Review needed", report.summary.needs_review ?? 0]])
+          .map(([name, value]) =>
           <div key={String(name)} className="rounded-lg border border-[#262b36] bg-[#0d0f12] p-3"><div className="text-[10px] uppercase text-gray-500">{name}</div><div className="text-xl font-semibold text-gray-100 mt-1">{value}</div></div>)}
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] gap-4 p-4 pt-0">

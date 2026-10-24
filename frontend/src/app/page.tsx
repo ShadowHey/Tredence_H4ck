@@ -323,7 +323,12 @@ export default function DashboardPage() {
               <div className="divide-y divide-[#262b36] rounded-lg border border-[#262b36] overflow-hidden">
                 {compliance.history.map((audit) => <div key={audit.output_id} className="flex flex-wrap items-center justify-between gap-3 p-3 bg-[#1a1e26]">
                   <div className="min-w-0"><Link href={`/analysis?outputId=${audit.output_id}`} className="text-sm text-gray-100 hover:text-amber-300 font-medium">{audit.source_filename}</Link><p className="text-xs text-gray-400 mt-1">{audit.planogram_name || "Planogram"} · {audit.shelf_name || "Shelf"} · {new Date(audit.created_at).toLocaleString()}</p></div>
-                  <div className="flex gap-2 text-[11px]"><span className="text-amber-300">{audit.open_count} open</span><span className="text-emerald-300">{audit.resolved_count} resolved</span><span className="text-gray-400">{audit.needs_review_count} review</span></div>
+                  <div className="flex flex-wrap justify-end gap-2 text-[11px]">
+                    {audit.compliance_score && <span data-testid={`history-compliance-score-${audit.output_id}`} className={`rounded border px-1.5 py-0.5 ${audit.compliance_score.state === "verified" ? "border-emerald-500/30 text-emerald-300" : audit.compliance_score.state === "provisional" ? "border-amber-500/30 text-amber-300" : "border-[#454d5a] text-gray-400"}`}>
+                      {audit.compliance_score.score == null ? "Not scored" : `${audit.compliance_score.score.toFixed(1)} / 100`} · {audit.compliance_score.state === "not_scored" ? `${audit.compliance_score.evidence_coverage_percent.toFixed(1)}% evidence` : audit.compliance_score.state}
+                    </span>}
+                    <span className="text-amber-300">{audit.open_count} open</span><span className="text-emerald-300">{audit.resolved_count} resolved</span><span className="text-gray-400">{audit.needs_review_count} review</span>
+                  </div>
                 </div>)}
               </div>}
           </div>

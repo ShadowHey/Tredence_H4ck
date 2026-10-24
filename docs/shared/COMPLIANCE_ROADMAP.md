@@ -1,5 +1,15 @@
 # ShelfSense Shelf Compliance Pipeline — Handoff Checklist
 
+### Product confidence cutoff — 2026-10-22
+- [x] Add an independent 0.60 acceptance threshold for product detections. Product boxes with confidence `< 0.60` are excluded from crops, CLIP/color matching, clusters, and product quantities; boxes at `0.60` are retained.
+- [x] Keep the lower shared YOLO proposal floor for empty-space candidates and shelf structures; product filtering does not disable empty-space/row detection.
+- [x] Preserve low-confidence product boxes as uncertainty-only geometry. If one overlaps an expected facing, mark that facing uncertain/review rather than deriving empty/missing/shortage solely from the filter.
+- [x] Apply the gate during initial parsing and saved-output reprocessing; expose effective threshold and excluded-box counts.
+- [x] Add threshold-boundary, empty-space independence, and compliance uncertainty tests; run backend/parser/frontend/build/Playwright checks.
+- [ ] Evaluate precision/recall and false-negative impact against pixel-level labeled shelf images before treating 60% as calibrated.
+
+**Boundary and current fixture:** This is a product acceptance threshold, not the shared model proposal threshold. Reprocessing saved Output #8 produced 60 accepted product crops and 10 excluded low-confidence boxes (9 overlap/map to expected facings). The actionable findings remain one misplaced Yellow Lays in Row 1 and one empty Lays facing in Row 2. Mapped exclusions keep the audit status review-required but do not add empty/missing/shortage issues. OCR accuracy is unchanged.
+
 This checklist tracks implementation of the shelf-photo compliance pipeline. The first phase freezes the planogram ground truth at queue time. Future phases should build on that snapshot and preserve raw CV artifacts.
 
 ## Phase 1 — Freeze audit ground truth at queue time

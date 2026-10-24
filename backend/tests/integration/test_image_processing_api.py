@@ -78,7 +78,8 @@ def test_one_image_generates_traceable_output_and_zip(client, db_session, monkey
     assert audit["job_id"] == output["job_id"]
     assert audit["audit_snapshot_sha256"] == output["audit_snapshot"]["snapshot_sha256"]
     assert audit["schema_version"] == 1
-    assert audit["audit_version"] == 8
+    assert audit["audit_version"] == 11
+    assert audit["compliance_score"]["state"] == "not_scored"
     assert audit["label_audit"]["status"] == "no_expected_label_zones"
 
     # Exercise a report issue and its durable operator workflow without depending on CV model output.
@@ -121,6 +122,13 @@ def test_one_image_generates_traceable_output_and_zip(client, db_session, monkey
     from io import BytesIO
     with zipfile.ZipFile(BytesIO(exported.content)) as archive:
         assert f"output-{output['id']}/compliance_audit.json" in archive.namelist()
+
+    # Reprocessing an existing output runs the source photo through the current
+    # parser cutoff rather than only rebuilding analysis from old detections.
+    reprocessed = client.post(f"/api/v1/outputs/{output['id']}/reprocess")
+    assert reprocessed.status_code == 200
+    assert reprocessed.json()["analysis_version"] == 9
+    assert reprocessed.json()["product_confidence_threshold"] == 0.60
 
     removed = client.request("DELETE", "/api/v1/outputs", json={"output_ids": [output["id"]]})
     assert removed.status_code == 200

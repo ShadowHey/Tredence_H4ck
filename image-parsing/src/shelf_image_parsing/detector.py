@@ -19,9 +19,14 @@ class ProductEmptySpaceDetector:
         iou: float = 0.45,
         device: str = "cpu",
         class_mapping: Optional[Dict[int, str]] = None,
+        product_confidence_threshold: float = 0.60,
         model: Optional[Any] = None,
     ):
+        if not 0.0 <= product_confidence_threshold <= 1.0:
+            raise ValueError("product_confidence_threshold must be between 0 and 1")
         self.confidence = confidence
+        self.product_confidence_threshold = product_confidence_threshold
+        self.excluded_products: List[DetectionItem] = []
         self.iou = iou
         self.device = device
         self.class_mapping = class_mapping or {0: "empty_space", 1: "product"}
@@ -55,7 +60,10 @@ class ProductEmptySpaceDetector:
 
         h, w = image.shape[:2]
         if h == 0 or w == 0:
+            self.excluded_products = []
             return [], []
+
+        self.excluded_products = []
 
         # Run inference
         results = self.model(
@@ -102,6 +110,10 @@ class ProductEmptySpaceDetector:
 
             if cls_id == 0 or "empty" in class_name.lower():
                 empty_regions.append(item)
+            elif conf < self.product_confidence_threshold:
+                # Keep geometry/confidence in a diagnostics-only collection so
+                # compliance can avoid false absence claims at uncertain facings.
+                self.excluded_products.append(item)
             else:
                 products.append(item)
 

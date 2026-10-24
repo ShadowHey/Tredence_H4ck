@@ -22,10 +22,11 @@ def fixture_snapshot(slots=None):
     ]}
 
 
-def audit(products, empties=None, *, slots=None, calibration="calibrated"):
+def audit(products, empties=None, *, slots=None, calibration="calibrated", excluded_products=None):
     return build_compliance_audit(
         output_id=3, job_id=7, source_filename="shelf.jpg", snapshot=fixture_snapshot(slots),
         snapshot_sha256="frozen-sha", products=products, empty_spaces=empties or [],
+        excluded_products=excluded_products,
         position_calibration={"status": calibration},
     )
 
@@ -78,10 +79,61 @@ def test_uncalibrated_audit_does_not_assert_missing_products():
     assert not any(issue["type"] == "missing_product" for issue in result["issues"])
 
 
+def test_compliance_score_is_facing_based_and_includes_coverage():
+    result = audit([product("p-a", 10, "A", 0, 10)])
+
+    assert result["compliance_score"] == {
+        "formula_version": 1,
+        "score": 50.0,
+        "state": "verified",
+        "evidence_coverage_percent": 100.0,
+        "evidence_coverage_threshold_percent": 80.0,
+        "expected_facing_count": 2,
+        "correct_facing_count": 1,
+        "non_compliant_facing_count": 1,
+        "unexpected_product_count": 0,
+        "review_facing_count": 0,
+        "assessed_facing_count": 2,
+        "score_denominator": 2,
+        "reasons": [],
+    }
+
+
+def test_compliance_score_is_provisional_when_a_slot_needs_review():
+    result = audit(
+        _present_products(14), slots=_facing_slots(15),
+        excluded_products=[{"id": "excluded-1", "planogram_position": position(0, 140, 150)}],
+    )
+
+    score = result["compliance_score"]
+    assert score["score"] == 100.0
+    assert score["state"] == "provisional"
+    assert score["evidence_coverage_percent"] == round(14 / 15 * 100, 1)
+    assert (score["correct_facing_count"], score["non_compliant_facing_count"], score["review_facing_count"]) == (14, 0, 1)
+    assert score["reasons"] == ["low_confidence_product_detections_excluded", "facing_slots_need_review"]
+
+
+def test_compliance_score_is_not_scored_without_calibrated_positions():
+    result = audit([], calibration="needs_review")
+
+    score = result["compliance_score"]
+    assert score["score"] is None
+    assert score["state"] == "not_scored"
+    assert "position_calibration_unavailable" in score["reasons"]
+
+
+def test_unexpected_product_in_an_expected_facing_counts_once_as_non_compliant():
+    result = audit([product("p-a", 10, "A", 0, 10), product("p-x", 99, "X", 10, 20)])
+
+    score = result["compliance_score"]
+    assert (score["correct_facing_count"], score["non_compliant_facing_count"], score["unexpected_product_count"]) == (1, 1, 0)
+    assert score["score"] == 50.0
+
+
 def test_audit_is_versioned_and_linked_to_output_snapshot():
     result = audit([product("p-a", 10, "A", 0, 10)])
     assert result["schema_version"] == 1
-    assert result["audit_version"] == 8
+    assert result["audit_version"] == 11
     layout = result["layout_comparison"]
     assert layout["coordinate_system"] == "normalized_shelf_width"
     assert layout["rows"][0]["expected_facings"][0]["ordinal_from_left"] == 1
@@ -107,6 +159,24 @@ def test_single_empty_facing_in_fifteen_does_not_raise_stock_alert():
 
     assert len([issue for issue in result["issues"] if issue["type"] in {"missing_product", "insufficient_quantity"}]) == 0
     assert sum(slot["status"] == "insufficient_quantity" for slot in result["slot_results"]) == 1
+
+
+def test_low_confidence_box_is_uncertainty_only_and_prevents_false_empty_or_stock_alert():
+    slots = _facing_slots(15)
+    result = audit(
+        _present_products(14),
+        [{"id": "void-a15", "planogram_position": position(0, 140, 150)}],
+        slots=slots,
+        excluded_products=[{"id": "excluded-1", "confidence": 0.599,
+                            "planogram_position": position(0, 140, 150)}],
+    )
+
+    uncertain_slot = next(slot for slot in result["slot_results"] if slot["slot_id"] == "a-15")
+    assert uncertain_slot["status"] == "needs_review"
+    assert result["excluded_low_confidence_products"] == 1
+    assert result["summary"]["excluded_low_confidence_products"] == 1
+    assert not any(issue["type"] in {"empty_space", "missing_product", "insufficient_quantity"}
+                   for issue in result["issues"])
 
 
 def test_low_stock_alert_is_emitted_at_half_occupancy_with_placement_level_evidence():

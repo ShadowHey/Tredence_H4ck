@@ -102,6 +102,12 @@ def analyze_output(output_id: int, db: Session = Depends(get_db)):
     return cutout_service.extract_cutouts_and_analyze(db, output_id, force_recompute=True)
 
 
+@router.post("/outputs/{output_id}/reprocess", response_model=OutputAnalysisResponse)
+def reprocess_output(output_id: int, db: Session = Depends(get_db)):
+    """Re-run YOLO on the original source photo using the current parser settings."""
+    return service.reprocess_output_image(db, output_id)
+
+
 @router.get("/outputs/{output_id}/cutouts/export")
 def export_cutouts(output_id: int, category: Optional[str] = None, db: Session = Depends(get_db)):
     archive = cutout_service.build_cutouts_zip(db, output_id, category=category)

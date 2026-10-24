@@ -77,7 +77,24 @@ export interface ComplianceDashboardData {
     output_id: number; source_filename: string; planogram_name?: string | null; shelf_name?: string | null;
     created_at: string; audit_status: string; issue_count: number; open_count: number;
     acknowledged_count: number; resolved_count: number; needs_review_count: number;
+    compliance_score?: ComplianceScore | null;
   }>;
+}
+
+export interface ComplianceScore {
+  formula_version: number;
+  score: number | null;
+  state: "verified" | "provisional" | "not_scored";
+  evidence_coverage_percent: number;
+  evidence_coverage_threshold_percent: number;
+  expected_facing_count: number;
+  correct_facing_count: number;
+  non_compliant_facing_count: number;
+  unexpected_product_count: number;
+  review_facing_count: number;
+  assessed_facing_count: number;
+  score_denominator: number;
+  reasons: string[];
 }
 
 export interface ComplianceIssue {
@@ -115,6 +132,9 @@ export interface ComplianceIssue {
 export interface ComplianceReport {
   schema_version: number; audit_version: number; output_id: number; job_id: number;
   source_filename: string; status: "complete" | "needs_review"; summary: Record<string, number>;
+  excluded_low_confidence_products?: number;
+  product_confidence_threshold?: number;
+  compliance_score: ComplianceScore;
   issues: ComplianceIssue[]; assignments: Array<Record<string, unknown>>;
   slot_results: Array<Record<string, unknown>>; label_audit: Record<string, unknown>;
   layout_comparison?: {
@@ -422,6 +442,9 @@ export interface OutputAnalysisResponse {
   shelf_name?: string | null;
   shelf_dimensions?: string | null;
   total_detections: number;
+  total_product_crops?: number;
+  product_confidence_threshold?: number;
+  excluded_low_confidence_product_count?: number;
   total_clusters: number;
   matched_clusters_count: number;
   catalog_confidence_threshold: number;

@@ -16,6 +16,9 @@ models:
       0: "shelf_row"
 
 refinement:
+  # Product boxes below this score are excluded from crops, matching, and counts.
+  # Empty-space and shelf-row detections keep their independent model thresholds.
+  product_confidence_threshold: 0.60
   # Filter out row segmentation noise whose width is less than ratio * average_width
   row_filter_width_ratio: 0.40
   # Vertical band assignment mode for mapping empty slots to shelf rows: 'overlap' or 'center_band'

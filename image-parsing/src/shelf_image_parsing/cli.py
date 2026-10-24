@@ -32,6 +32,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Confidence score threshold for product/empty detections (default: 0.20).",
     )
     parser.add_argument(
+        "--product-confidence",
+        type=float,
+        default=None,
+        help="Minimum confidence for a product box to enter product matching (default: 0.60).",
+    )
+    parser.add_argument(
         "--row-confidence",
         type=float,
         default=None,
@@ -77,6 +83,10 @@ def main() -> int:
     config = load_config(args.config)
     if args.confidence is not None:
         config.detection_model.confidence = args.confidence
+    if args.product_confidence is not None:
+        if not 0.0 <= args.product_confidence <= 1.0:
+            parser.error("--product-confidence must be between 0 and 1")
+        config.product_confidence_threshold = args.product_confidence
     if args.row_confidence is not None:
         config.segmentation_model.confidence = args.row_confidence
     if args.device:
@@ -91,7 +101,8 @@ def main() -> int:
     print("=" * 60)
     print(f"▶ Input Path       : {args.input}")
     print(f"▶ Output Directory : {args.output}")
-    print(f"▶ Confidence       : {config.detection_model.confidence}")
+    print(f"▶ YOLO floor       : {config.detection_model.confidence}")
+    print(f"▶ Product cutoff   : {config.product_confidence_threshold}")
     print(f"▶ Device           : {config.device}")
     print(f"▶ Detection Model  : {config.detection_model.path}")
     print(f"▶ Segmentation     : {config.segmentation_model.path}")
