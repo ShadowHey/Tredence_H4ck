@@ -7,6 +7,12 @@ import {
   Placement,
   RowCapacity,
   PlanogramExportJSON,
+  InputImage,
+  ProcessedOutput,
+  CutoutsResponse,
+  OutputAnalysisResponse,
+  ComplianceDashboardData,
+  ComplianceReport,
 } from "@/types";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -101,6 +107,8 @@ export const api = {
   getPlanograms: () => request<PlanogramSummary[]>("/api/v1/planograms"),
 
   getDashboardMetrics: () => request<DashboardMetrics>("/api/v1/planograms/metrics"),
+
+  getComplianceDashboard: () => request<ComplianceDashboardData>("/api/v1/compliance/summary"),
 
   getPlanogram: (id: number) => request<Planogram>(`/api/v1/planograms/${id}`),
 
@@ -232,5 +240,80 @@ export const api = {
     request<{ status: string; message: string; seeded_count: number }>("/api/v1/seed", {
       method: "POST",
     }),
+
+  // Shelf image processing
+  getInputImages: () => request<InputImage[]>("/api/v1/input-images"),
+
+  uploadInputImages: (files: File[]) => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append("files", file));
+    return request<InputImage[]>("/api/v1/input-images", { method: "POST", body: formData });
+  },
+
+  processInputImage: (id: number, target: { planogram_id: number; shelf_id: number }) =>
+    request<InputImage>(`/api/v1/input-images/${id}/process`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(target),
+    }),
+
+  deleteInputImage: (id: number) =>
+    request<{ message: string }>(`/api/v1/input-images/${id}`, { method: "DELETE" }),
+
+  getProcessedOutputs: () => request<ProcessedOutput[]>("/api/v1/outputs"),
+
+  deleteProcessedOutputs: (outputIds: number[]) =>
+    request<{ message: string }>("/api/v1/outputs", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ output_ids: outputIds }),
+    }),
+
+  getOutputCutouts: (outputId: number) =>
+    request<CutoutsResponse>(`/api/v1/outputs/${outputId}/cutouts`),
+
+  getOutputAnalysis: (outputId: number) =>
+    request<OutputAnalysisResponse>(`/api/v1/outputs/${outputId}/analysis`),
+
+  getOutputCompliance: (outputId: number) =>
+    request<ComplianceReport>(`/api/v1/outputs/${outputId}/compliance`),
+
+  updateComplianceIssue: (outputId: number, issueId: string, update: { status: "open" | "acknowledged" | "resolved"; note?: string }) =>
+    request<{ issue_id: string; status: string; note?: string | null; updated_at?: string }>(
+      `/api/v1/outputs/${outputId}/compliance/issues/${issueId}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(update),
+      }),
+
+  exportComplianceReport: async (outputId: number): Promise<void> => {
+    const report = await request<{ report: ComplianceReport; source: { source_filename?: string } }>(
+      `/api/v1/outputs/${outputId}/compliance/export.json`);
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `shelfsense-compliance-output-${outputId}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  },
+
+  analyzeOutput: (outputId: number) =>
+    request<OutputAnalysisResponse>(`/api/v1/outputs/${outputId}/reprocess`, {
+      method: "POST",
+    }),
 };
 
+export async function downloadProcessedOutputs(outputIds: number[]): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/outputs/export`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ output_ids: outputIds }),
+  });
+  if (!response.ok) throw new Error("Unable to export the selected outputs.");
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "shelfsense-outputs.zip";
+  anchor.click();
+  URL.revokeObjectURL(url);
+}

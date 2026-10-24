@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   ChevronRight,
   ChevronDown,
   Box,
   Layers,
-  Folder,
   Trash2,
   Package,
   Plus,
+  Search,
+  X,
 } from "lucide-react";
 import { Planogram } from "@/types";
 
@@ -17,8 +18,10 @@ interface OutlinerProps {
   planogram: Planogram | null;
   selectedShelfId: number | null;
   selectedPlacementId: number | null;
+  selectedRowIndex?: number;
   onSelectShelf: (shelfId: number | null) => void;
   onSelectPlacement: (placementId: number | null) => void;
+  onSelectRow?: (rowIndex: number) => void;
   onDeleteShelf: (shelfId: number) => void;
   onDeletePlacement: (placementId: number) => void;
   onOpenAddShelf: () => void;
@@ -28,12 +31,17 @@ export function Outliner({
   planogram,
   selectedShelfId,
   selectedPlacementId,
+  selectedRowIndex = 0,
   onSelectShelf,
   onSelectPlacement,
+  onSelectRow,
   onDeleteShelf,
   onDeletePlacement,
   onOpenAddShelf,
 }: OutlinerProps) {
+  // Search query state
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Collapsed sets
   const [collapsedShelves, setCollapsedShelves] = useState<Set<number>>(new Set());
   const [collapsedRows, setCollapsedRows] = useState<Set<string>>(new Set());
@@ -60,18 +68,36 @@ export function Outliner({
     setCollapsedRows(next);
   };
 
-  const shelves = planogram?.shelves || [];
+  const allShelves = planogram?.shelves || [];
+
+  // Filter shelves in real-time by search query (by shelf name or product SKU/name)
+  const filteredShelves = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return allShelves;
+    return allShelves.filter(
+      (shelf) =>
+        shelf.name.toLowerCase().includes(q) ||
+        (shelf.placements || []).some(
+          (p) =>
+            p.product.name.toLowerCase().includes(q) ||
+            p.product.sku.toLowerCase().includes(q)
+        )
+    );
+  }, [allShelves, searchQuery]);
 
   return (
     <aside
       className="w-72 bg-[#13161c] border-r border-[#262b36] flex flex-col h-full select-none text-xs"
       data-testid="blender-outliner"
     >
-      {/* Header bar inspired by Blender Outliner */}
+      {/* Header bar */}
       <div className="h-10 px-3 border-b border-[#262b36] flex items-center justify-between bg-[#1a1e26] shrink-0">
         <div className="flex items-center gap-1.5 text-gray-200 font-semibold tracking-wide uppercase text-[11px]">
           <Layers className="w-3.5 h-3.5 text-amber-400" />
           <span>Scene Hierarchy</span>
+          <span className="text-[10px] text-gray-400 font-mono font-normal lowercase">
+            ({allShelves.length})
+          </span>
         </div>
         <button
           onClick={onOpenAddShelf}
@@ -82,46 +108,47 @@ export function Outliner({
         </button>
       </div>
 
-      {/* Tree Content */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
-        {/* Root Planogram Node */}
-        <div
-          onClick={() => {
-            onSelectShelf(null);
-            onSelectPlacement(null);
-          }}
-          className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer transition-colors ${
-            selectedShelfId === null && selectedPlacementId === null
-              ? "bg-amber-500/15 text-amber-300 font-medium border border-amber-500/30"
-              : "text-gray-300 hover:bg-[#1a1e26]"
-          }`}
-        >
-          <div className="flex items-center gap-1.5 truncate">
-            <Folder className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="truncate font-semibold">{planogram?.name || "Untitled Planogram"}</span>
-          </div>
-          <span className="text-[10px] text-gray-400 font-mono">
-            {shelves.length} {shelves.length === 1 ? "shelf" : "shelves"}
-          </span>
+      {/* Search Input Bar (Replaces old root folder node) */}
+      <div className="p-2 border-b border-[#262b36] bg-[#101217] shrink-0">
+        <div className="relative flex items-center">
+          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search shelf name..."
+            className="w-full bg-[#1a1e26] border border-[#262b36] rounded-md pl-8 pr-7 py-1 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2 text-gray-400 hover:text-gray-200 p-0.5"
+              title="Clear search"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
         </div>
+      </div>
 
-        {/* Shelves List */}
-        {shelves.map((shelf) => {
+      {/* Scrollable Shelves List */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-1">
+        {filteredShelves.map((shelf) => {
           const isShelfCollapsed = collapsedShelves.has(shelf.id);
           const isShelfSelected = selectedShelfId === shelf.id && selectedPlacementId === null;
-          
+
           return (
-            <div key={shelf.id} className="pl-2 space-y-0.5">
+            <div key={shelf.id} className="space-y-0.5">
               {/* Shelf Item */}
               <div
                 onClick={() => {
                   onSelectShelf(shelf.id);
                   onSelectPlacement(null);
                 }}
-                className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer group transition-colors ${
+                className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer group transition-colors ${
                   isShelfSelected
                     ? "bg-amber-500/20 text-amber-300 font-medium border border-amber-500/40"
-                    : "text-gray-300 hover:bg-[#1a1e26]"
+                    : "text-gray-300 hover:bg-[#1a1e26] border border-transparent"
                 }`}
                 data-testid={`outliner-shelf-${shelf.id}`}
               >
@@ -139,7 +166,7 @@ export function Outliner({
                   <Box className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                   <span className="truncate">{shelf.name}</span>
                   <span className="text-[10px] text-gray-400 font-mono">
-                    ({shelf.width_cm}×{shelf.total_height_cm}cm)
+                    ({shelf.width_cm}x{shelf.total_height_cm}cm)
                   </span>
                 </div>
 
@@ -177,12 +204,23 @@ export function Outliner({
                       <div key={rowKey} className="space-y-0.5">
                         {/* Row Node */}
                         <div
-                          onClick={(e) => toggleRow(rowKey, e)}
-                          className="flex items-center justify-between px-2 py-0.5 rounded text-gray-400 hover:text-gray-200 hover:bg-[#1a1e26]/60 cursor-pointer text-[11px]"
+                          onClick={() => {
+                            onSelectShelf(shelf.id);
+                            onSelectRow?.(rIdx);
+                          }}
+                          className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer text-[11px] transition-colors ${
+                            isShelfSelected && selectedRowIndex === rIdx
+                              ? "bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40"
+                              : "text-gray-400 hover:text-gray-200 hover:bg-[#1a1e26]/60 border border-transparent"
+                          }`}
                         >
                           <div className="flex items-center gap-1.5 truncate">
                             {rowPlacements.length > 0 ? (
-                              <button className="p-0.5">
+                              <button
+                                type="button"
+                                onClick={(e) => toggleRow(rowKey, e)}
+                                className="p-0.5 text-gray-400 hover:text-gray-200"
+                              >
                                 {isRowCollapsed ? (
                                   <ChevronRight className="w-2.5 h-2.5" />
                                 ) : (
@@ -192,7 +230,7 @@ export function Outliner({
                             ) : (
                               <span className="w-3.5" />
                             )}
-                            <span className="font-mono text-gray-400">Row {rIdx + 1}</span>
+                            <span className="font-mono">Row {rIdx + 1}</span>
                           </div>
                           <span
                             className={`text-[9px] font-mono px-1 rounded ${
@@ -215,6 +253,7 @@ export function Outliner({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onSelectShelf(shelf.id);
+                                  onSelectRow?.(rIdx);
                                   onSelectPlacement(placement.id);
                                 }}
                                 className={`flex items-center justify-between pl-6 pr-2 py-0.5 rounded cursor-pointer group text-[11px] transition-colors ${
@@ -232,7 +271,7 @@ export function Outliner({
                                   </span>
                                   {placement.facing_count > 1 && (
                                     <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 font-bold">
-                                      ×{placement.facing_count}
+                                      x{placement.facing_count}
                                     </span>
                                   )}
                                 </div>
@@ -259,7 +298,21 @@ export function Outliner({
           );
         })}
 
-        {shelves.length === 0 && (
+        {/* Empty search results state */}
+        {allShelves.length > 0 && filteredShelves.length === 0 && (
+          <div className="p-4 text-center text-gray-400 text-xs">
+            <p>No shelf units matching &quot;{searchQuery}&quot;</p>
+            <button
+              onClick={() => setSearchQuery("")}
+              className="mt-2 text-amber-400 hover:text-amber-300 font-medium"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
+
+        {/* Zero shelves in planogram */}
+        {allShelves.length === 0 && (
           <div className="p-4 text-center text-gray-400 text-xs">
             <p>No shelf units added yet.</p>
             <button

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from sqlalchemy import (
+    JSON,
     Column,
     Integer,
     String,
@@ -9,6 +10,7 @@ from sqlalchemy import (
     ForeignKey,
     Text,
     CheckConstraint,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 from app.db.database import Base
@@ -32,8 +34,9 @@ class Product(Base):
     depth_cm = Column(Float, nullable=False)
     image_path = Column(String(500), nullable=False)
     is_sample = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=utc_now, nullable=False)
-    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+    embedding = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     placements = relationship("Placement", back_populates="product", passive_deletes="all")
 
@@ -69,6 +72,7 @@ class Shelf(Base):
     row_count = Column(Integer, nullable=False, default=4)
     has_plinth = Column(Boolean, default=False, nullable=False)
     plinth_height_cm = Column(Float, default=0.0, nullable=False)
+    row_heights = Column(JSON, nullable=True, default=None)
     order_index = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime, default=utc_now, nullable=False)
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
@@ -104,4 +108,81 @@ class Placement(Base):
         CheckConstraint("row_index >= 0", name="check_placement_row_non_negative"),
         CheckConstraint("x_offset_cm >= 0", name="check_placement_x_non_negative"),
         CheckConstraint("facing_count >= 1", name="check_placement_facing_positive"),
+    )
+
+
+class InputImage(Base):
+    """A shelf photograph staged for a single, explicitly selected shelf."""
+    __tablename__ = "input_images"
+
+    id = Column(Integer, primary_key=True, index=True)
+    original_filename = Column(String(500), nullable=False)
+    storage_path = Column(String(500), nullable=False, unique=True)
+    content_type = Column(String(100), nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+    status = Column(String(32), nullable=False, default="ready", index=True)
+    planogram_id = Column(Integer, ForeignKey("planograms.id", ondelete="SET NULL"), nullable=True, index=True)
+    shelf_id = Column(Integer, ForeignKey("shelves.id", ondelete="SET NULL"), nullable=True, index=True)
+    shelf_snapshot = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    planogram = relationship("Planogram")
+    shelf = relationship("Shelf")
+    job = relationship("ProcessingJob", back_populates="input_image", cascade="all, delete-orphan", uselist=False)
+    output = relationship("ProcessedOutput", back_populates="input_image", cascade="all, delete-orphan", uselist=False)
+
+
+class ProcessingJob(Base):
+    """Durable, sequential image-processing work item."""
+    __tablename__ = "processing_jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    input_image_id = Column(Integer, ForeignKey("input_images.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    status = Column(String(32), nullable=False, default="queued", index=True)
+    error_message = Column(Text, nullable=True)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    audit_snapshot = Column(JSON, nullable=True)
+
+    input_image = relationship("InputImage", back_populates="job")
+    output = relationship("ProcessedOutput", back_populates="job", cascade="all, delete-orphan", uselist=False)
+
+
+class ProcessedOutput(Base):
+    """Artifacts and metrics produced from one input image processing job."""
+    __tablename__ = "processed_outputs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    input_image_id = Column(Integer, ForeignKey("input_images.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    job_id = Column(Integer, ForeignKey("processing_jobs.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    annotated_image_path = Column(String(500), nullable=False)
+    result_json_path = Column(String(500), nullable=False)
+    metrics = Column(JSON, nullable=False, default=dict)
+    compliance_audit = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    input_image = relationship("InputImage", back_populates="output")
+    job = relationship("ProcessingJob", back_populates="output")
+    issue_resolutions = relationship("ComplianceIssueResolution", back_populates="output", cascade="all, delete-orphan")
+
+
+class ComplianceIssueResolution(Base):
+    """Operator disposition for one stable finding in an immutable output audit."""
+    __tablename__ = "compliance_issue_resolutions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    output_id = Column(Integer, ForeignKey("processed_outputs.id", ondelete="CASCADE"), nullable=False, index=True)
+    issue_id = Column(String(64), nullable=False)
+    status = Column(String(20), nullable=False, default="open")
+    note = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+    output = relationship("ProcessedOutput", back_populates="issue_resolutions")
+
+    __table_args__ = (
+        UniqueConstraint("output_id", "issue_id", name="uq_compliance_resolution_output_issue"),
+        CheckConstraint("status IN ('open', 'acknowledged', 'resolved')", name="check_compliance_issue_status"),
+        CheckConstraint("length(issue_id) = 64", name="check_compliance_issue_id_length"),
     )

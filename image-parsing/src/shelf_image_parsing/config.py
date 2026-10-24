@@ -46,6 +46,9 @@ class PipelineConfig:
     )
 
     # Refinement settings
+    # Product detections below this score are retained only as uncertainty
+    # diagnostics; they are not passed to crop generation or matching.
+    product_confidence_threshold: float = 0.60
     row_filter_width_ratio: float = 0.40
     empty_assignment_mode: str = "center_band"
     empty_nms_threshold: float = 0.50
@@ -125,6 +128,11 @@ def load_config(config_path: Optional[str] = None) -> PipelineConfig:
 
             # Parse refinement
             ref = data.get("refinement", {})
+            cfg.product_confidence_threshold = float(
+                ref.get("product_confidence_threshold", cfg.product_confidence_threshold)
+            )
+            if not 0.0 <= cfg.product_confidence_threshold <= 1.0:
+                raise ValueError("refinement.product_confidence_threshold must be between 0 and 1")
             cfg.row_filter_width_ratio = float(ref.get("row_filter_width_ratio", cfg.row_filter_width_ratio))
             cfg.empty_assignment_mode = str(ref.get("empty_assignment_mode", cfg.empty_assignment_mode))
             cfg.empty_nms_threshold = float(ref.get("empty_nms_threshold", cfg.empty_nms_threshold))

@@ -20,6 +20,7 @@ class MockDetector:
     def __init__(self, products=None, empty_spaces=None):
         self.products = products or []
         self.empty_spaces = empty_spaces or []
+        self.excluded_products = []
 
     def detect(self, image: np.ndarray):
         return list(self.products), list(self.empty_spaces)
@@ -92,6 +93,8 @@ class TestPipelineIntegration:
         assert result.image_width == 800
         assert result.image_height == 600
         assert result.summary.product_count == 3
+        assert result.summary.excluded_product_count == 0
+        assert result.summary.product_confidence_threshold == 0.60
         assert result.summary.empty_region_count == 1
         assert result.summary.shelf_row_count == 2
         assert result.summary.empty_area_percentage is not None

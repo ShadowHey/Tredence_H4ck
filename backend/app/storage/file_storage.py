@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import os
 import uuid
 from pathlib import Path
 from fastapi import UploadFile, HTTPException
 from app.core.config import settings
 
-def save_uploaded_image(file: UploadFile, subfolder: str = "products") -> str:
+def save_uploaded_image(file: UploadFile, subfolder: str = "products", max_size_bytes: int | None = None) -> str:
     """
     Validates and saves an uploaded image file into the configured uploads directory.
     Returns the relative path e.g. 'uploads/products/<unique_name>.ext'.
@@ -42,17 +44,18 @@ def save_uploaded_image(file: UploadFile, subfolder: str = "products") -> str:
     dest_path = target_dir / unique_filename
     
     # Stream and enforce max size
+    limit = max_size_bytes or settings.MAX_UPLOAD_SIZE_BYTES
     size = 0
     with open(dest_path, "wb") as buffer:
         while chunk := file.file.read(8192):
             size += len(chunk)
-            if size > settings.MAX_UPLOAD_SIZE_BYTES:
+            if size > limit:
                 buffer.close()
                 if dest_path.exists():
                     os.remove(dest_path)
                 raise HTTPException(
                     status_code=400,
-                    detail=f"File exceeds maximum allowed size of {settings.MAX_UPLOAD_SIZE_BYTES // (1024*1024)}MB."
+                    detail=f"File exceeds maximum allowed size of {limit // (1024*1024)}MB."
                 )
             buffer.write(chunk)
             

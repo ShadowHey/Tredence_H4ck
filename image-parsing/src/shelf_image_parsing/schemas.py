@@ -13,6 +13,8 @@ class DetectionItem(BaseModel):
     bbox_normalized: List[float] = Field(description="Normalized coordinates [x1_norm, y1_norm, x2_norm, y2_norm]")
     row_number: Optional[int] = Field(default=None, description="1-indexed shelf row number from top to bottom")
     area_px: Optional[int] = Field(default=None, description="Area in square pixels")
+    quality_status: str = Field(default="unchecked", description="Detection geometry quality: unchecked, usable, or review")
+    quality_flags: List[str] = Field(default_factory=list, description="Non-destructive warnings about suspicious detection geometry")
 
 
 class ShelfRowItem(BaseModel):
@@ -47,6 +49,8 @@ class ImageParsingSummary(BaseModel):
     )
     total_empty_area_px: int = Field(default=0, description="Total accumulated empty pixel area")
     total_product_area_px: int = Field(default=0, description="Total accumulated product pixel area")
+    excluded_product_count: int = Field(default=0, description="Product-class boxes excluded by the product confidence floor")
+    product_confidence_threshold: float = Field(default=0.60, description="Minimum confidence required for a product box to enter matching")
 
 
 class ImageParsingResult(BaseModel):
@@ -60,7 +64,15 @@ class ImageParsingResult(BaseModel):
     )
     summary: ImageParsingSummary
     products: List[DetectionItem] = Field(default_factory=list)
+    excluded_products: List[DetectionItem] = Field(
+        default_factory=list,
+        description="Low-confidence product boxes retained for uncertainty diagnostics only; never cropped or matched.",
+    )
     empty_regions: List[DetectionItem] = Field(default_factory=list)
     shelf_rows: List[ShelfRowItem] = Field(default_factory=list)
+    calibration: Optional[dict] = Field(
+        default=None,
+        description="Optional four-corner ArUco calibration anchors in source-image pixel coordinates.",
+    )
     annotated_image: Optional[str] = Field(default=None, description="Filename of combined annotated image")
     errors: Optional[List[str]] = Field(default=None, description="Any warnings or error details encountered")

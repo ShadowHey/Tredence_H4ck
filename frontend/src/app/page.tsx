@@ -15,13 +15,16 @@ import {
   FolderOpen,
   AlertCircle,
   TrendingUp,
+  Trash2,
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { DashboardMetrics } from "@/types";
+import { ComplianceDashboardData, DashboardMetrics, Product } from "@/types";
+import { AddProductModal } from "@/components/designer/AddProductModal";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [compliance, setCompliance] = useState<ComplianceDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
@@ -32,13 +35,45 @@ export default function DashboardPage() {
   const [newPlanogramName, setNewPlanogramName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
+
+  const handleDeletePlanogram = async (id: number, name: string) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete planogram "${name}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setDeletingId(id);
+      await api.deletePlanogram(id);
+      const [data, complianceData] = await Promise.all([
+        api.getDashboardMetrics(),
+        api.getComplianceDashboard().catch(() => null),
+      ]);
+      setMetrics(data);
+      setCompliance(complianceData);
+    } catch (err: unknown) {
+      console.error("Failed to delete planogram:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Failed to delete planogram: ${msg}`);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.getDashboardMetrics();
+      const [data, complianceData] = await Promise.all([
+        api.getDashboardMetrics(),
+        api.getComplianceDashboard().catch(() => null),
+      ]);
       setMetrics(data);
+      setCompliance(complianceData);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(msg || "Failed to load dashboard metrics.");
@@ -54,8 +89,10 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
         const data = await api.getDashboardMetrics();
+        const complianceData = await api.getComplianceDashboard().catch(() => null);
         if (!ignore) {
           setMetrics(data);
+          setCompliance(complianceData);
         }
       } catch (err: unknown) {
         if (!ignore) {
@@ -131,6 +168,16 @@ export default function DashboardPage() {
             title="Refresh dashboard"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-amber-400" : ""}`} />
+          </button>
+
+          <button
+            onClick={() => setShowAddProductModal(true)}
+            data-testid="dashboard-add-product-btn"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#1a1e26] hover:bg-[#222733] border border-[#262b36] text-amber-400 hover:text-amber-300 font-semibold text-sm transition-colors shadow-sm"
+            title="Add a new product manually to database"
+          >
+            <Package className="w-4 h-4" />
+            <span>Add Product</span>
           </button>
 
           <button
@@ -261,6 +308,32 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Compliance Overview and planogram/shelf audit history */}
+        <section className="rounded-xl bg-[#13161c] border border-[#262b36] overflow-hidden" data-testid="dashboard-compliance">
+          <div className="p-5 border-b border-[#262b36] flex flex-wrap justify-between items-center gap-2">
+            <div><h2 className="text-base font-semibold text-gray-100">Compliance overview</h2><p className="text-xs text-gray-400 mt-1">Persisted issue dispositions and recent audits by planogram and shelf.</p></div>
+            <Link href="/analysis" className="text-xs text-amber-400 hover:text-amber-300 font-medium">Open reports →</Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 p-4">
+            {([["Audits", compliance?.summary.audits], ["Findings", compliance?.summary.issues], ["Open", compliance?.summary.open], ["Acknowledged", compliance?.summary.acknowledged], ["Resolved", compliance?.summary.resolved]] as const).map(([title, value]) =>
+              <div key={title} className="rounded-lg bg-[#0d0f12] border border-[#262b36] p-3"><div className="text-[10px] uppercase tracking-wide text-gray-500">{title}</div><div className="text-xl text-gray-100 font-semibold mt-1">{value ?? "—"}</div></div>)}
+          </div>
+          <div className="px-4 pb-4">
+            {!compliance?.history.length ? <p className="p-4 text-center text-sm text-gray-500 border border-dashed border-[#353b48] rounded-lg">No persisted compliance audits yet. Process a shelf image to begin.</p> :
+              <div className="divide-y divide-[#262b36] rounded-lg border border-[#262b36] overflow-hidden">
+                {compliance.history.map((audit) => <div key={audit.output_id} className="flex flex-wrap items-center justify-between gap-3 p-3 bg-[#1a1e26]">
+                  <div className="min-w-0"><Link href={`/analysis?outputId=${audit.output_id}`} className="text-sm text-gray-100 hover:text-amber-300 font-medium">{audit.source_filename}</Link><p className="text-xs text-gray-400 mt-1">{audit.planogram_name || "Planogram"} · {audit.shelf_name || "Shelf"} · {new Date(audit.created_at).toLocaleString()}</p></div>
+                  <div className="flex flex-wrap justify-end gap-2 text-[11px]">
+                    {audit.compliance_score && <span data-testid={`history-compliance-score-${audit.output_id}`} className={`rounded border px-1.5 py-0.5 ${audit.compliance_score.state === "verified" ? "border-emerald-500/30 text-emerald-300" : audit.compliance_score.state === "provisional" ? "border-amber-500/30 text-amber-300" : "border-[#454d5a] text-gray-400"}`}>
+                      {audit.compliance_score.score == null ? "Not scored" : `${audit.compliance_score.score.toFixed(1)} / 100`} · {audit.compliance_score.state === "not_scored" ? `${audit.compliance_score.evidence_coverage_percent.toFixed(1)}% evidence` : audit.compliance_score.state}
+                    </span>}
+                    <span className="text-amber-300">{audit.open_count} open</span><span className="text-emerald-300">{audit.resolved_count} resolved</span><span className="text-gray-400">{audit.needs_review_count} review</span>
+                  </div>
+                </div>)}
+              </div>}
+          </div>
+        </section>
+
         {/* Recent Planograms Section */}
         <div className="rounded-xl bg-[#1a1e26] border border-[#262b36] overflow-hidden">
           <div className="p-5 border-b border-[#262b36] flex items-center justify-between">
@@ -324,6 +397,22 @@ export default function DashboardPage() {
                       <FolderOpen className="w-3.5 h-3.5" />
                       <span>Open Planogram</span>
                     </Link>
+
+                    <button
+                      type="button"
+                      disabled={deletingId === planogram.id}
+                      onClick={() => handleDeletePlanogram(planogram.id, planogram.name)}
+                      className="px-3 py-1.5 rounded-lg bg-[#262b36] hover:bg-red-600/90 text-gray-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5 border border-transparent hover:border-red-500 disabled:opacity-50 cursor-pointer"
+                      title={`Delete planogram "${planogram.name}"`}
+                      data-testid={`delete-planogram-${planogram.id}`}
+                    >
+                      {deletingId === planogram.id ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-red-300" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5 text-red-400 group-hover:text-white" />
+                      )}
+                      <span>Delete</span>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -427,6 +516,16 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      {/* Add Product Modal */}
+      <AddProductModal
+        isOpen={showAddProductModal}
+        onClose={() => setShowAddProductModal(false)}
+        onProductCreated={async (prod) => {
+          setShowAddProductModal(false);
+          await loadData();
+          setSeedMessage(`Product "${prod.name}" (${prod.sku}) created and saved to database!`);
+        }}
+      />
     </div>
   );
 }

@@ -8,7 +8,9 @@ import cv2
 import numpy as np
 
 from .config import PipelineConfig, load_config
+from .calibration import detect_shelf_corner_markers
 from .detector import ProductEmptySpaceDetector
+from .detection_refinement import assess_row_box_quality
 from .empty_space import EmptySpaceRefiner
 from .row_segmenter import ShelfRowSegmenter
 from .schemas import ImageParsingResult, ImageParsingSummary
@@ -37,6 +39,7 @@ class ShelfImageParsingPipeline:
             iou=self.config.detection_model.iou,
             device=self.config.device,
             class_mapping=self.config.detection_model.class_mapping,
+            product_confidence_threshold=self.config.product_confidence_threshold,
         )
         self.row_segmenter = row_segmenter or ShelfRowSegmenter(
             model_path=self.config.segmentation_model.path,
@@ -128,10 +131,15 @@ class ShelfImageParsingPipeline:
                 errors=["Image has zero width or height."],
             )
 
+        # Calibration markers are optional. Their centres provide projective
+        # anchors for a rectified usable-shelf coordinate frame.
+        calibration = detect_shelf_corner_markers(original_image)
+
         # ----------------------------------------------------
         # Stage 2: Detect products and empty spaces
         # ----------------------------------------------------
         products, empty_regions = self.detector.detect(original_image)
+        excluded_products = list(getattr(self.detector, "excluded_products", []))
 
         # ----------------------------------------------------
         # Stage 3: Detect shelf rows
@@ -147,12 +155,23 @@ class ShelfImageParsingPipeline:
         )
 
         assigned_products = self.empty_refiner.assign_to_rows(products, shelf_rows, img_h)
+        assigned_excluded_products = self.empty_refiner.assign_to_rows(excluded_products, shelf_rows, img_h)
         assigned_empty = self.empty_refiner.assign_to_rows(refined_empty, shelf_rows, img_h)
+        # Preserve original YOLO coordinates, but make likely partial/truncated boxes
+        # explicit so downstream matching and compliance can abstain instead of
+        # treating a suspicious crop as a reliable product observation.
+        assigned_products = assess_row_box_quality(assigned_products)
+        assigned_excluded_products = assess_row_box_quality(assigned_excluded_products)
+        assigned_empty = assess_row_box_quality(assigned_empty)
 
         # ----------------------------------------------------
         # Stage 5: Generate statistics
         # ----------------------------------------------------
         summary, updated_rows = self.empty_refiner.compute_metrics(assigned_products, assigned_empty, shelf_rows)
+        summary = summary.model_copy(update={
+            "excluded_product_count": len(assigned_excluded_products),
+            "product_confidence_threshold": self.config.product_confidence_threshold,
+        })
 
         stem = Path(input_filename).stem
         annotated_filename: Optional[str] = None
@@ -180,8 +199,10 @@ class ShelfImageParsingPipeline:
             model_status="completed" if (assigned_products or updated_rows) else "no_detections",
             summary=summary,
             products=assigned_products,
+            excluded_products=assigned_excluded_products,
             empty_regions=assigned_empty,
             shelf_rows=updated_rows,
+            calibration=calibration,
             annotated_image=annotated_filename,
         )
 
@@ -250,6 +271,7 @@ class ShelfImageParsingPipeline:
             "row_empty_count",
             "row_empty_percentage",
             "total_products",
+            "excluded_products_below_confidence_floor",
             "total_empty_slots",
             "total_shelf_rows",
             "overall_empty_percentage",
@@ -273,6 +295,7 @@ class ShelfImageParsingPipeline:
                         "row_empty_count": 0,
                         "row_empty_percentage": "N/A",
                         "total_products": res.summary.product_count,
+                        "excluded_products_below_confidence_floor": res.summary.excluded_product_count,
                         "total_empty_slots": res.summary.empty_region_count,
                         "total_shelf_rows": res.summary.shelf_row_count,
                         "overall_empty_percentage": res.summary.empty_area_percentage or "N/A",
@@ -290,6 +313,7 @@ class ShelfImageParsingPipeline:
                             "row_empty_count": row.empty_region_count,
                             "row_empty_percentage": row.row_empty_percentage if row.row_empty_percentage is not None else "N/A",
                             "total_products": res.summary.product_count,
+                            "excluded_products_below_confidence_floor": res.summary.excluded_product_count,
                             "total_empty_slots": res.summary.empty_region_count,
                             "total_shelf_rows": res.summary.shelf_row_count,
                             "overall_empty_percentage": res.summary.empty_area_percentage or "N/A",

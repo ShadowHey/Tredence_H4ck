@@ -35,3 +35,29 @@ def get_db():
 def init_db(target_engine=None):
     use_engine = target_engine or engine
     Base.metadata.create_all(bind=use_engine)
+    if use_engine.dialect.name != "sqlite":
+        return
+    with use_engine.connect() as conn:
+        res = conn.exec_driver_sql("PRAGMA table_info(shelves);")
+        cols = [row[1] for row in res.fetchall()]
+        if cols and "row_heights" not in cols:
+            conn.exec_driver_sql("ALTER TABLE shelves ADD COLUMN row_heights TEXT;")
+            conn.commit()
+
+        res_prod = conn.exec_driver_sql("PRAGMA table_info(products);")
+        prod_cols = [row[1] for row in res_prod.fetchall()]
+        if prod_cols and "embedding" not in prod_cols:
+            conn.exec_driver_sql("ALTER TABLE products ADD COLUMN embedding JSON;")
+            conn.commit()
+
+        res_jobs = conn.exec_driver_sql("PRAGMA table_info(processing_jobs);")
+        job_cols = [row[1] for row in res_jobs.fetchall()]
+        if job_cols and "audit_snapshot" not in job_cols:
+            conn.exec_driver_sql("ALTER TABLE processing_jobs ADD COLUMN audit_snapshot JSON;")
+            conn.commit()
+
+        res_outputs = conn.exec_driver_sql("PRAGMA table_info(processed_outputs);")
+        output_cols = [row[1] for row in res_outputs.fetchall()]
+        if output_cols and "compliance_audit" not in output_cols:
+            conn.exec_driver_sql("ALTER TABLE processed_outputs ADD COLUMN compliance_audit JSON;")
+            conn.commit()
